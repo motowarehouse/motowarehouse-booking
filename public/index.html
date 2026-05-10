@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Service Booking – Motowarehouse</title>
+  <link rel="icon" type="image/png" href="/assets/MWH_Logo_New.png">
   <style>
     @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Light.ttf'); font-weight:300; }
     @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Regular.ttf'); font-weight:400; }
@@ -57,10 +58,12 @@
 
     /* Motowarehouse logo mark */
     .logo-mark {
-      height: 44px;
+      height: 48px;
       width: auto;
       display: block;
       flex-shrink: 0;
+      border-radius: 6px;
+      object-fit: contain;
     }
 
     .logo-mark-fallback {
@@ -300,6 +303,10 @@
     input:focus, select:focus, textarea:focus { border-color: var(--blue); background: rgba(0,155,180,0.06); }
     textarea { resize: vertical; min-height: 80px; }
 
+    select { color: var(--white); }
+    select option { background: #0f2429; color: var(--white); }
+    select option:disabled { color: rgba(255,255,255,0.35); }
+
     /* ── CUSTOM MODEL DROPDOWN ── */
     .custom-select-wrap { position: relative; }
 
@@ -531,7 +538,7 @@
 <!-- HEADER -->
 <header>
   <div class="logo-wrap">
-    <img class="logo-mark" src="/assets/logo.png" alt="Motowarehouse" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+    <img class="logo-mark" src="/assets/MWH_Logo_New.png" alt="Motowarehouse" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
     <div class="logo-mark-fallback">MW</div>
     <div class="logo-text-wrap">
       <div class="logo-name">Motowarehouse</div>
