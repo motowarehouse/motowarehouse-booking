@@ -1,7 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, 'bookings.json');
+// Use Railway persistent volume if available, otherwise fall back to local (for development)
+const DB_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH
+  ? path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, 'bookings.json')
+  : path.join(__dirname, 'bookings.json');
 
 function readDB() {
   if (!fs.existsSync(DB_PATH)) {
