@@ -13,11 +13,12 @@ function createTransporter() {
   return nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
-    secure: true,          // SSL on port 465
+    secure: true,
     auth: { user, pass },
-    tls: {
-      rejectUnauthorized: true
-    }
+    tls: { rejectUnauthorized: true },
+    connectionTimeout: 10000,  // fail fast — 10s max to connect
+    greetingTimeout:   10000,
+    socketTimeout:     15000
   });
 }
 

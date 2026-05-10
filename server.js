@@ -197,7 +197,10 @@ app.post('/api/admin/test-email', requireAdmin, async (req, res) => {
       auth: {
         user: process.env.GMAIL_USER,
         pass: process.env.GMAIL_APP_PASSWORD
-      }
+      },
+      connectionTimeout: 10000,
+      greetingTimeout:   10000,
+      socketTimeout:     15000
     });
     await transporter.sendMail({
       from: `"Motowarehouse Bookings" <${process.env.GMAIL_USER}>`,

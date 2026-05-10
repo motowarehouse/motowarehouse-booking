@@ -807,23 +807,25 @@
   }
 
   // ── TOAST ──────────────────────────────────────────────────────────────
-  function showToast(msg, type = '') {
+  let _toastTimer = null;
+  function showToast(msg, type = '', duration = 5000) {
     const t = document.getElementById('toast');
+    if (_toastTimer) clearTimeout(_toastTimer);
     t.textContent = msg;
     t.className = 'toast show ' + type;
-    setTimeout(() => { t.className = 'toast'; }, 3500);
+    _toastTimer = setTimeout(() => { t.className = 'toast'; }, duration);
   }
 
   // ── TEST EMAIL ────────────────────────────────────────────────────────
   async function testEmail() {
-    showToast('Sending test email…', '');
+    showToast('⏳ Sending test email… please wait', '', 30000); // hold while waiting
     try {
       const res  = await fetch('/api/admin/test-email', { method: 'POST' });
       const data = await res.json();
-      if (res.ok) showToast('✅ ' + data.message, 'success');
-      else        showToast('❌ ' + (data.error || 'Failed'), 'error');
+      if (res.ok) showToast('✅ ' + data.message, 'success', 8000);
+      else        showToast('❌ Error: ' + (data.error || 'Unknown') + (data.code ? ' (' + data.code + ')' : ''), 'error', 10000);
     } catch (e) {
-      showToast('❌ Network error', 'error');
+      showToast('❌ Network error — check Railway logs', 'error', 8000);
     }
   }
 
