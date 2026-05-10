@@ -16,6 +16,7 @@ function getResend() {
 // The "from" address — once you verify motowarehouse.com.cy in Resend dashboard
 // you can change this to: 'Motowarehouse <bookings@motowarehouse.com.cy>'
 const FROM = 'Motowarehouse <onboarding@resend.dev>';
+const REPLY_TO = 'Motowarehouse <support@motowarehouse.com.cy>';
 
 // ── Notify Nikolas of a new booking ─────────────────────────────────────────
 async function sendNewBookingAlert(booking) {
@@ -24,8 +25,9 @@ async function sendNewBookingAlert(booking) {
 
   const resend = getResend();
   const { error } = await resend.emails.send({
-    from:    FROM,
-    to:      [adminEmail],
+    from:     FROM,
+    reply_to: REPLY_TO,
+    to:       [adminEmail],
     subject: `[NEW BOOKING] ${booking.ref} – ${booking.name} – ${SERVICE_LABELS[booking.serviceType]}`,
     html: `
       <h2 style="color:#009BB4;">New Service Booking</h2>
@@ -59,8 +61,9 @@ async function sendConfirmationToCustomer(booking) {
 
   const resend = getResend();
   const { error } = await resend.emails.send({
-    from:    FROM,
-    to:      [booking.email],
+    from:     FROM,
+    reply_to: REPLY_TO,
+    to:       [booking.email],
     subject: `Your Service Appointment is Confirmed – ${booking.ref}`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
@@ -103,8 +106,9 @@ async function sendCancellationToCustomer(booking) {
 
   const resend = getResend();
   const { error } = await resend.emails.send({
-    from:    FROM,
-    to:      [booking.email],
+    from:     FROM,
+    reply_to: REPLY_TO,
+    to:       [booking.email],
     subject: `Your Booking ${booking.ref} – Update Required`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
@@ -136,8 +140,9 @@ async function sendReminderToCustomer(booking) {
 
   const resend = getResend();
   const { error } = await resend.emails.send({
-    from:    FROM,
-    to:      [booking.email],
+    from:     FROM,
+    reply_to: REPLY_TO,
+    to:       [booking.email],
     subject: `Reminder: Your appointment today at ${booking.time} – ${booking.ref}`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
