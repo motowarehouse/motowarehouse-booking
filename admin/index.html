@@ -751,6 +751,7 @@
             <div class="detail-item"><label>Plate</label><span>${b.plate}</span></div>
             <div class="detail-item"><label>Model</label><span>${b.model}</span></div>
             <div class="detail-item"><label>Year</label><span>${b.year}</span></div>
+            <div class="detail-item"><label>Current KM</label><span>${b.km ? Number(b.km).toLocaleString() + ' km' : '—'}</span></div>
             <div class="detail-item"><label>Booked</label><span>${new Date(b.createdAt).toLocaleString('en-GB')}</span></div>
           </div>
           ${b.notes ? `<div class="detail-notes">📝 ${b.notes}</div>` : ''}

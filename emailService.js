@@ -35,6 +35,7 @@ async function sendNewBookingAlert(booking) {
         <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Date & Time</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.date} at ${booking.time}</td></tr>
         <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Vehicle</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.year} ${booking.model}</td></tr>
         <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Plate</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.plate}</td></tr>
+        <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Current KM</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.km ? Number(booking.km).toLocaleString() + ' km' : '—'}</td></tr>
         <tr><td style="padding:8px;font-weight:bold;">Notes</td><td style="padding:8px;">${booking.notes || '—'}</td></tr>
       </table>
       <p style="margin-top:20px;">
@@ -69,7 +70,8 @@ async function sendConfirmationToCustomer(booking) {
             <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Date</td><td style="padding:10px;">${booking.date}</td></tr>
             <tr><td style="padding:10px;font-weight:bold;">Time</td><td style="padding:10px;">${booking.time}</td></tr>
             <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${booking.year} ${booking.model}</td></tr>
-            <tr><td style="padding:10px;font-weight:bold;">Plate Number</td><td style="padding:10px;">${booking.plate}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Plate Number</td><td style="padding:10px;">${booking.plate}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Current KM</td><td style="padding:10px;">${booking.km ? Number(booking.km).toLocaleString() + ' km' : '—'}</td></tr>
           </table>
           <div style="background:#f0fbfd;border-left:4px solid #009BB4;padding:16px;margin:20px 0;">
             <strong>Location:</strong><br>

@@ -71,10 +71,10 @@ app.get('/api/slots', (req, res) => {
 
 // Submit a new booking
 app.post('/api/book', async (req, res) => {
-  const { name, phone, email, serviceType, date, time, model, year, plate, notes } = req.body;
+  const { name, phone, email, serviceType, date, time, model, year, plate, km, notes } = req.body;
 
   // Validation
-  if (!name || !phone || !email || !serviceType || !date || !time || !model || !year || !plate) {
+  if (!name || !phone || !email || !serviceType || !date || !time || !model || !year || !plate || !km) {
     return res.status(400).json({ error: 'All required fields must be filled.' });
   }
 
@@ -90,7 +90,7 @@ app.post('/api/book', async (req, res) => {
   }
 
   try {
-    const booking = db.createBooking({ name, phone, email, serviceType, date, time, model, year, plate, notes });
+    const booking = db.createBooking({ name, phone, email, serviceType, date, time, model, year, plate, km, notes });
 
     // Notify admin
     emailService.sendNewBookingAlert(booking).catch(e => console.error('[Email alert error]', e.message));

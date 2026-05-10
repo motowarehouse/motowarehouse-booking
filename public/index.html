@@ -734,6 +734,11 @@
       </div>
 
       <div class="form-group full">
+        <label for="km">Current Kilometres <span class="req">*</span></label>
+        <input type="number" id="km" placeholder="e.g. 12500" min="0">
+      </div>
+
+      <div class="form-group full">
         <label for="notes">Additional Notes <span style="font-weight:300;text-transform:none;letter-spacing:0;font-size:10px;margin-left:4px;">(optional)</span></label>
         <textarea id="notes" placeholder="Any issues you'd like us to check, or anything else we should know…"></textarea>
       </div>
@@ -922,6 +927,7 @@
     const model = document.getElementById('model').value;
     const year  = document.getElementById('year').value;
     const plate = document.getElementById('plate').value.trim().toUpperCase();
+    const km    = document.getElementById('km').value.trim();
     const notes = document.getElementById('notes').value.trim();
     const date  = dateInput.value;
 
@@ -934,6 +940,7 @@
     if (!model)           return showError('Please select your vehicle model.');
     if (!year)            return showError('Please select the model year.');
     if (!plate)           return showError('Please enter your license plate number.');
+    if (!km || isNaN(km) || Number(km) < 0) return showError('Please enter the current kilometres on your vehicle.');
 
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span>Sending…';
@@ -942,7 +949,7 @@
       const res = await fetch('/api/book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone, email, serviceType: selectedService, date, time: selectedTime, model, year, plate, notes })
+        body: JSON.stringify({ name, phone, email, serviceType: selectedService, date, time: selectedTime, model, year, plate, km, notes })
       });
       const data = await res.json();
 
