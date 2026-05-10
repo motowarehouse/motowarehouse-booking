@@ -145,14 +145,22 @@ app.post('/api/admin/bookings/:id/accept', requireAdmin, async (req, res) => {
   if (!booking) return res.status(404).json({ error: 'Booking not found' });
 
   // Send notifications
+  let emailError = null;
   try {
     await emailService.sendConfirmationToCustomer(booking);
-    await smsService.sendConfirmationSMS(booking);
+    console.log(`[Email] Confirmation sent to ${booking.email}`);
   } catch (e) {
-    console.error('[Notification error]', e.message);
+    emailError = e.message;
+    console.error('[Email] Confirmation FAILED:', e.message, e.code || '');
   }
 
-  res.json({ success: true, booking });
+  try {
+    await smsService.sendConfirmationSMS(booking);
+  } catch (e) {
+    console.error('[SMS] Confirmation FAILED:', e.message);
+  }
+
+  res.json({ success: true, booking, emailError });
 });
 
 // Cancel a booking
@@ -162,12 +170,46 @@ app.post('/api/admin/bookings/:id/cancel', requireAdmin, async (req, res) => {
 
   try {
     await emailService.sendCancellationToCustomer(booking);
+    console.log(`[Email] Cancellation sent to ${booking.email}`);
+  } catch (e) {
+    console.error('[Email] Cancellation FAILED:', e.message, e.code || '');
+  }
+
+  try {
     await smsService.sendCancellationSMS(booking);
   } catch (e) {
-    console.error('[Notification error]', e.message);
+    console.error('[SMS] Cancellation FAILED:', e.message);
   }
 
   res.json({ success: true, booking });
+});
+
+// Test email (admin only — use to verify Railway env vars are working)
+app.post('/api/admin/test-email', requireAdmin, async (req, res) => {
+  const to = process.env.ADMIN_EMAIL || process.env.GMAIL_USER;
+  console.log('[Email] Test requested. GMAIL_USER set:', !!process.env.GMAIL_USER, '| GMAIL_APP_PASSWORD set:', !!process.env.GMAIL_APP_PASSWORD);
+  try {
+    const nodemailer = require('nodemailer');
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD
+      }
+    });
+    await transporter.sendMail({
+      from: `"Motowarehouse Bookings" <${process.env.GMAIL_USER}>`,
+      to,
+      subject: 'Motowarehouse – Email Test ✓',
+      html: '<h2 style="color:#009BB4">Email is working!</h2><p>This test was sent from Railway.</p>'
+    });
+    res.json({ success: true, message: `Test email sent to ${to}` });
+  } catch (e) {
+    console.error('[Email] Test FAILED:', e.message, e.code || '');
+    res.status(500).json({ success: false, error: e.message, code: e.code });
+  }
 });
 
 // Serve admin panel

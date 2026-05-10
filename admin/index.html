@@ -539,6 +539,7 @@
         </div>
       </nav>
       <div class="sidebar-footer">
+        <button class="logout-btn" onclick="testEmail()" style="margin-bottom:8px;border-color:rgba(0,155,180,0.3);color:var(--blue);">📧 Test Email</button>
         <button class="logout-btn" onclick="logout()">Sign Out</button>
       </div>
     </div>
@@ -811,6 +812,19 @@
     t.textContent = msg;
     t.className = 'toast show ' + type;
     setTimeout(() => { t.className = 'toast'; }, 3500);
+  }
+
+  // ── TEST EMAIL ────────────────────────────────────────────────────────
+  async function testEmail() {
+    showToast('Sending test email…', '');
+    try {
+      const res  = await fetch('/api/admin/test-email', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) showToast('✅ ' + data.message, 'success');
+      else        showToast('❌ ' + (data.error || 'Failed'), 'error');
+    } catch (e) {
+      showToast('❌ Network error', 'error');
+    }
   }
 
   // ── START ──────────────────────────────────────────────────────────────

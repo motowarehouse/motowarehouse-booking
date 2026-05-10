@@ -552,6 +552,28 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ── YEAR SELECT ANIMATION ── */
+    @keyframes yearPop {
+      0%   { border-color: var(--blue); box-shadow: 0 0 0 0   rgba(0,155,180,0.45); transform: translateY(-1px); }
+      50%  { border-color: var(--teal-light); box-shadow: 0 0 0 6px rgba(0,155,180,0); transform: translateY(-2px); }
+      100% { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,155,180,0.12); transform: translateY(-1px); }
+    }
+    select.year-selected {
+      animation: yearPop 0.35s ease forwards;
+      border-color: var(--blue);
+      background: rgba(0,155,180,0.08);
+    }
+
+    /* ── PLATE VALIDATION ── */
+    input#plate.plate-invalid {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(229,0,82,0.12);
+    }
+    input#plate.plate-valid {
+      border-color: var(--success);
+      box-shadow: 0 0 0 3px rgba(0,200,150,0.12);
+    }
+
     /* ── VEHICLE SECTION REVEAL ── */
     .vehicle-section {
       /* layout — spans full form-grid width, re-establishes 2-col grid inside */
@@ -968,14 +990,20 @@
       <div class="vehicle-section" id="vehicle-section">
         <div class="form-group field-reveal">
           <label for="year">Year of Model <span class="req">*</span></label>
-          <select id="year">
+          <select id="year" onchange="animateYear(this)">
             <option value="">Select year…</option>
           </select>
         </div>
 
         <div class="form-group field-reveal" style="transition-delay:0.08s">
           <label for="plate">License Plate <span class="req">*</span></label>
-          <input type="text" id="plate" placeholder="e.g. ABC 123" style="text-transform:uppercase;">
+          <input type="text" id="plate" placeholder="e.g. PXX833"
+                 maxlength="6"
+                 style="text-transform:uppercase;letter-spacing:0.1em;"
+                 oninput="formatPlate(this)">
+          <div id="plate-hint" style="font-size:11px;color:var(--grey);margin-top:3px;display:none;">
+            Format: 3 letters + 3 numbers (e.g. PXX833)
+          </div>
         </div>
 
         <div class="form-group full field-reveal" style="transition-delay:0.16s">
@@ -1262,6 +1290,42 @@
 
   function hideError() {
     document.getElementById('form-error').classList.remove('show');
+  }
+
+  // ── YEAR ANIMATION ─────────────────────────────────────────────────
+  function animateYear(sel) {
+    sel.classList.remove('year-selected');
+    // Force reflow so animation replays on repeated changes
+    void sel.offsetWidth;
+    if (sel.value) sel.classList.add('year-selected');
+  }
+
+  // ── PLATE FORMATTING ───────────────────────────────────────────────
+  function formatPlate(input) {
+    // Strip anything that isn't a letter or digit, uppercase
+    let raw = input.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+
+    // Enforce Cyprus format: first 3 must be letters, next 3 must be digits
+    let result = '';
+    for (let i = 0; i < raw.length && i < 6; i++) {
+      const ch = raw[i];
+      if (i < 3) {
+        // positions 0-2: letters only
+        if (/[A-Z]/.test(ch)) result += ch;
+      } else {
+        // positions 3-5: digits only
+        if (/[0-9]/.test(ch)) result += ch;
+      }
+    }
+
+    input.value = result;
+
+    // Validation feedback
+    const hint = document.getElementById('plate-hint');
+    const valid = /^[A-Z]{3}[0-9]{3}$/.test(result);
+    input.classList.toggle('plate-valid',   result.length === 6 &&  valid);
+    input.classList.toggle('plate-invalid', result.length > 0  && !valid);
+    hint.style.display = (result.length > 0 && !valid) ? 'block' : 'none';
   }
 
   // ── SCROLL ANIMATIONS ──────────────────────────────────────────────

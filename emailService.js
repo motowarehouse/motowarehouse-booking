@@ -1,11 +1,22 @@
 const nodemailer = require('nodemailer');
 
 function createTransporter() {
+  const user = process.env.GMAIL_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD;
+
+  if (!user || !pass) {
+    console.error('[Email] GMAIL_USER or GMAIL_APP_PASSWORD not set in environment variables');
+  }
+
+  // Use explicit SMTP settings — more reliable on cloud hosts like Railway
+  // than the shorthand service:'gmail' which can fail on non-standard IPs
   return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_APP_PASSWORD
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,          // SSL on port 465
+    auth: { user, pass },
+    tls: {
+      rejectUnauthorized: true
     }
   });
 }
