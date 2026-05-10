@@ -294,13 +294,18 @@
       font-size: 15px;
       font-weight: 400;
       padding: 11px 14px;
-      transition: border-color 0.2s, background 0.2s;
+      transition: border-color 0.25s, background 0.25s, box-shadow 0.25s, transform 0.2s;
       outline: none;
       width: 100%;
     }
 
     input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.2); }
-    input:focus, select:focus, textarea:focus { border-color: var(--blue); background: rgba(0,155,180,0.06); }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--blue);
+      background: rgba(0,155,180,0.06);
+      box-shadow: 0 0 0 3px rgba(0,155,180,0.12);
+      transform: translateY(-1px);
+    }
     textarea { resize: vertical; min-height: 80px; }
 
     select { color: var(--white); }
@@ -343,19 +348,30 @@
     .custom-select-trigger.open .arrow { transform: rotate(180deg); }
 
     .custom-select-panel {
-      display: none;
       position: absolute;
-      top: calc(100% + 4px);
+      top: calc(100% + 6px);
       left: 0; right: 0;
       background: #0d2830;
       border: 1px solid rgba(0,155,180,0.35);
       border-radius: 8px;
       z-index: 200;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.55);
       overflow: hidden;
+      /* closed state */
+      opacity: 0;
+      transform: translateY(-8px) scaleY(0.97);
+      transform-origin: top center;
+      pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+      visibility: hidden;
     }
 
-    .custom-select-panel.open { display: block; }
+    .custom-select-panel.open {
+      opacity: 1;
+      transform: translateY(0) scaleY(1);
+      pointer-events: auto;
+      visibility: visible;
+    }
 
     /* Brand tabs — side by side at top */
     .cs-brand-tabs {
@@ -529,6 +545,33 @@
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── VEHICLE SECTION REVEAL ── */
+    .vehicle-section {
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: max-height 0.55s cubic-bezier(0.4,0,0.2,1),
+                  opacity   0.45s ease 0.08s,
+                  transform 0.45s ease 0.08s;
+    }
+    .vehicle-section.revealed {
+      max-height: 600px;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── FORM FIELD STAGGER ── */
+    .field-reveal {
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .field-reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
 
     /* ── SCROLL ANIMATIONS ── */
     .reveal {
@@ -807,25 +850,28 @@
   <div class="form-card reveal" style="transition-delay:0.1s">
     <div class="form-grid">
 
-      <div class="form-group">
+      <div class="form-group field-reveal">
         <label for="name">Full Name <span class="req">*</span></label>
         <input type="text" id="name" placeholder="e.g. Andreas Papadopoulos" autocomplete="name">
       </div>
 
-      <div class="form-group">
+      <div class="form-group field-reveal" style="transition-delay:0.07s">
         <label for="phone">Phone Number <span class="req">*</span></label>
         <input type="tel" id="phone" placeholder="e.g. 99 123 456" autocomplete="tel">
       </div>
 
-      <div class="form-group full">
+      <div class="form-group full field-reveal" style="transition-delay:0.14s">
         <label for="email">Email Address <span class="req">*</span></label>
         <input type="email" id="email" placeholder="e.g. andreas@email.com" autocomplete="email">
       </div>
 
       <hr class="form-divider">
 
+      <!-- VEHICLE SECTION (animated reveal) -->
+      <div class="vehicle-section" id="vehicle-section">
+
       <!-- CUSTOM MODEL DROPDOWN -->
-      <div class="form-group full">
+      <div class="form-group full field-reveal">
         <label>Vehicle Model <span class="req">*</span></label>
         <div class="custom-select-wrap">
           <div class="custom-select-trigger" id="model-trigger" onclick="toggleModelDropdown()">
@@ -906,24 +952,26 @@
         <input type="hidden" id="brand">
       </div>
 
-      <div class="form-group">
+      <div class="form-group field-reveal" style="transition-delay:0.07s">
         <label for="year">Year of Model <span class="req">*</span></label>
         <select id="year">
           <option value="">Select year…</option>
         </select>
       </div>
 
-      <div class="form-group">
+      <div class="form-group field-reveal" style="transition-delay:0.14s">
         <label for="plate">License Plate <span class="req">*</span></label>
         <input type="text" id="plate" placeholder="e.g. ABC 123" style="text-transform:uppercase;">
       </div>
 
-      <div class="form-group full">
+      <div class="form-group full field-reveal" style="transition-delay:0.21s">
         <label for="km">Current Kilometres <span class="req">*</span></label>
         <input type="number" id="km" placeholder="e.g. 12500" min="0">
       </div>
 
-      <div class="form-group full">
+      </div><!-- end .vehicle-section -->
+
+      <div class="form-group full field-reveal" style="transition-delay:0.28s">
         <label for="notes">Additional Notes <span style="font-weight:300;text-transform:none;letter-spacing:0;font-size:10px;margin-left:4px;">(optional)</span></label>
         <textarea id="notes" placeholder="Any issues you'd like us to check, or anything else we should know…"></textarea>
       </div>
@@ -1049,6 +1097,7 @@
     document.getElementById('model-panel').classList.remove('open');
 
     checkSymNote();
+    revealVehicleSection(); // slide in Year, Plate, KM fields
   }
 
   // Close dropdown on outside click
@@ -1184,7 +1233,7 @@
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         entry.target.classList.add('visible');
-        revealObserver.unobserve(entry.target); // only animate once
+        revealObserver.unobserve(entry.target);
       }
     });
   }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
@@ -1192,6 +1241,22 @@
   document.querySelectorAll('.reveal, .reveal-left, .stagger-children').forEach(el => {
     revealObserver.observe(el);
   });
+
+  // Field-reveal: observe the form card; when it enters view, stagger-reveal its fields
+  const formCardObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        // Animate only non-vehicle-section field-reveals (those are handled by selectModel)
+        const fields = entry.target.querySelectorAll('.field-reveal:not(#vehicle-section .field-reveal)');
+        fields.forEach((el, i) => {
+          setTimeout(() => el.classList.add('visible'), 60 + i * 80);
+        });
+        formCardObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08 });
+
+  document.querySelectorAll('.form-card').forEach(card => formCardObserver.observe(card));
 
   // Trigger hero elements immediately (already in view on load)
   setTimeout(() => {
@@ -1243,38 +1308,104 @@
     });
   }
 
-  // 4. Floating background shapes
+  // 4. Motorcycle-themed floating background SVGs
+  const MOTO_SVGS = {
+    gear: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <path d="M43,2 L57,2 L60,18 C64,19 68,21 71,24 L87,18 L96,30 L84,42
+               C86,46 87,50 87,54 L103,57 L103,71 L87,74 C86,78 84,82 81,85
+               L87,101 L75,110 L63,98 C59,100 55,101 51,101 L48,117 L34,117
+               L31,101 C27,100 23,98 20,95 L4,101 L-5,89 L7,77
+               C5,73 4,69 4,65 L-12,62 L-12,48 L4,45
+               C5,41 7,37 10,34 L4,18 L16,9 L28,21
+               C32,19 36,18 40,17 Z M50,35 A15,15 0 1,0 50,65 A15,15 0 1,0 50,35Z"
+            fill="none" stroke="currentColor" stroke-width="3"/>
+    </svg>`,
+
+    wheel: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="3"/>
+      <circle cx="50" cy="50" r="8"  fill="none" stroke="currentColor" stroke-width="2.5"/>
+      <circle cx="50" cy="50" r="32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 6"/>
+      <line x1="50" y1="4"  x2="50" y2="42" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="50" y1="58" x2="50" y2="96" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="4"  y1="50" x2="42" y2="50" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="58" y1="50" x2="96" y2="50" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="18" y1="18" x2="44" y2="44" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="56" y1="56" x2="82" y2="82" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="82" y1="18" x2="56" y2="44" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="44" y1="56" x2="18" y2="82" stroke="currentColor" stroke-width="1.5"/>
+    </svg>`,
+
+    wrench: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <path d="M72,8 C58,8 47,19 47,33 C47,37 48,40 50,43 L12,81
+               C9,84 9,89 12,92 C15,95 20,95 23,92 L61,54
+               C64,56 68,57 72,57 C86,57 97,46 97,32 C97,28 96,24 94,21
+               L80,35 L70,35 L65,25 L79,11 C77,9 75,8 72,8 Z"
+            fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round"/>
+    </svg>`,
+
+    chain: `<svg viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2"  y="8"  width="28" height="24" rx="12" fill="none" stroke="currentColor" stroke-width="3"/>
+      <rect x="22" y="12" width="20" height="16" rx="4"  fill="none" stroke="currentColor" stroke-width="2"/>
+      <rect x="34" y="8"  width="28" height="24" rx="12" fill="none" stroke="currentColor" stroke-width="3"/>
+      <rect x="54" y="12" width="20" height="16" rx="4"  fill="none" stroke="currentColor" stroke-width="2"/>
+      <rect x="66" y="8"  width="28" height="24" rx="12" fill="none" stroke="currentColor" stroke-width="3"/>
+      <rect x="86" y="12" width="20" height="16" rx="4"  fill="none" stroke="currentColor" stroke-width="2"/>
+      <rect x="98" y="8"  width="20" height="24" rx="10" fill="none" stroke="currentColor" stroke-width="3"/>
+    </svg>`,
+
+    piston: `<svg viewBox="0 0 60 110" xmlns="http://www.w3.org/2000/svg">
+      <rect x="8"  y="2"  width="44" height="50" rx="6" fill="none" stroke="currentColor" stroke-width="3"/>
+      <rect x="2"  y="18" width="4"  height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+      <rect x="54" y="18" width="4"  height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+      <rect x="16" y="52" width="28" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2.5"/>
+      <rect x="22" y="62" width="16" height="44" rx="4" fill="none" stroke="currentColor" stroke-width="2.5"/>
+      <line x1="8"  y1="30" x2="52" y2="30" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 4"/>
+    </svg>`,
+  };
+
   function createShapes() {
     const container = document.getElementById('bg-shapes');
-    const shapes = [
-      { size: 180, top: '12%',  left: '-60px',  color: 'rgba(0,155,180,0.04)',  dur: 14, delay: 0 },
-      { size: 100, top: '35%',  right: '-30px',  color: 'rgba(0,239,209,0.035)', dur: 18, delay: 2 },
-      { size: 240, top: '60%',  left: '-80px',  color: 'rgba(0,155,180,0.025)', dur: 22, delay: 4 },
-      { size:  70, top: '78%',  right: '-20px',  color: 'rgba(0,239,209,0.05)',  dur: 11, delay: 1 },
-      { size: 130, top: '88%',  left: '-40px',  color: 'rgba(0,155,180,0.035)', dur: 17, delay: 6 },
-      { size:  55, top: '20%',  right: '-10px',  color: 'rgba(0,239,209,0.06)',  dur: 9,  delay: 3 },
+
+    const placements = [
+      { type:'wheel',  size:160, top:'8%',   side:'left',  offset:'-55px', color:'rgba(0,155,180,0.07)',  dur:22, delay:0 },
+      { type:'gear',   size:130, top:'30%',  side:'right', offset:'-45px', color:'rgba(0,239,209,0.065)', dur:28, delay:5 },
+      { type:'wrench', size:110, top:'52%',  side:'left',  offset:'-36px', color:'rgba(0,155,180,0.06)',  dur:18, delay:2 },
+      { type:'chain',  size:160, top:'68%',  side:'right', offset:'-60px', color:'rgba(0,239,209,0.055)', dur:32, delay:8 },
+      { type:'piston', size: 90, top:'82%',  side:'left',  offset:'-28px', color:'rgba(0,155,180,0.065)', dur:20, delay:4 },
+      { type:'gear',   size: 80, top:'92%',  side:'right', offset:'-25px', color:'rgba(0,239,209,0.05)',  dur:24, delay:11},
     ];
 
-    shapes.forEach(s => {
-      const el = document.createElement('div');
-      el.className = 'bg-shape';
-      el.style.cssText = `
-        width:${s.size}px;
-        height:${s.size}px;
-        top:${s.top};
-        ${s.left  !== undefined ? 'left:' + s.left  + ';' : ''}
-        ${s.right !== undefined ? 'right:' + s.right + ';' : ''}
-        background:${s.color};
-        animation-duration:${s.dur}s;
-        animation-delay:-${s.delay}s;
+    placements.forEach(p => {
+      const wrap = document.createElement('div');
+      wrap.className = 'bg-shape';
+      wrap.style.cssText = `
+        width:${p.size}px; height:${p.size}px;
+        top:${p.top};
+        ${p.side}:${p.offset};
+        color:${p.color};
+        animation-duration:${p.dur}s;
+        animation-delay:-${p.delay}s;
+        display:flex; align-items:center; justify-content:center;
       `;
-      container.appendChild(el);
-      // Show with a small delay so they don't pop in
-      setTimeout(() => el.classList.add('show'), 500);
+      wrap.innerHTML = MOTO_SVGS[p.type];
+      container.appendChild(wrap);
+      setTimeout(() => wrap.classList.add('show'), 600);
     });
   }
 
   createShapes();
+
+  // 5. Vehicle section reveal — triggered when a model is selected
+  function revealVehicleSection() {
+    const sec = document.getElementById('vehicle-section');
+    if (!sec.classList.contains('revealed')) {
+      sec.classList.add('revealed');
+      // Stagger the field-reveal items inside
+      sec.querySelectorAll('.field-reveal').forEach((el, i) => {
+        setTimeout(() => el.classList.add('visible'), 80 + i * 80);
+      });
+    }
+  }
 
   // Attach scroll listener
   window.addEventListener('scroll', () => {
