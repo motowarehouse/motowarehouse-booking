@@ -1246,6 +1246,7 @@
     if (!name)            return showError('Please enter your full name.');
     if (!phone)           return showError('Please enter your phone number.');
     if (!email)           return showError('Please enter your email address.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError('Please enter a valid email address (e.g. name@email.com).');
     if (!model)           return showError('Please select your vehicle model.');
     if (!year)            return showError('Please select the model year.');
     if (!plate)           return showError('Please enter your license plate number.');
