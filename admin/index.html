@@ -223,6 +223,8 @@
     .booking-card.pending { border-left: 3px solid var(--orange); }
     .booking-card.accepted { border-left: 3px solid var(--green); }
     .booking-card.cancelled { border-left: 3px solid var(--red); opacity: 0.6; }
+    .booking-card.phone { border-left: 3px solid #a78bfa; }
+    .status-phone { background: rgba(167,139,250,0.15); color: #a78bfa; }
 
     .booking-header { padding: 14px 20px; display: flex; align-items: center; gap: 14px; cursor: pointer; }
     .booking-ref { font-size: 13px; font-weight: 700; color: var(--blue); min-width: 80px; }
@@ -643,6 +645,7 @@
   const SVC = { 'oil-change':'Oil Change', 'small-service':'Small Service', 'big-service':'Big Service' };
   const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   let allBookings = [];
+  let allBlocks = [];
   let currentView = 'all';
   let expandedId = null;
   let currentHours = null;
@@ -692,9 +695,12 @@
   }
 
   async function loadBookings() {
-    const res = await fetch('/api/admin/bookings');
-    if (!res.ok) return;
-    allBookings = await res.json();
+    const [bRes, blRes] = await Promise.all([
+      fetch('/api/admin/bookings'),
+      fetch('/api/admin/blocks')
+    ]);
+    if (bRes.ok)  allBookings = await bRes.json();
+    if (blRes.ok) allBlocks   = await blRes.json();
     updateStats();
     if (['all','pending','accepted','cancelled','today'].includes(currentView)) renderView();
   }
@@ -707,8 +713,8 @@
     document.getElementById('stat-pending').textContent   = pending;
     document.getElementById('stat-accepted').textContent  = accepted;
     document.getElementById('stat-cancelled').textContent = cancelled;
-    document.getElementById('stat-total').textContent     = allBookings.length;
-    document.getElementById('badge-all').textContent      = allBookings.length;
+    document.getElementById('stat-total').textContent     = allBookings.length + allBlocks.length;
+    document.getElementById('badge-all').textContent      = allBookings.length + allBlocks.length;
     document.getElementById('badge-pending').textContent  = pending;
   }
 
@@ -762,18 +768,68 @@
     let filtered = allBookings;
     if (currentView !== 'all') filtered = allBookings.filter(b => b.status === currentView);
 
-    filtered = [...filtered].sort((a, b) => {
+    // Build combined list: bookings + blocks (only in 'all' view)
+    let items = filtered.map(b => ({ ...b, _type: 'booking', _sortKey: b.date + 'T' + b.time }));
+
+    if (currentView === 'all') {
+      const blockItems = allBlocks.map(bl => ({
+        ...bl, _type: 'block', _sortKey: bl.date + 'T' + bl.startTime
+      }));
+      items = [...items, ...blockItems];
+    }
+
+    // Sort: pending first, then by date/time
+    items.sort((a, b) => {
       if (a.status === 'pending' && b.status !== 'pending') return -1;
       if (b.status === 'pending' && a.status !== 'pending') return 1;
-      return new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time);
+      return a._sortKey.localeCompare(b._sortKey);
     });
 
     const list = document.getElementById('bookings-list');
-    if (filtered.length === 0) {
+    if (items.length === 0) {
       list.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>No ${currentView === 'all' ? '' : currentView} bookings.</p></div>`;
       return;
     }
-    list.innerHTML = filtered.map(b => bookingCard(b)).join('');
+    list.innerHTML = items.map(item => item._type === 'block' ? blockCard(item) : bookingCard(item)).join('');
+  }
+
+  function blockCard(bl) {
+    const isExpanded = expandedId === 'block-' + bl.id;
+    return `
+      <div class="booking-card phone" id="card-block-${bl.id}">
+        <div class="booking-header" onclick="toggleExpandBlock(${bl.id})">
+          <div class="booking-ref" style="color:#a78bfa;">📞 Phone</div>
+          <div class="booking-name-col">
+            <div class="booking-name">${bl.reason || 'Manual Block'}</div>
+            <div class="booking-phone" style="color:#a78bfa;">${bl.startTime} – ${bl.endTime}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+            <span class="status-badge status-phone">Via Phone</span>
+          </div>
+          <div class="booking-datetime">${bl.date}<br>${bl.startTime}–${bl.endTime}</div>
+          <div class="quick-actions" onclick="event.stopPropagation()">
+            <button class="btn-quick btn-quick-cancel" title="Remove block" onclick="deleteBlockFromList(${bl.id})">✕</button>
+          </div>
+        </div>
+        <div class="booking-detail ${isExpanded ? 'open' : ''}" id="detail-block-${bl.id}">
+          <div class="detail-grid">
+            <div class="detail-item"><label>Date</label><span>${formatDate(bl.date)}</span></div>
+            <div class="detail-item"><label>Time Range</label><span>${bl.startTime} – ${bl.endTime}</span></div>
+            <div class="detail-item"><label>Added</label><span>${new Date(bl.createdAt).toLocaleString('en-GB')}</span></div>
+          </div>
+          ${bl.reason ? `<div class="detail-notes">📝 ${bl.reason}</div>` : ''}
+          <div class="action-row">
+            <button class="btn-cancel-booking" onclick="deleteBlockFromList(${bl.id})">✕ Remove Block</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function toggleExpandBlock(id) {
+    const key = 'block-' + id;
+    expandedId = expandedId === key ? null : key;
+    renderBookings();
   }
 
   function renderToday() {
@@ -962,6 +1018,7 @@
       document.getElementById('block-start').value = '';
       document.getElementById('block-end').value = '';
       document.getElementById('block-reason').value = '';
+      await loadBookings();
       loadBlocks();
     } else {
       showToast('Error: ' + (data.error || 'Unknown error'), 'error');
@@ -973,7 +1030,20 @@
     const res = await fetch(`/api/admin/blocks/${id}`, { method: 'DELETE' });
     if (res.ok) {
       showToast('Block removed.', 'success');
+      await loadBookings();
       loadBlocks();
+    } else {
+      showToast('Error removing block.', 'error');
+    }
+  }
+
+  async function deleteBlockFromList(id) {
+    if (!confirm('Remove this phone booking block? Those time slots will become available for online booking again.')) return;
+    const res = await fetch(`/api/admin/blocks/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      showToast('Block removed.', 'success');
+      await loadBookings();
+      if (currentView === 'schedule') loadBlocks();
     } else {
       showToast('Error removing block.', 'error');
     }
