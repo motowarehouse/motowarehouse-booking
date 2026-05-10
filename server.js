@@ -38,23 +38,15 @@ app.get('/api/slots', (req, res) => {
   const d = new Date(date + 'T12:00:00');
   const day = d.getDay(); // 0=Sun, 6=Sat
 
-  // Define working hours per day
-  let slots = [];
-  if (day === 0) { // Sunday - closed
+  const hours = db.getHours();
+  const dayConfig = hours[day];
+
+  if (!dayConfig || dayConfig.closed) {
     return res.json({ slots: [], closed: true });
   }
 
-  // Generate half-hourly slots based on opening hours
-  let ranges = [];
-  if (day === 3) { // Wednesday - morning only
-    ranges = [['08:30', '12:30']];
-  } else if (day === 6) { // Saturday
-    ranges = [['09:00', '12:30']];
-  } else { // Mon Tue Thu Fri
-    ranges = [['08:30', '12:30'], ['14:00', '17:00']];
-  }
-
-  for (const [start, end] of ranges) {
+  const slots = [];
+  for (const [start, end] of dayConfig.ranges) {
     let [sh, sm] = start.split(':').map(Number);
     const [eh, em] = end.split(':').map(Number);
     while (sh * 60 + sm < eh * 60 + em) {
@@ -110,7 +102,6 @@ app.post('/api/admin/login', async (req, res) => {
   const adminHash = process.env.ADMIN_PASSWORD_HASH;
 
   if (!adminHash) {
-    // First-time setup: any password works, then hash is shown in console
     console.log('\n⚠️  ADMIN_PASSWORD_HASH not set. Run: node hash-password.js <your-password>\n');
     return res.status(401).json({ error: 'Admin password not configured. See server console.' });
   }
@@ -144,7 +135,6 @@ app.post('/api/admin/bookings/:id/accept', requireAdmin, async (req, res) => {
   const booking = db.updateBookingStatus(req.params.id, 'accepted');
   if (!booking) return res.status(404).json({ error: 'Booking not found' });
 
-  // Send notifications
   let emailError = null;
   try {
     await emailService.sendConfirmationToCustomer(booking);
@@ -184,7 +174,53 @@ app.post('/api/admin/bookings/:id/cancel', requireAdmin, async (req, res) => {
   res.json({ success: true, booking });
 });
 
-// Test email (admin only — use to verify Resend is working)
+// ── Manual Blocks ─────────────────────────────────────────────────────────────
+
+// Get all blocks
+app.get('/api/admin/blocks', requireAdmin, (req, res) => {
+  const blocks = db.getAllBlocks().sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
+  res.json(blocks);
+});
+
+// Create a block
+app.post('/api/admin/blocks', requireAdmin, (req, res) => {
+  const { date, startTime, endTime, reason } = req.body;
+  if (!date || !startTime || !endTime) {
+    return res.status(400).json({ error: 'date, startTime, and endTime are required.' });
+  }
+  // Validate start < end
+  const [sh, sm] = startTime.split(':').map(Number);
+  const [eh, em] = endTime.split(':').map(Number);
+  if (sh * 60 + sm >= eh * 60 + em) {
+    return res.status(400).json({ error: 'End time must be after start time.' });
+  }
+  const block = db.createBlock({ date, startTime, endTime, reason });
+  res.json({ success: true, block });
+});
+
+// Delete a block
+app.delete('/api/admin/blocks/:id', requireAdmin, (req, res) => {
+  const ok = db.deleteBlock(req.params.id);
+  if (!ok) return res.status(404).json({ error: 'Block not found.' });
+  res.json({ success: true });
+});
+
+// ── Opening Hours ─────────────────────────────────────────────────────────────
+
+// Get hours
+app.get('/api/admin/hours', requireAdmin, (req, res) => {
+  res.json(db.getHours());
+});
+
+// Save hours
+app.post('/api/admin/hours', requireAdmin, (req, res) => {
+  const { hours } = req.body;
+  if (!hours) return res.status(400).json({ error: 'hours object required.' });
+  db.saveHours(hours);
+  res.json({ success: true });
+});
+
+// Test email (admin only)
 app.post('/api/admin/test-email', requireAdmin, async (req, res) => {
   const to = process.env.ADMIN_EMAIL || process.env.GMAIL_USER;
   console.log('[Email] Test requested via Resend. API key set:', !!process.env.RESEND_API_KEY, '| To:', to);

@@ -55,20 +55,8 @@
       text-align: center;
     }
 
-    .login-logo {
-      font-size: 13px;
-      font-weight: 500;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--blue);
-      margin-bottom: 8px;
-    }
-
-    .login-title {
-      font-size: 24px;
-      font-weight: 900;
-      margin-bottom: 32px;
-    }
+    .login-logo { font-size: 13px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--blue); margin-bottom: 8px; }
+    .login-title { font-size: 24px; font-weight: 900; margin-bottom: 32px; }
 
     .login-input {
       background: rgba(255,255,255,0.05);
@@ -83,7 +71,6 @@
       outline: none;
       transition: border-color 0.2s;
     }
-
     .login-input:focus { border-color: var(--blue); }
 
     .login-btn {
@@ -101,7 +88,6 @@
       width: 100%;
       transition: background 0.2s;
     }
-
     .login-btn:hover { background: var(--blue-dark); }
 
     .login-error {
@@ -118,11 +104,7 @@
     /* MAIN APP */
     .app { display: none; }
 
-    /* SIDEBAR + LAYOUT */
-    .layout {
-      display: flex;
-      min-height: 100vh;
-    }
+    .layout { display: flex; min-height: 100vh; }
 
     .sidebar {
       background: var(--dark2);
@@ -137,28 +119,20 @@
       overflow-y: auto;
     }
 
-    .sidebar-logo {
-      padding: 24px 20px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
+    .sidebar-logo { padding: 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .sidebar-brand { font-size: 11px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--blue); }
+    .sidebar-sub { font-size: 13px; color: var(--grey); margin-top: 2px; }
 
-    .sidebar-brand {
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.18em;
+    .sidebar-nav { padding: 16px 0; flex: 1; }
+
+    .nav-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: var(--blue);
-    }
-
-    .sidebar-sub {
-      font-size: 13px;
       color: var(--grey);
-      margin-top: 2px;
-    }
-
-    .sidebar-nav {
-      padding: 16px 0;
-      flex: 1;
+      padding: 16px 20px 6px;
+      opacity: 0.6;
     }
 
     .nav-item {
@@ -173,7 +147,6 @@
       border-left: 3px solid transparent;
       transition: all 0.15s;
     }
-
     .nav-item:hover { color: var(--white); background: rgba(255,255,255,0.03); }
     .nav-item.active { color: var(--white); border-left-color: var(--blue); background: rgba(0,155,180,0.08); }
 
@@ -187,10 +160,7 @@
       padding: 2px 7px;
     }
 
-    .sidebar-footer {
-      padding: 16px 20px;
-      border-top: 1px solid rgba(255,255,255,0.06);
-    }
+    .sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.06); }
 
     .logout-btn {
       background: none;
@@ -204,14 +174,9 @@
       width: 100%;
       transition: all 0.2s;
     }
-
     .logout-btn:hover { border-color: var(--red); color: var(--red); }
 
-    /* MAIN CONTENT */
-    .main {
-      flex: 1;
-      overflow-x: hidden;
-    }
+    .main { flex: 1; overflow-x: hidden; }
 
     .topbar {
       background: var(--dark2);
@@ -221,7 +186,6 @@
       align-items: center;
       justify-content: space-between;
     }
-
     .topbar-title { font-size: 18px; font-weight: 700; }
     .topbar-date { font-size: 13px; color: var(--grey); }
 
@@ -234,52 +198,16 @@
       gap: 16px;
       margin-bottom: 28px;
     }
-
     @media (max-width: 900px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 500px) { .stats-grid { grid-template-columns: 1fr; } }
 
-    .stat-card {
-      background: var(--dark2);
-      border: 1px solid rgba(0,155,180,0.12);
-      border-radius: 8px;
-      padding: 20px;
-    }
-
+    .stat-card { background: var(--dark2); border: 1px solid rgba(0,155,180,0.12); border-radius: 8px; padding: 20px; }
     .stat-label { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--grey); margin-bottom: 8px; }
     .stat-value { font-size: 32px; font-weight: 900; line-height: 1; }
     .stat-value.pending { color: var(--orange); }
     .stat-value.accepted { color: var(--green); }
     .stat-value.cancelled { color: var(--red); }
     .stat-value.total { color: var(--blue); }
-
-    /* FILTER TABS */
-    .filter-tabs {
-      display: flex;
-      gap: 4px;
-      margin-bottom: 20px;
-      background: var(--dark2);
-      border-radius: 8px;
-      padding: 4px;
-      width: fit-content;
-    }
-
-    .filter-tab {
-      background: none;
-      border: none;
-      border-radius: 6px;
-      color: var(--grey);
-      cursor: pointer;
-      font-family: 'SupremeLL', Arial, sans-serif;
-      font-size: 13px;
-      font-weight: 500;
-      padding: 7px 16px;
-      transition: all 0.15s;
-    }
-
-    .filter-tab.active {
-      background: var(--blue);
-      color: white;
-    }
 
     /* BOOKING CARDS */
     .bookings-list { display: flex; flex-direction: column; gap: 12px; }
@@ -291,203 +219,251 @@
       overflow: hidden;
       transition: border-color 0.2s;
     }
-
     .booking-card:hover { border-color: rgba(0,155,180,0.35); }
     .booking-card.pending { border-left: 3px solid var(--orange); }
     .booking-card.accepted { border-left: 3px solid var(--green); }
     .booking-card.cancelled { border-left: 3px solid var(--red); opacity: 0.6; }
 
-    .booking-header {
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      cursor: pointer;
-    }
+    .booking-header { padding: 16px 20px; display: flex; align-items: center; gap: 16px; cursor: pointer; }
+    .booking-ref { font-size: 13px; font-weight: 700; color: var(--blue); min-width: 80px; }
+    .booking-name { font-size: 15px; font-weight: 500; flex: 1; }
+    .booking-datetime { font-size: 13px; color: var(--grey); min-width: 140px; text-align: right; }
 
-    .booking-ref {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--blue);
-      min-width: 80px;
-    }
-
-    .booking-name {
-      font-size: 15px;
-      font-weight: 500;
-      flex: 1;
-    }
-
-    .booking-datetime {
-      font-size: 13px;
-      color: var(--grey);
-      min-width: 140px;
-      text-align: right;
-    }
-
-    .booking-service {
-      font-size: 12px;
-      padding: 3px 10px;
-      border-radius: 12px;
-      font-weight: 500;
-    }
-
+    .booking-service { font-size: 12px; padding: 3px 10px; border-radius: 12px; font-weight: 500; }
     .service-oil-change { background: rgba(0,155,180,0.15); color: var(--blue); }
     .service-small-service { background: rgba(0,200,150,0.12); color: var(--green); }
     .service-big-service { background: rgba(145,192,29,0.12); color: #91C01D; }
 
-    .status-badge {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      padding: 3px 8px;
-      border-radius: 4px;
-    }
-
+    .status-badge { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; }
     .status-pending { background: rgba(245,158,11,0.15); color: var(--orange); }
     .status-accepted { background: rgba(0,200,150,0.15); color: var(--green); }
     .status-cancelled { background: rgba(229,0,82,0.12); color: var(--red); }
 
-    .booking-detail {
-      border-top: 1px solid rgba(255,255,255,0.06);
-      display: none;
-      padding: 16px 20px;
-    }
-
+    .booking-detail { border-top: 1px solid rgba(255,255,255,0.06); display: none; padding: 16px 20px; }
     .booking-detail.open { display: block; }
 
-    .detail-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-
+    .detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
     @media (max-width: 600px) { .detail-grid { grid-template-columns: 1fr 1fr; } }
 
-    .detail-item label {
-      font-size: 10px;
-      font-weight: 500;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--grey);
-      display: block;
-      margin-bottom: 3px;
-    }
+    .detail-item label { font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--grey); display: block; margin-bottom: 3px; }
+    .detail-item span { font-size: 14px; font-weight: 400; }
 
-    .detail-item span {
-      font-size: 14px;
-      font-weight: 400;
-    }
-
-    .detail-notes {
-      background: rgba(255,255,255,0.03);
-      border-radius: 6px;
-      color: var(--grey);
-      font-size: 13px;
-      margin-bottom: 16px;
-      padding: 10px 14px;
-    }
-
+    .detail-notes { background: rgba(255,255,255,0.03); border-radius: 6px; color: var(--grey); font-size: 13px; margin-bottom: 16px; padding: 10px 14px; }
     .action-row { display: flex; gap: 10px; }
 
     .btn-accept {
-      background: var(--green);
-      border: none;
-      border-radius: 6px;
-      color: #0a1a1f;
-      cursor: pointer;
-      font-family: 'SupremeLL', Arial, sans-serif;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      padding: 10px 20px;
-      text-transform: uppercase;
-      transition: opacity 0.2s;
+      background: var(--green); border: none; border-radius: 6px; color: #0a1a1f; cursor: pointer;
+      font-family: 'SupremeLL', Arial, sans-serif; font-size: 13px; font-weight: 700;
+      letter-spacing: 0.06em; padding: 10px 20px; text-transform: uppercase; transition: opacity 0.2s;
     }
-
     .btn-cancel-booking {
-      background: none;
-      border: 1px solid rgba(229,0,82,0.4);
-      border-radius: 6px;
-      color: var(--red);
-      cursor: pointer;
-      font-family: 'SupremeLL', Arial, sans-serif;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      padding: 10px 20px;
-      text-transform: uppercase;
-      transition: all 0.2s;
+      background: none; border: 1px solid rgba(229,0,82,0.4); border-radius: 6px; color: var(--red); cursor: pointer;
+      font-family: 'SupremeLL', Arial, sans-serif; font-size: 13px; font-weight: 700;
+      letter-spacing: 0.06em; padding: 10px 20px; text-transform: uppercase; transition: all 0.2s;
     }
-
     .btn-cancel-booking:hover { background: rgba(229,0,82,0.1); }
     .btn-accept:hover { opacity: 0.85; }
-
     .btn-accept:disabled, .btn-cancel-booking:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    /* EMPTY STATE */
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--grey);
-    }
-
-    .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
-    .empty-state p { font-size: 14px; }
-
     /* TODAY VIEW */
-    .today-view { display: none; }
-
     .today-slot {
-      background: var(--dark2);
-      border: 1px solid rgba(0,155,180,0.12);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 10px;
-      padding: 14px 18px;
+      background: var(--dark2); border: 1px solid rgba(0,155,180,0.12); border-radius: 8px;
+      display: flex; align-items: center; gap: 16px; margin-bottom: 10px; padding: 14px 18px;
     }
-
-    .today-time {
-      font-size: 18px;
-      font-weight: 900;
-      color: var(--blue);
-      min-width: 60px;
-    }
-
+    .today-time { font-size: 18px; font-weight: 900; color: var(--blue); min-width: 60px; }
     .today-info { flex: 1; }
     .today-name { font-size: 15px; font-weight: 500; }
     .today-vehicle { font-size: 12px; color: var(--grey); margin-top: 2px; }
 
+    /* EMPTY STATE */
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--grey); }
+    .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; }
+
+    /* ── SCHEDULE / BLOCK VIEW ─────────────────────────────────────────── */
+    .panel-card {
+      background: var(--dark2);
+      border: 1px solid rgba(0,155,180,0.12);
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .panel-card h3 {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 18px;
+    }
+
+    .block-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 2fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+    @media (max-width: 800px) { .block-form { grid-template-columns: 1fr 1fr; } }
+
+    .form-group label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--grey);
+      margin-bottom: 6px;
+    }
+
+    .admin-input {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      color: var(--white);
+      font-family: 'SupremeLL', Arial, sans-serif;
+      font-size: 14px;
+      padding: 10px 12px;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .admin-input:focus { border-color: var(--blue); }
+
+    .btn-primary {
+      background: var(--blue);
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      font-family: 'SupremeLL', Arial, sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      padding: 10px 20px;
+      text-transform: uppercase;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    .btn-primary:hover { background: var(--blue-dark); }
+
+    .blocks-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .block-item {
+      background: rgba(0,155,180,0.06);
+      border: 1px solid rgba(0,155,180,0.15);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 16px;
+    }
+    .block-item-date { font-size: 14px; font-weight: 700; color: var(--blue); min-width: 110px; }
+    .block-item-time { font-size: 14px; font-weight: 500; min-width: 110px; }
+    .block-item-reason { font-size: 13px; color: var(--grey); flex: 1; }
+    .btn-delete {
+      background: none;
+      border: 1px solid rgba(229,0,82,0.3);
+      border-radius: 6px;
+      color: var(--red);
+      cursor: pointer;
+      font-size: 12px;
+      padding: 6px 12px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn-delete:hover { background: rgba(229,0,82,0.1); }
+
+    /* ── HOURS VIEW ────────────────────────────────────────────────────── */
+    .hours-table { width: 100%; border-collapse: collapse; }
+    .hours-table th {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--grey);
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .hours-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+    .hours-table tr:last-child td { border-bottom: none; }
+
+    .day-name { font-size: 14px; font-weight: 500; min-width: 100px; }
+
+    .toggle-closed {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--grey);
+      user-select: none;
+    }
+    .toggle-closed input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--blue); cursor: pointer; }
+
+    .range-inputs { display: flex; align-items: center; gap: 8px; }
+    .range-inputs span { font-size: 13px; color: var(--grey); }
+    .time-input {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      color: var(--white);
+      font-family: 'SupremeLL', Arial, sans-serif;
+      font-size: 14px;
+      padding: 7px 10px;
+      width: 90px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .time-input:focus { border-color: var(--blue); }
+    .time-input:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .add-range-btn {
+      background: none;
+      border: 1px dashed rgba(0,155,180,0.4);
+      border-radius: 6px;
+      color: var(--blue);
+      cursor: pointer;
+      font-size: 12px;
+      padding: 6px 12px;
+      transition: all 0.2s;
+    }
+    .add-range-btn:hover { background: rgba(0,155,180,0.08); }
+    .add-range-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .remove-range-btn {
+      background: none;
+      border: none;
+      color: var(--red);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 4px;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+    .remove-range-btn:hover { opacity: 1; }
+
+    .hours-save-row { margin-top: 20px; display: flex; justify-content: flex-end; gap: 12px; align-items: center; }
+    .hours-saved-msg { font-size: 13px; color: var(--green); display: none; }
+
     @media print {
-      .sidebar, .topbar, .filter-tabs, .action-row, .logout-btn { display: none !important; }
+      .sidebar, .topbar, .action-row, .logout-btn { display: none !important; }
       .booking-detail { display: block !important; }
       body { background: white; color: black; }
     }
 
-    /* Accent bar */
     .accent-bar { height: 3px; background: linear-gradient(90deg, var(--blue) 0%, var(--teal) 100%); }
 
-    /* Spinner */
     .spinner { display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,0.3); border-top-color:white; border-radius:50%; animation:spin 0.6s linear infinite; vertical-align:middle; margin-right:6px; }
     @keyframes spin { to { transform:rotate(360deg); } }
 
     .toast {
-      position: fixed;
-      bottom: 24px; right: 24px;
-      background: var(--dark3);
-      border: 1px solid rgba(0,155,180,0.3);
-      border-radius: 8px;
-      color: white;
-      font-size: 14px;
-      padding: 14px 20px;
-      z-index: 999;
-      transform: translateY(80px);
-      opacity: 0;
-      transition: all 0.3s;
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--dark3); border: 1px solid rgba(0,155,180,0.3);
+      border-radius: 8px; color: white; font-size: 14px;
+      padding: 14px 20px; z-index: 999;
+      transform: translateY(80px); opacity: 0; transition: all 0.3s;
     }
     .toast.show { transform: translateY(0); opacity: 1; }
     .toast.success { border-color: rgba(0,200,150,0.5); }
@@ -520,6 +496,7 @@
         <div class="sidebar-sub">Service Bookings</div>
       </div>
       <nav class="sidebar-nav">
+        <div class="nav-section-label">Bookings</div>
         <div class="nav-item active" id="nav-all" onclick="setView('all')">
           <span>📋</span> All Bookings
           <span class="nav-badge" id="badge-all">0</span>
@@ -537,6 +514,13 @@
         <div class="nav-item" id="nav-today" onclick="setView('today')">
           <span>📅</span> Today's Schedule
         </div>
+        <div class="nav-section-label">Management</div>
+        <div class="nav-item" id="nav-schedule" onclick="setView('schedule')">
+          <span>🚫</span> Block Time
+        </div>
+        <div class="nav-item" id="nav-hours" onclick="setView('hours')">
+          <span>🕐</span> Opening Hours
+        </div>
       </nav>
       <div class="sidebar-footer">
         <button class="logout-btn" onclick="testEmail()" style="margin-bottom:8px;border-color:rgba(0,155,180,0.3);color:var(--blue);">📧 Test Email</button>
@@ -552,7 +536,7 @@
       </div>
       <div class="content">
 
-        <!-- Stats -->
+        <!-- Stats (hidden on schedule/hours) -->
         <div class="stats-grid" id="stats-grid">
           <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value pending" id="stat-pending">–</div></div>
           <div class="stat-card"><div class="stat-label">Accepted</div><div class="stat-value accepted" id="stat-accepted">–</div></div>
@@ -566,7 +550,69 @@
         </div>
 
         <!-- Today view -->
-        <div class="today-view" id="today-view"></div>
+        <div id="today-view" style="display:none;"></div>
+
+        <!-- ── SCHEDULE / BLOCK VIEW ───────────────────────────────────── -->
+        <div id="schedule-view" style="display:none;">
+
+          <div class="panel-card">
+            <h3>🚫 Block Time Slot</h3>
+            <p style="font-size:13px;color:var(--grey);margin-bottom:18px;">
+              Use this to block off time for phone bookings, walk-ins, long jobs, or any reason. Blocked slots will not be available for online booking.
+            </p>
+            <div class="block-form">
+              <div class="form-group">
+                <label>Date</label>
+                <input type="date" class="admin-input" id="block-date">
+              </div>
+              <div class="form-group">
+                <label>From</label>
+                <input type="time" class="admin-input" id="block-start" step="1800">
+              </div>
+              <div class="form-group">
+                <label>To</label>
+                <input type="time" class="admin-input" id="block-end" step="1800">
+              </div>
+              <div class="form-group">
+                <label>Reason (optional)</label>
+                <input type="text" class="admin-input" id="block-reason" placeholder="e.g. Phone booking – Michalis, 4hr engine job">
+              </div>
+              <button class="btn-primary" onclick="createBlock()">Block</button>
+            </div>
+          </div>
+
+          <div class="panel-card">
+            <h3>📋 Active Blocks</h3>
+            <div class="blocks-list" id="blocks-list">
+              <div class="empty-state"><div class="icon">✅</div><p>No blocks — all slots are open.</p></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ── HOURS VIEW ──────────────────────────────────────────────── -->
+        <div id="hours-view" style="display:none;">
+          <div class="panel-card">
+            <h3>🕐 Opening Hours</h3>
+            <p style="font-size:13px;color:var(--grey);margin-bottom:20px;">
+              Set the days and times customers can book online. Changes take effect immediately.
+            </p>
+            <table class="hours-table" id="hours-table">
+              <thead>
+                <tr>
+                  <th>Day</th>
+                  <th>Closed</th>
+                  <th>Time Ranges</th>
+                </tr>
+              </thead>
+              <tbody id="hours-tbody"></tbody>
+            </table>
+            <div class="hours-save-row">
+              <span class="hours-saved-msg" id="hours-saved-msg">✅ Saved!</span>
+              <button class="btn-primary" onclick="saveHours()">Save Hours</button>
+            </div>
+          </div>
+        </div>
 
       </div>
     </div>
@@ -577,23 +623,23 @@
 
 <script>
   const SVC = { 'oil-change':'Oil Change', 'small-service':'Small Service', 'big-service':'Big Service' };
+  const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   let allBookings = [];
   let currentView = 'all';
   let expandedId = null;
+  let currentHours = null;
 
-  // ── AUTH ────────────────────────────────────────────────────────────
+  // ── AUTH ──────────────────────────────────────────────────────────────
   async function login() {
     const pw = document.getElementById('password-input').value;
     const errEl = document.getElementById('login-error');
     errEl.style.display = 'none';
-
     const res = await fetch('/api/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: pw })
     });
     const data = await res.json();
-
     if (res.ok) {
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('app').style.display = 'block';
@@ -618,11 +664,13 @@
     }
   }
 
-  // ── INIT ─────────────────────────────────────────────────────────────
+  // ── INIT ──────────────────────────────────────────────────────────────
   function initApp() {
     document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    // Set default date for block form to today
+    document.getElementById('block-date').value = new Date().toISOString().split('T')[0];
     loadBookings();
-    setInterval(loadBookings, 30000); // auto-refresh every 30s
+    setInterval(loadBookings, 30000);
   }
 
   async function loadBookings() {
@@ -630,10 +678,10 @@
     if (!res.ok) return;
     allBookings = await res.json();
     updateStats();
-    renderView();
+    if (['all','pending','accepted','cancelled','today'].includes(currentView)) renderView();
   }
 
-  // ── STATS ─────────────────────────────────────────────────────────────
+  // ── STATS ──────────────────────────────────────────────────────────────
   function updateStats() {
     const pending   = allBookings.filter(b => b.status === 'pending').length;
     const accepted  = allBookings.filter(b => b.status === 'accepted').length;
@@ -647,37 +695,55 @@
   }
 
   // ── VIEWS ──────────────────────────────────────────────────────────────
-  const VIEW_TITLES = { all:'All Bookings', pending:'Pending', accepted:'Accepted', cancelled:'Cancelled', today:"Today's Schedule" };
+  const VIEW_TITLES = {
+    all:'All Bookings', pending:'Pending', accepted:'Accepted',
+    cancelled:'Cancelled', today:"Today's Schedule",
+    schedule:'Block Time', hours:'Opening Hours'
+  };
 
   function setView(view) {
     currentView = view;
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    document.getElementById('nav-' + view).classList.add('active');
-    document.getElementById('topbar-title').textContent = VIEW_TITLES[view];
+    const navEl = document.getElementById('nav-' + view);
+    if (navEl) navEl.classList.add('active');
+    document.getElementById('topbar-title').textContent = VIEW_TITLES[view] || view;
     renderView();
   }
 
   function renderView() {
-    const bookingView = document.getElementById('bookings-view');
-    const todayView   = document.getElementById('today-view');
-    const statsGrid   = document.getElementById('stats-grid');
+    const bookingView  = document.getElementById('bookings-view');
+    const todayView    = document.getElementById('today-view');
+    const statsGrid    = document.getElementById('stats-grid');
+    const scheduleView = document.getElementById('schedule-view');
+    const hoursView    = document.getElementById('hours-view');
+
+    // Hide all
+    bookingView.style.display  = 'none';
+    todayView.style.display    = 'none';
+    scheduleView.style.display = 'none';
+    hoursView.style.display    = 'none';
+    statsGrid.style.display    = 'none';
 
     if (currentView === 'today') {
-      bookingView.style.display = 'none';
       todayView.style.display = 'block';
-      statsGrid.style.display = 'none';
       renderToday();
-      return;
+    } else if (currentView === 'schedule') {
+      scheduleView.style.display = 'block';
+      loadBlocks();
+    } else if (currentView === 'hours') {
+      hoursView.style.display = 'block';
+      loadHours();
+    } else {
+      bookingView.style.display = 'block';
+      statsGrid.style.display   = 'grid';
+      renderBookings();
     }
+  }
 
-    bookingView.style.display = 'block';
-    todayView.style.display = 'none';
-    statsGrid.style.display = 'grid';
-
+  function renderBookings() {
     let filtered = allBookings;
     if (currentView !== 'all') filtered = allBookings.filter(b => b.status === currentView);
 
-    // Sort: pending first, then by date
     filtered = [...filtered].sort((a, b) => {
       if (a.status === 'pending' && b.status !== 'pending') return -1;
       if (b.status === 'pending' && a.status !== 'pending') return 1;
@@ -689,7 +755,6 @@
       list.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>No ${currentView === 'all' ? '' : currentView} bookings.</p></div>`;
       return;
     }
-
     list.innerHTML = filtered.map(b => bookingCard(b)).join('');
   }
 
@@ -704,7 +769,6 @@
       el.innerHTML = `<div class="empty-state"><div class="icon">🏖️</div><p>No accepted appointments for today.</p></div>`;
       return;
     }
-
     el.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
         <div style="font-size:16px;font-weight:700;">${todayBookings.length} appointment${todayBookings.length>1?'s':''} today</div>
@@ -726,7 +790,6 @@
   function bookingCard(b) {
     const svcClass = 'service-' + b.serviceType;
     const isExpanded = expandedId === b.id;
-
     const actions = b.status === 'pending' ? `
       <div class="action-row">
         <button class="btn-accept" onclick="acceptBooking(${b.id}, event)">✓ Accept & Confirm</button>
@@ -764,20 +827,18 @@
 
   function toggleExpand(id) {
     expandedId = expandedId === id ? null : id;
-    renderView();
+    renderBookings();
   }
 
-  // ── ACTIONS ────────────────────────────────────────────────────────────
+  // ── BOOKING ACTIONS ────────────────────────────────────────────────────
   async function acceptBooking(id, e) {
     e.stopPropagation();
     if (!confirm('Accept this booking and send confirmation to the customer?')) return;
     const btn = e.target;
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span>Sending…';
-
     const res = await fetch(`/api/admin/bookings/${id}/accept`, { method: 'POST' });
     const data = await res.json();
-
     if (res.ok) {
       showToast('✅ Booking accepted – confirmation sent!', 'success');
       await loadBookings();
@@ -793,10 +854,8 @@
     if (!confirm('Cancel this booking? The customer will be notified and asked to call to reschedule.')) return;
     const btn = e.target;
     btn.disabled = true;
-
     const res = await fetch(`/api/admin/bookings/${id}/cancel`, { method: 'POST' });
     const data = await res.json();
-
     if (res.ok) {
       showToast('Booking cancelled – customer notified.', 'success');
       await loadBookings();
@@ -804,6 +863,168 @@
       showToast('Error: ' + (data.error || 'Unknown error'), 'error');
       btn.disabled = false;
     }
+  }
+
+  // ── BLOCK TIME ─────────────────────────────────────────────────────────
+  async function loadBlocks() {
+    const res = await fetch('/api/admin/blocks');
+    if (!res.ok) return;
+    const blocks = await res.json();
+    const list = document.getElementById('blocks-list');
+
+    // Only show future/today blocks
+    const todayStr = new Date().toISOString().split('T')[0];
+    const upcoming = blocks.filter(bl => bl.date >= todayStr);
+
+    if (upcoming.length === 0) {
+      list.innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>No blocks — all slots are open.</p></div>`;
+      return;
+    }
+
+    list.innerHTML = upcoming.map(bl => `
+      <div class="block-item">
+        <div class="block-item-date">${formatDate(bl.date)}</div>
+        <div class="block-item-time">${bl.startTime} – ${bl.endTime}</div>
+        <div class="block-item-reason">${bl.reason || '—'}</div>
+        <button class="btn-delete" onclick="deleteBlock(${bl.id})">✕ Remove</button>
+      </div>
+    `).join('');
+  }
+
+  async function createBlock() {
+    const date      = document.getElementById('block-date').value;
+    const startTime = document.getElementById('block-start').value;
+    const endTime   = document.getElementById('block-end').value;
+    const reason    = document.getElementById('block-reason').value.trim();
+
+    if (!date || !startTime || !endTime) {
+      showToast('Please fill in date, from, and to fields.', 'error');
+      return;
+    }
+    if (startTime >= endTime) {
+      showToast('End time must be after start time.', 'error');
+      return;
+    }
+
+    const res = await fetch('/api/admin/blocks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date, startTime, endTime, reason })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showToast('✅ Time blocked successfully.', 'success');
+      document.getElementById('block-start').value = '';
+      document.getElementById('block-end').value = '';
+      document.getElementById('block-reason').value = '';
+      loadBlocks();
+    } else {
+      showToast('Error: ' + (data.error || 'Unknown error'), 'error');
+    }
+  }
+
+  async function deleteBlock(id) {
+    if (!confirm('Remove this block? Those time slots will become available for booking again.')) return;
+    const res = await fetch(`/api/admin/blocks/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      showToast('Block removed.', 'success');
+      loadBlocks();
+    } else {
+      showToast('Error removing block.', 'error');
+    }
+  }
+
+  // ── OPENING HOURS ──────────────────────────────────────────────────────
+  async function loadHours() {
+    const res = await fetch('/api/admin/hours');
+    if (!res.ok) return;
+    currentHours = await res.json();
+    renderHoursTable();
+  }
+
+  function renderHoursTable() {
+    const tbody = document.getElementById('hours-tbody');
+    tbody.innerHTML = '';
+
+    for (let d = 0; d <= 6; d++) {
+      const config = currentHours[d] || { closed: true, ranges: [] };
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><div class="day-name">${DAYS[d]}</div></td>
+        <td>
+          <label class="toggle-closed">
+            <input type="checkbox" id="closed-${d}" ${config.closed ? 'checked' : ''} onchange="toggleDay(${d})">
+            Closed
+          </label>
+        </td>
+        <td id="ranges-cell-${d}">
+          ${renderRanges(d, config)}
+        </td>
+      `;
+      tbody.appendChild(tr);
+    }
+  }
+
+  function renderRanges(d, config) {
+    if (config.closed) {
+      return '<span style="font-size:13px;color:var(--grey);opacity:0.5;">—</span>';
+    }
+    const ranges = config.ranges || [];
+    const rangeHtml = ranges.map((r, i) => `
+      <div class="range-inputs" style="margin-bottom:6px;">
+        <input type="time" class="time-input" value="${r[0]}" onchange="updateRange(${d},${i},0,this.value)">
+        <span>to</span>
+        <input type="time" class="time-input" value="${r[1]}" onchange="updateRange(${d},${i},1,this.value)">
+        ${ranges.length > 1 ? `<button class="remove-range-btn" onclick="removeRange(${d},${i})" title="Remove">×</button>` : ''}
+      </div>
+    `).join('');
+
+    const canAdd = ranges.length < 2;
+    return rangeHtml + `<button class="add-range-btn" onclick="addRange(${d})" ${!canAdd ? 'disabled' : ''}>+ Add range</button>`;
+  }
+
+  function toggleDay(d) {
+    const closed = document.getElementById(`closed-${d}`).checked;
+    currentHours[d].closed = closed;
+    if (!closed && currentHours[d].ranges.length === 0) {
+      currentHours[d].ranges = [['08:30', '13:00']];
+    }
+    document.getElementById(`ranges-cell-${d}`).innerHTML = renderRanges(d, currentHours[d]);
+  }
+
+  function updateRange(d, i, pos, val) {
+    currentHours[d].ranges[i][pos] = val;
+  }
+
+  function addRange(d) {
+    currentHours[d].ranges.push(['14:00', '17:00']);
+    document.getElementById(`ranges-cell-${d}`).innerHTML = renderRanges(d, currentHours[d]);
+  }
+
+  function removeRange(d, i) {
+    currentHours[d].ranges.splice(i, 1);
+    document.getElementById(`ranges-cell-${d}`).innerHTML = renderRanges(d, currentHours[d]);
+  }
+
+  async function saveHours() {
+    const res = await fetch('/api/admin/hours', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hours: currentHours })
+    });
+    if (res.ok) {
+      showToast('✅ Opening hours saved!', 'success');
+      const msg = document.getElementById('hours-saved-msg');
+      msg.style.display = 'inline';
+      setTimeout(() => { msg.style.display = 'none'; }, 3000);
+    } else {
+      showToast('Error saving hours.', 'error');
+    }
+  }
+
+  // ── HELPERS ────────────────────────────────────────────────────────────
+  function formatDate(dateStr) {
+    return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
   }
 
   // ── TOAST ──────────────────────────────────────────────────────────────
@@ -816,9 +1037,9 @@
     _toastTimer = setTimeout(() => { t.className = 'toast'; }, duration);
   }
 
-  // ── TEST EMAIL ────────────────────────────────────────────────────────
+  // ── TEST EMAIL ─────────────────────────────────────────────────────────
   async function testEmail() {
-    showToast('⏳ Sending test email… please wait', '', 30000); // hold while waiting
+    showToast('⏳ Sending test email… please wait', '', 30000);
     try {
       const res  = await fetch('/api/admin/test-email', { method: 'POST' });
       const data = await res.json();
