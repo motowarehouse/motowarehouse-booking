@@ -529,11 +529,196 @@
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── SCROLL ANIMATIONS ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-left {
+      opacity: 0;
+      transform: translateX(-32px);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+    .reveal-left.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* Stagger children */
+    .stagger-children > * {
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .stagger-children.visible > *:nth-child(1) { opacity:1; transform:translateY(0); transition-delay:0s; }
+    .stagger-children.visible > *:nth-child(2) { opacity:1; transform:translateY(0); transition-delay:0.1s; }
+    .stagger-children.visible > *:nth-child(3) { opacity:1; transform:translateY(0); transition-delay:0.2s; }
+    .stagger-children.visible > *:nth-child(4) { opacity:1; transform:translateY(0); transition-delay:0.3s; }
+    .stagger-children.visible > *:nth-child(5) { opacity:1; transform:translateY(0); transition-delay:0.4s; }
+
+    /* ── SIDE STEP TRACKER ── */
+    .step-tracker {
+      position: fixed;
+      left: 24px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      z-index: 50;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .step-tracker.visible { opacity: 1; }
+
+    .tracker-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .tracker-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid rgba(0,155,180,0.35);
+      background: transparent;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .tracker-dot::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      background: rgba(0,155,180,0.12);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .tracker-item.active .tracker-dot {
+      background: var(--blue);
+      border-color: var(--blue);
+      box-shadow: 0 0 12px rgba(0,155,180,0.55);
+    }
+
+    .tracker-item.active .tracker-dot::after { opacity: 1; }
+
+    .tracker-item.done .tracker-dot {
+      background: rgba(0,155,180,0.4);
+      border-color: rgba(0,155,180,0.4);
+    }
+
+    .tracker-label {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--grey);
+      margin-top: 4px;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateX(-6px);
+      transition: all 0.25s ease;
+      pointer-events: none;
+    }
+
+    .tracker-item.active .tracker-label {
+      color: var(--blue);
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .tracker-line {
+      width: 1px;
+      height: 36px;
+      background: linear-gradient(180deg, rgba(0,155,180,0.3) 0%, rgba(0,155,180,0.1) 100%);
+      margin: 2px 0;
+      transition: background 0.3s;
+    }
+
+    .tracker-item.done ~ .tracker-line,
+    .tracker-item.done + .tracker-line {
+      background: rgba(0,155,180,0.5);
+    }
+
+    @media (max-width: 1100px) { .step-tracker { display: none; } }
+
+    /* ── FLOATING BACKGROUND SHAPES ── */
+    .bg-shapes {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .bg-shape {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0;
+      animation: shapeFloat linear infinite;
+      transition: opacity 1s;
+    }
+
+    .bg-shape.show { opacity: 1; }
+
+    @keyframes shapeFloat {
+      0%   { transform: translateY(0px) rotate(0deg); }
+      50%  { transform: translateY(-30px) rotate(180deg); }
+      100% { transform: translateY(0px) rotate(360deg); }
+    }
+
+    /* scroll progress bar at top */
+    .scroll-progress {
+      position: fixed;
+      top: 3px; /* sits on top of accent bar */
+      left: 0;
+      height: 3px;
+      background: var(--teal-light);
+      width: 0%;
+      z-index: 200;
+      transition: width 0.1s linear;
+      box-shadow: 0 0 8px rgba(0,239,209,0.6);
+    }
   </style>
 </head>
 <body>
 
+<!-- SCROLL PROGRESS -->
+<div class="scroll-progress" id="scroll-progress"></div>
+
 <div class="accent-bar"></div>
+
+<!-- SIDE STEP TRACKER -->
+<div class="step-tracker" id="step-tracker">
+  <div class="tracker-item" id="tracker-1" onclick="scrollToStep(1)">
+    <div class="tracker-dot"></div>
+    <div class="tracker-label">Service</div>
+  </div>
+  <div class="tracker-line"></div>
+  <div class="tracker-item" id="tracker-2" onclick="scrollToStep(2)">
+    <div class="tracker-dot"></div>
+    <div class="tracker-label">Date &amp; Time</div>
+  </div>
+  <div class="tracker-line"></div>
+  <div class="tracker-item" id="tracker-3" onclick="scrollToStep(3)">
+    <div class="tracker-dot"></div>
+    <div class="tracker-label">Details</div>
+  </div>
+</div>
+
+<!-- FLOATING BG SHAPES -->
+<div class="bg-shapes" id="bg-shapes"></div>
 
 <!-- HEADER -->
 <header>
@@ -557,18 +742,18 @@
 
 <!-- HERO -->
 <div class="hero">
-  <div class="hero-label">Motowarehouse – Official Service Centre</div>
-  <h1>Book Your<br><span>Service Appointment</span></h1>
-  <p class="hero-sub">CFMOTO &amp; SYM servicing in Nicosia. We'll confirm your appointment shortly after you submit.</p>
+  <div class="hero-label reveal" style="transition-delay:0.05s">Motowarehouse – Official Service Centre</div>
+  <h1 class="reveal" style="transition-delay:0.15s">Book Your<br><span>Service Appointment</span></h1>
+  <p class="hero-sub reveal" style="transition-delay:0.25s">CFMOTO &amp; SYM servicing in Nicosia. We'll confirm your appointment shortly after you submit.</p>
 </div>
 
 <div class="section" id="booking-section">
 
   <!-- STEP 1: SERVICE TYPE -->
-  <div class="step-label">Step 1</div>
-  <div class="step-title">Select Service Type</div>
+  <div class="step-label reveal-left" id="step1-anchor">Step 1</div>
+  <div class="step-title reveal-left" style="transition-delay:0.07s">Select Service Type</div>
 
-  <div class="service-cards">
+  <div class="service-cards stagger-children" id="service-cards-wrap">
     <div class="service-card" data-value="oil-change" onclick="selectService(this)">
       <span class="service-icon">🛢️</span>
       <div class="service-name">Oil Change</div>
@@ -595,10 +780,10 @@
   </div>
 
   <!-- STEP 2: DATE & TIME -->
-  <div class="step-label" style="margin-top:36px;">Step 2</div>
-  <div class="step-title">Choose Date &amp; Time</div>
+  <div class="step-label reveal-left" id="step2-anchor" style="margin-top:36px;">Step 2</div>
+  <div class="step-title reveal-left" style="transition-delay:0.07s">Choose Date &amp; Time</div>
 
-  <div class="form-card" style="margin-bottom:24px;">
+  <div class="form-card reveal" style="margin-bottom:24px;transition-delay:0.1s">
     <div class="form-grid">
       <div class="form-group">
         <label for="date">Date <span class="req">*</span></label>
@@ -616,10 +801,10 @@
   </div>
 
   <!-- STEP 3: DETAILS -->
-  <div class="step-label">Step 3</div>
-  <div class="step-title">Your Details</div>
+  <div class="step-label reveal-left" id="step3-anchor">Step 3</div>
+  <div class="step-title reveal-left" style="transition-delay:0.07s">Your Details</div>
 
-  <div class="form-card">
+  <div class="form-card reveal" style="transition-delay:0.1s">
     <div class="form-grid">
 
       <div class="form-group">
@@ -982,6 +1167,124 @@
   function hideError() {
     document.getElementById('form-error').classList.remove('show');
   }
+
+  // ── SCROLL ANIMATIONS ──────────────────────────────────────────────
+
+  // 1. Scroll progress bar
+  const progressBar = document.getElementById('scroll-progress');
+  function updateProgress() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    progressBar.style.width = pct + '%';
+  }
+
+  // 2. Reveal elements on scroll (Intersection Observer)
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        revealObserver.unobserve(entry.target); // only animate once
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.reveal, .reveal-left, .stagger-children').forEach(el => {
+    revealObserver.observe(el);
+  });
+
+  // Trigger hero elements immediately (already in view on load)
+  setTimeout(() => {
+    document.querySelectorAll('.hero .reveal').forEach(el => el.classList.add('visible'));
+  }, 80);
+
+  // 3. Side step tracker
+  const tracker = document.getElementById('step-tracker');
+  const stepAnchors = [
+    document.getElementById('step1-anchor'),
+    document.getElementById('step2-anchor'),
+    document.getElementById('step3-anchor'),
+  ];
+  const trackerItems = [
+    document.getElementById('tracker-1'),
+    document.getElementById('tracker-2'),
+    document.getElementById('tracker-3'),
+  ];
+
+  function scrollToStep(n) {
+    const anchor = stepAnchors[n - 1];
+    if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function updateTracker() {
+    const scrollY = window.scrollY + window.innerHeight * 0.4;
+
+    // Show tracker after hero
+    const heroBottom = document.querySelector('.hero').getBoundingClientRect().bottom + window.scrollY;
+    if (window.scrollY > heroBottom - 100) {
+      tracker.classList.add('visible');
+    } else {
+      tracker.classList.remove('visible');
+    }
+
+    // Figure out which step is in view
+    let activeStep = -1;
+    stepAnchors.forEach((anchor, i) => {
+      if (anchor) {
+        const top = anchor.getBoundingClientRect().top + window.scrollY;
+        if (scrollY >= top) activeStep = i;
+      }
+    });
+
+    trackerItems.forEach((item, i) => {
+      item.classList.remove('active', 'done');
+      if (i === activeStep) item.classList.add('active');
+      else if (i < activeStep) item.classList.add('done');
+    });
+  }
+
+  // 4. Floating background shapes
+  function createShapes() {
+    const container = document.getElementById('bg-shapes');
+    const shapes = [
+      { size: 180, top: '12%',  left: '-60px',  color: 'rgba(0,155,180,0.04)',  dur: 14, delay: 0 },
+      { size: 100, top: '35%',  right: '-30px',  color: 'rgba(0,239,209,0.035)', dur: 18, delay: 2 },
+      { size: 240, top: '60%',  left: '-80px',  color: 'rgba(0,155,180,0.025)', dur: 22, delay: 4 },
+      { size:  70, top: '78%',  right: '-20px',  color: 'rgba(0,239,209,0.05)',  dur: 11, delay: 1 },
+      { size: 130, top: '88%',  left: '-40px',  color: 'rgba(0,155,180,0.035)', dur: 17, delay: 6 },
+      { size:  55, top: '20%',  right: '-10px',  color: 'rgba(0,239,209,0.06)',  dur: 9,  delay: 3 },
+    ];
+
+    shapes.forEach(s => {
+      const el = document.createElement('div');
+      el.className = 'bg-shape';
+      el.style.cssText = `
+        width:${s.size}px;
+        height:${s.size}px;
+        top:${s.top};
+        ${s.left  !== undefined ? 'left:' + s.left  + ';' : ''}
+        ${s.right !== undefined ? 'right:' + s.right + ';' : ''}
+        background:${s.color};
+        animation-duration:${s.dur}s;
+        animation-delay:-${s.delay}s;
+      `;
+      container.appendChild(el);
+      // Show with a small delay so they don't pop in
+      setTimeout(() => el.classList.add('show'), 500);
+    });
+  }
+
+  createShapes();
+
+  // Attach scroll listener
+  window.addEventListener('scroll', () => {
+    updateProgress();
+    updateTracker();
+  }, { passive: true });
+
+  // Run once on load
+  updateProgress();
+  updateTracker();
 </script>
 
 </body>
