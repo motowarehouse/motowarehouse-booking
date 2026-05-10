@@ -121,7 +121,6 @@ async function sendCancellationToCustomer(booking) {
           <p>Please contact us to arrange a more suitable time:</p>
           <div style="background:#f0fbfd;border-left:4px solid #009BB4;padding:16px;margin:20px 0;">
             <strong>📞 22 328 788</strong><br>
-            <strong>📱 WhatsApp: 97 828 510</strong><br>
             info@motowarehouse.com.cy
           </div>
           <p>We apologise for any inconvenience and look forward to assisting you.</p>

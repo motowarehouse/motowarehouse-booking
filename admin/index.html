@@ -224,10 +224,28 @@
     .booking-card.accepted { border-left: 3px solid var(--green); }
     .booking-card.cancelled { border-left: 3px solid var(--red); opacity: 0.6; }
 
-    .booking-header { padding: 16px 20px; display: flex; align-items: center; gap: 16px; cursor: pointer; }
+    .booking-header { padding: 14px 20px; display: flex; align-items: center; gap: 14px; cursor: pointer; }
     .booking-ref { font-size: 13px; font-weight: 700; color: var(--blue); min-width: 80px; }
-    .booking-name { font-size: 15px; font-weight: 500; flex: 1; }
-    .booking-datetime { font-size: 13px; color: var(--grey); min-width: 140px; text-align: right; }
+    .booking-name-col { flex: 1; }
+    .booking-name { font-size: 15px; font-weight: 500; }
+    .booking-phone { font-size: 12px; color: var(--blue); margin-top: 2px; font-weight: 500; }
+    .booking-datetime { font-size: 13px; color: var(--grey); min-width: 130px; text-align: right; }
+
+    /* Quick-action tick/cross buttons in header */
+    .quick-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+    .btn-quick {
+      width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 700; transition: all 0.15s; flex-shrink: 0;
+    }
+    .btn-quick-accept {
+      background: rgba(0,200,150,0.15); color: var(--green); border: 1px solid rgba(0,200,150,0.3);
+    }
+    .btn-quick-accept:hover { background: var(--green); color: #0a1a1f; }
+    .btn-quick-cancel {
+      background: rgba(229,0,82,0.1); color: var(--red); border: 1px solid rgba(229,0,82,0.25);
+    }
+    .btn-quick-cancel:hover { background: rgba(229,0,82,0.25); }
 
     .booking-service { font-size: 12px; padding: 3px 10px; border-radius: 12px; font-weight: 500; }
     .service-oil-change { background: rgba(0,155,180,0.15); color: var(--blue); }
@@ -790,23 +808,50 @@
   function bookingCard(b) {
     const svcClass = 'service-' + b.serviceType;
     const isExpanded = expandedId === b.id;
-    const actions = b.status === 'pending' ? `
-      <div class="action-row">
-        <button class="btn-accept" onclick="acceptBooking(${b.id}, event)">✓ Accept & Confirm</button>
-        <button class="btn-cancel-booking" onclick="cancelBooking(${b.id}, event)">✕ Cancel</button>
+
+    // Quick-action buttons in header row
+    const quickActions = b.status === 'pending' ? `
+      <div class="quick-actions" onclick="event.stopPropagation()">
+        <button class="btn-quick btn-quick-accept" title="Accept" onclick="acceptBooking(${b.id}, event)">✓</button>
+        <button class="btn-quick btn-quick-cancel" title="Cancel" onclick="cancelBooking(${b.id}, event)">✕</button>
       </div>
-    ` : `<div style="font-size:12px;color:var(--grey);">Updated: ${b.updatedAt ? new Date(b.updatedAt).toLocaleString('en-GB') : '—'}</div>`;
+    ` : b.status === 'accepted' ? `
+      <div class="quick-actions" onclick="event.stopPropagation()">
+        <button class="btn-quick btn-quick-cancel" title="Cancel booking" onclick="cancelBooking(${b.id}, event)">✕</button>
+      </div>
+    ` : '';
+
+    // Expanded action row
+    let actions = '';
+    if (b.status === 'pending') {
+      actions = `
+        <div class="action-row">
+          <button class="btn-accept" onclick="acceptBooking(${b.id}, event)">✓ Accept & Confirm</button>
+          <button class="btn-cancel-booking" onclick="cancelBooking(${b.id}, event)">✕ Cancel</button>
+        </div>`;
+    } else if (b.status === 'accepted') {
+      actions = `
+        <div class="action-row">
+          <button class="btn-cancel-booking" onclick="cancelBooking(${b.id}, event)">✕ Cancel This Booking</button>
+        </div>`;
+    } else {
+      actions = `<div style="font-size:12px;color:var(--grey);">Cancelled: ${b.updatedAt ? new Date(b.updatedAt).toLocaleString('en-GB') : '—'}</div>`;
+    }
 
     return `
       <div class="booking-card ${b.status}" id="card-${b.id}">
         <div class="booking-header" onclick="toggleExpand(${b.id})">
           <div class="booking-ref">${b.ref}</div>
-          <div class="booking-name">${b.name}</div>
+          <div class="booking-name-col">
+            <div class="booking-name">${b.name}</div>
+            <div class="booking-phone">📞 ${b.phone}</div>
+          </div>
           <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
             <span class="booking-service ${svcClass}">${SVC[b.serviceType]}</span>
             <span class="status-badge status-${b.status}">${b.status}</span>
           </div>
           <div class="booking-datetime">${b.date}<br>${b.time}</div>
+          ${quickActions}
         </div>
         <div class="booking-detail ${isExpanded ? 'open' : ''}" id="detail-${b.id}">
           <div class="detail-grid">
