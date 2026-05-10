@@ -313,7 +313,14 @@
     select option:disabled { color: rgba(255,255,255,0.35); }
 
     /* ── CUSTOM MODEL DROPDOWN ── */
-    .custom-select-wrap { position: relative; }
+    .custom-select-wrap {
+      position: relative;
+      z-index: 10; /* base */
+    }
+    /* Lift the whole wrap above everything when open */
+    .custom-select-wrap.is-open {
+      z-index: 9999;
+    }
 
     .custom-select-trigger {
       background: rgba(255,255,255,0.04);
@@ -354,7 +361,7 @@
       background: #0d2830;
       border: 1px solid rgba(0,155,180,0.35);
       border-radius: 8px;
-      z-index: 200;
+      z-index: 9999;
       box-shadow: 0 12px 40px rgba(0,0,0,0.55);
       overflow: hidden;
       /* closed state */
@@ -548,26 +555,26 @@
 
     /* ── VEHICLE SECTION REVEAL ── */
     .vehicle-section {
+      /* layout — spans full form-grid width, re-establishes 2-col grid inside */
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      /* collapsed state */
       overflow: hidden;
       max-height: 0;
       opacity: 0;
-      transform: translateY(16px);
-      transition: max-height 0.55s cubic-bezier(0.4,0,0.2,1),
-                  opacity   0.45s ease 0.08s,
-                  transform 0.45s ease 0.08s;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: max-height 0.5s cubic-bezier(0.4,0,0.2,1),
+                  opacity   0.4s ease 0.06s,
+                  transform 0.4s ease 0.06s;
     }
     .vehicle-section.revealed {
       max-height: 400px;
       opacity: 1;
       transform: translateY(0);
-    }
-
-    /* vehicle-section sits inside form-grid so it needs to span full width and re-establish grid */
-    .vehicle-section {
-      grid-column: 1 / -1;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      pointer-events: auto;
     }
     @media (max-width: 560px) { .vehicle-section { grid-template-columns: 1fr; } }
 
@@ -1070,10 +1077,11 @@
 
   function toggleModelDropdown() {
     const trigger = document.getElementById('model-trigger');
-    const panel = document.getElementById('model-panel');
-    const isOpen = trigger.classList.toggle('open');
+    const panel   = document.getElementById('model-panel');
+    const wrap    = document.querySelector('.custom-select-wrap');
+    const isOpen  = trigger.classList.toggle('open');
     panel.classList.toggle('open', isOpen);
-    // Auto-select first tab if none selected
+    wrap.classList.toggle('is-open', isOpen);
     if (isOpen && !activeBrandTab) switchBrandTab('cfmoto');
   }
 
@@ -1113,6 +1121,7 @@
     if (!wrap.contains(e.target)) {
       document.getElementById('model-trigger').classList.remove('open');
       document.getElementById('model-panel').classList.remove('open');
+      wrap.classList.remove('is-open');
     }
   });
 
