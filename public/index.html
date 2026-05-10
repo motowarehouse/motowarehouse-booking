@@ -355,21 +355,20 @@
     .custom-select-trigger.open .arrow { transform: rotate(180deg); }
 
     .custom-select-panel {
-      position: absolute;
-      top: calc(100% + 6px);
-      left: 0; right: 0;
+      /* Fixed so it escapes ALL stacking contexts (opacity animations, transforms, etc.) */
+      position: fixed;
       background: #0d2830;
       border: 1px solid rgba(0,155,180,0.35);
       border-radius: 8px;
-      z-index: 9999;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.55);
+      z-index: 99999;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.6);
       overflow: hidden;
       /* closed state */
       opacity: 0;
-      transform: translateY(-8px) scaleY(0.97);
+      transform: translateY(-6px) scaleY(0.97);
       transform-origin: top center;
       pointer-events: none;
-      transition: opacity 0.22s ease, transform 0.22s ease;
+      transition: opacity 0.2s ease, transform 0.2s ease;
       visibility: hidden;
     }
 
@@ -1075,6 +1074,15 @@
   // ── Custom model dropdown ─────────────────────────────────────────
   let activeBrandTab = null;
 
+  function positionDropdownPanel() {
+    const trigger = document.getElementById('model-trigger');
+    const panel   = document.getElementById('model-panel');
+    const rect    = trigger.getBoundingClientRect();
+    panel.style.top   = (rect.bottom + 6) + 'px';
+    panel.style.left  = rect.left + 'px';
+    panel.style.width = rect.width + 'px';
+  }
+
   function toggleModelDropdown() {
     const trigger = document.getElementById('model-trigger');
     const panel   = document.getElementById('model-panel');
@@ -1082,8 +1090,24 @@
     const isOpen  = trigger.classList.toggle('open');
     panel.classList.toggle('open', isOpen);
     wrap.classList.toggle('is-open', isOpen);
-    if (isOpen && !activeBrandTab) switchBrandTab('cfmoto');
+    if (isOpen) {
+      positionDropdownPanel();
+      if (!activeBrandTab) switchBrandTab('cfmoto');
+    }
   }
+
+  // Re-position on scroll or resize while open
+  window.addEventListener('scroll', () => {
+    if (document.getElementById('model-panel').classList.contains('open')) {
+      positionDropdownPanel();
+    }
+  }, { passive: true });
+
+  window.addEventListener('resize', () => {
+    if (document.getElementById('model-panel').classList.contains('open')) {
+      positionDropdownPanel();
+    }
+  });
 
   function switchBrandTab(brand) {
     activeBrandTab = brand;
