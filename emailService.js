@@ -1,40 +1,31 @@
-const nodemailer = require('nodemailer');
-
-function createTransporter() {
-  const user = process.env.GMAIL_USER;
-  const pass = process.env.GMAIL_APP_PASSWORD;
-
-  if (!user || !pass) {
-    console.error('[Email] GMAIL_USER or GMAIL_APP_PASSWORD not set in environment variables');
-  }
-
-  // Use explicit SMTP settings — more reliable on cloud hosts like Railway
-  // than the shorthand service:'gmail' which can fail on non-standard IPs
-  return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,             // STARTTLS on 587
-    auth: { user, pass },
-    tls: { rejectUnauthorized: true },
-    connectionTimeout: 10000,
-    greetingTimeout:   10000,
-    socketTimeout:     15000
-  });
-}
+const { Resend } = require('resend');
 
 const SERVICE_LABELS = {
-  'oil-change': 'Oil Change',
+  'oil-change':    'Oil Change',
   'small-service': 'Small Service',
-  'big-service': 'Big Service'
+  'big-service':   'Big Service'
 };
 
-// Notify Nikolas of a new booking
+function getResend() {
+  if (!process.env.RESEND_API_KEY) {
+    console.error('[Email] RESEND_API_KEY is not set in environment variables');
+  }
+  return new Resend(process.env.RESEND_API_KEY);
+}
+
+// The "from" address — once you verify motowarehouse.com.cy in Resend dashboard
+// you can change this to: 'Motowarehouse <bookings@motowarehouse.com.cy>'
+const FROM = 'Motowarehouse <onboarding@resend.dev>';
+
+// ── Notify Nikolas of a new booking ─────────────────────────────────────────
 async function sendNewBookingAlert(booking) {
-  if (!process.env.GMAIL_USER) return;
-  const transporter = createTransporter();
-  await transporter.sendMail({
-    from: `"Motowarehouse Bookings" <${process.env.GMAIL_USER}>`,
-    to: process.env.ADMIN_EMAIL || process.env.GMAIL_USER,
+  const adminEmail = process.env.ADMIN_EMAIL || process.env.GMAIL_USER;
+  if (!adminEmail) return;
+
+  const resend = getResend();
+  const { error } = await resend.emails.send({
+    from:    FROM,
+    to:      [adminEmail],
     subject: `[NEW BOOKING] ${booking.ref} – ${booking.name} – ${SERVICE_LABELS[booking.serviceType]}`,
     html: `
       <h2 style="color:#009BB4;">New Service Booking</h2>
@@ -44,29 +35,32 @@ async function sendNewBookingAlert(booking) {
         <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Phone</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.phone}</td></tr>
         <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Email</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.email || '—'}</td></tr>
         <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Service</td><td style="padding:8px;border-bottom:1px solid #eee;">${SERVICE_LABELS[booking.serviceType]}</td></tr>
-        <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Date & Time</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.date} at ${booking.time}</td></tr>
+        <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Date &amp; Time</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.date} at ${booking.time}</td></tr>
         <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Vehicle</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.year} ${booking.model}</td></tr>
         <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Plate</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.plate}</td></tr>
         <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Current KM</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.km ? Number(booking.km).toLocaleString() + ' km' : '—'}</td></tr>
         <tr><td style="padding:8px;font-weight:bold;">Notes</td><td style="padding:8px;">${booking.notes || '—'}</td></tr>
       </table>
       <p style="margin-top:20px;">
-        <a href="${process.env.SITE_URL || 'http://localhost:3001'}/admin" 
+        <a href="${process.env.SITE_URL || 'https://web-production-ad678.up.railway.app'}/admin"
            style="background:#009BB4;color:white;padding:12px 24px;text-decoration:none;border-radius:4px;display:inline-block;">
           Open Admin Panel
         </a>
       </p>
     `
   });
+
+  if (error) throw new Error(error.message || JSON.stringify(error));
 }
 
-// Send confirmation to customer
+// ── Confirmation to customer ─────────────────────────────────────────────────
 async function sendConfirmationToCustomer(booking) {
-  if (!booking.email || !process.env.GMAIL_USER) return;
-  const transporter = createTransporter();
-  await transporter.sendMail({
-    from: `"Motowarehouse" <${process.env.GMAIL_USER}>`,
-    to: booking.email,
+  if (!booking.email) return;
+
+  const resend = getResend();
+  const { error } = await resend.emails.send({
+    from:    FROM,
+    to:      [booking.email],
     subject: `Your Service Appointment is Confirmed – ${booking.ref}`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
@@ -82,8 +76,8 @@ async function sendConfirmationToCustomer(booking) {
             <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Date</td><td style="padding:10px;">${booking.date}</td></tr>
             <tr><td style="padding:10px;font-weight:bold;">Time</td><td style="padding:10px;">${booking.time}</td></tr>
             <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${booking.year} ${booking.model}</td></tr>
-            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Plate Number</td><td style="padding:10px;">${booking.plate}</td></tr>
-            <tr><td style="padding:10px;font-weight:bold;">Current KM</td><td style="padding:10px;">${booking.km ? Number(booking.km).toLocaleString() + ' km' : '—'}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Plate Number</td><td style="padding:10px;">${booking.plate}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Current KM</td><td style="padding:10px;">${booking.km ? Number(booking.km).toLocaleString() + ' km' : '—'}</td></tr>
           </table>
           <div style="background:#f0fbfd;border-left:4px solid #009BB4;padding:16px;margin:20px 0;">
             <strong>Location:</strong><br>
@@ -99,15 +93,18 @@ async function sendConfirmationToCustomer(booking) {
       </div>
     `
   });
+
+  if (error) throw new Error(error.message || JSON.stringify(error));
 }
 
-// Send cancellation to customer
+// ── Cancellation to customer ─────────────────────────────────────────────────
 async function sendCancellationToCustomer(booking) {
-  if (!booking.email || !process.env.GMAIL_USER) return;
-  const transporter = createTransporter();
-  await transporter.sendMail({
-    from: `"Motowarehouse" <${process.env.GMAIL_USER}>`,
-    to: booking.email,
+  if (!booking.email) return;
+
+  const resend = getResend();
+  const { error } = await resend.emails.send({
+    from:    FROM,
+    to:      [booking.email],
     subject: `Your Booking ${booking.ref} – Update Required`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
@@ -129,15 +126,18 @@ async function sendCancellationToCustomer(booking) {
       </div>
     `
   });
+
+  if (error) throw new Error(error.message || JSON.stringify(error));
 }
 
-// Reminder email (sent 2 hours before appointment)
+// ── Reminder (2 hours before appointment) ───────────────────────────────────
 async function sendReminderToCustomer(booking) {
-  if (!booking.email || !process.env.GMAIL_USER) return;
-  const transporter = createTransporter();
-  await transporter.sendMail({
-    from: `"Motowarehouse" <${process.env.GMAIL_USER}>`,
-    to: booking.email,
+  if (!booking.email) return;
+
+  const resend = getResend();
+  const { error } = await resend.emails.send({
+    from:    FROM,
+    to:      [booking.email],
     subject: `Reminder: Your appointment today at ${booking.time} – ${booking.ref}`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
@@ -160,6 +160,8 @@ async function sendReminderToCustomer(booking) {
       </div>
     `
   });
+
+  if (error) throw new Error(error.message || JSON.stringify(error));
 }
 
 module.exports = {

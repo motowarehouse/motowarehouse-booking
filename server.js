@@ -184,34 +184,28 @@ app.post('/api/admin/bookings/:id/cancel', requireAdmin, async (req, res) => {
   res.json({ success: true, booking });
 });
 
-// Test email (admin only — use to verify Railway env vars are working)
+// Test email (admin only — use to verify Resend is working)
 app.post('/api/admin/test-email', requireAdmin, async (req, res) => {
   const to = process.env.ADMIN_EMAIL || process.env.GMAIL_USER;
-  console.log('[Email] Test requested. GMAIL_USER set:', !!process.env.GMAIL_USER, '| GMAIL_APP_PASSWORD set:', !!process.env.GMAIL_APP_PASSWORD);
+  console.log('[Email] Test requested via Resend. API key set:', !!process.env.RESEND_API_KEY, '| To:', to);
   try {
-    const nodemailer = require('nodemailer');
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD
-      },
-      connectionTimeout: 10000,
-      greetingTimeout:   10000,
-      socketTimeout:     15000
-    });
-    await transporter.sendMail({
-      from: `"Motowarehouse Bookings" <${process.env.GMAIL_USER}>`,
-      to,
+    const { Resend } = require('resend');
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const { data, error } = await resend.emails.send({
+      from:    'Motowarehouse <onboarding@resend.dev>',
+      to:      [to],
       subject: 'Motowarehouse – Email Test ✓',
-      html: '<h2 style="color:#009BB4">Email is working!</h2><p>This test was sent from Railway.</p>'
+      html:    '<h2 style="color:#009BB4">Email is working!</h2><p>This test was sent from Railway via Resend.</p>'
     });
+    if (error) {
+      console.error('[Email] Resend error:', error);
+      return res.status(500).json({ success: false, error: error.message || JSON.stringify(error) });
+    }
+    console.log('[Email] Test sent successfully. ID:', data?.id);
     res.json({ success: true, message: `Test email sent to ${to}` });
   } catch (e) {
-    console.error('[Email] Test FAILED:', e.message, e.code || '');
-    res.status(500).json({ success: false, error: e.message, code: e.code });
+    console.error('[Email] Test FAILED:', e.message);
+    res.status(500).json({ success: false, error: e.message });
   }
 });
 
