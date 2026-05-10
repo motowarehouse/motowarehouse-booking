@@ -12,11 +12,11 @@ function createTransporter() {
   // than the shorthand service:'gmail' which can fail on non-standard IPs
   return nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false,             // STARTTLS on 587
     auth: { user, pass },
     tls: { rejectUnauthorized: true },
-    connectionTimeout: 10000,  // fail fast — 10s max to connect
+    connectionTimeout: 10000,
     greetingTimeout:   10000,
     socketTimeout:     15000
   });
