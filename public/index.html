@@ -557,10 +557,19 @@
                   transform 0.45s ease 0.08s;
     }
     .vehicle-section.revealed {
-      max-height: 600px;
+      max-height: 400px;
       opacity: 1;
       transform: translateY(0);
     }
+
+    /* vehicle-section sits inside form-grid so it needs to span full width and re-establish grid */
+    .vehicle-section {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 560px) { .vehicle-section { grid-template-columns: 1fr; } }
 
     /* ── FORM FIELD STAGGER ── */
     .field-reveal {
@@ -867,11 +876,8 @@
 
       <hr class="form-divider">
 
-      <!-- VEHICLE SECTION (animated reveal) -->
-      <div class="vehicle-section" id="vehicle-section">
-
-      <!-- CUSTOM MODEL DROPDOWN -->
-      <div class="form-group full field-reveal">
+      <!-- VEHICLE MODEL — always visible -->
+      <div class="form-group full field-reveal" style="transition-delay:0.21s">
         <label>Vehicle Model <span class="req">*</span></label>
         <div class="custom-select-wrap">
           <div class="custom-select-trigger" id="model-trigger" onclick="toggleModelDropdown()">
@@ -952,23 +958,24 @@
         <input type="hidden" id="brand">
       </div>
 
-      <div class="form-group field-reveal" style="transition-delay:0.07s">
-        <label for="year">Year of Model <span class="req">*</span></label>
-        <select id="year">
-          <option value="">Select year…</option>
-        </select>
-      </div>
+      <!-- VEHICLE DETAILS — slide in after model is chosen -->
+      <div class="vehicle-section" id="vehicle-section">
+        <div class="form-group field-reveal">
+          <label for="year">Year of Model <span class="req">*</span></label>
+          <select id="year">
+            <option value="">Select year…</option>
+          </select>
+        </div>
 
-      <div class="form-group field-reveal" style="transition-delay:0.14s">
-        <label for="plate">License Plate <span class="req">*</span></label>
-        <input type="text" id="plate" placeholder="e.g. ABC 123" style="text-transform:uppercase;">
-      </div>
+        <div class="form-group field-reveal" style="transition-delay:0.08s">
+          <label for="plate">License Plate <span class="req">*</span></label>
+          <input type="text" id="plate" placeholder="e.g. ABC 123" style="text-transform:uppercase;">
+        </div>
 
-      <div class="form-group full field-reveal" style="transition-delay:0.21s">
-        <label for="km">Current Kilometres <span class="req">*</span></label>
-        <input type="number" id="km" placeholder="e.g. 12500" min="0">
-      </div>
-
+        <div class="form-group full field-reveal" style="transition-delay:0.16s">
+          <label for="km">Current Kilometres <span class="req">*</span></label>
+          <input type="number" id="km" placeholder="e.g. 12500" min="0">
+        </div>
       </div><!-- end .vehicle-section -->
 
       <div class="form-group full field-reveal" style="transition-delay:0.28s">
