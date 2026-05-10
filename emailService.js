@@ -1,4 +1,4 @@
-const { Resend } = require('resend');
+const https = require('https');
 
 const SERVICE_LABELS = {
   'oil-change':    'Oil Change',
@@ -6,28 +6,58 @@ const SERVICE_LABELS = {
   'big-service':   'Big Service'
 };
 
-function getResend() {
-  if (!process.env.RESEND_API_KEY) {
-    console.error('[Email] RESEND_API_KEY is not set in environment variables');
+const SENDER = { name: 'Motowarehouse', email: 'motowarehouse.bookings@gmail.com' };
+
+// ── Core Brevo API call ───────────────────────────────────────────────────────
+function sendBrevoEmail({ to, subject, html }) {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) {
+    console.error('[Email] BREVO_API_KEY is not set');
+    return Promise.reject(new Error('BREVO_API_KEY not set'));
   }
-  return new Resend(process.env.RESEND_API_KEY);
+
+  const recipients = (Array.isArray(to) ? to : [to]).map(e => ({ email: e }));
+  const payload = JSON.stringify({
+    sender:      SENDER,
+    to:          recipients,
+    subject,
+    htmlContent: html
+  });
+
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: 'api.brevo.com',
+      path:     '/v3/smtp/email',
+      method:   'POST',
+      headers: {
+        'Content-Type':   'application/json',
+        'api-key':        apiKey,
+        'Content-Length': Buffer.byteLength(payload)
+      }
+    }, res => {
+      let body = '';
+      res.on('data', chunk => body += chunk);
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve(JSON.parse(body));
+        } else {
+          reject(new Error(`Brevo error ${res.statusCode}: ${body}`));
+        }
+      });
+    });
+    req.on('error', reject);
+    req.write(payload);
+    req.end();
+  });
 }
 
-// The "from" address — once you verify motowarehouse.com.cy in Resend dashboard
-// you can change this to: 'Motowarehouse <bookings@motowarehouse.com.cy>'
-const FROM = 'Motowarehouse <onboarding@resend.dev>';
-const REPLY_TO = 'Motowarehouse <support@motowarehouse.com.cy>';
-
-// ── Notify Nikolas of a new booking ─────────────────────────────────────────
+// ── Notify admin of a new booking ────────────────────────────────────────────
 async function sendNewBookingAlert(booking) {
-  const adminEmail = process.env.ADMIN_EMAIL || process.env.GMAIL_USER;
+  const adminEmail = process.env.ADMIN_EMAIL;
   if (!adminEmail) return;
 
-  const resend = getResend();
-  const { error } = await resend.emails.send({
-    from:     FROM,
-    reply_to: REPLY_TO,
-    to:       [adminEmail],
+  await sendBrevoEmail({
+    to:      adminEmail,
     subject: `[NEW BOOKING] ${booking.ref} – ${booking.name} – ${SERVICE_LABELS[booking.serviceType]}`,
     html: `
       <h2 style="color:#009BB4;">New Service Booking</h2>
@@ -51,19 +81,14 @@ async function sendNewBookingAlert(booking) {
       </p>
     `
   });
-
-  if (error) throw new Error(error.message || JSON.stringify(error));
 }
 
-// ── Confirmation to customer ─────────────────────────────────────────────────
+// ── Confirmation to customer ──────────────────────────────────────────────────
 async function sendConfirmationToCustomer(booking) {
   if (!booking.email) return;
 
-  const resend = getResend();
-  const { error } = await resend.emails.send({
-    from:     FROM,
-    reply_to: REPLY_TO,
-    to:       [booking.email],
+  await sendBrevoEmail({
+    to:      booking.email,
     subject: `Your Service Appointment is Confirmed – ${booking.ref}`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
@@ -91,24 +116,19 @@ async function sendConfirmationToCustomer(booking) {
           <p>The Motowarehouse Team</p>
         </div>
         <div style="background:#1a1a1a;padding:16px;text-align:center;">
-          <p style="color:#999;font-size:12px;margin:0;">Motowarehouse Ltd – info@motowarehouse.com.cy</p>
+          <p style="color:#999;font-size:12px;margin:0;">Motowarehouse Ltd – support@motowarehouse.com.cy</p>
         </div>
       </div>
     `
   });
-
-  if (error) throw new Error(error.message || JSON.stringify(error));
 }
 
-// ── Cancellation to customer ─────────────────────────────────────────────────
+// ── Cancellation to customer ──────────────────────────────────────────────────
 async function sendCancellationToCustomer(booking) {
   if (!booking.email) return;
 
-  const resend = getResend();
-  const { error } = await resend.emails.send({
-    from:     FROM,
-    reply_to: REPLY_TO,
-    to:       [booking.email],
+  await sendBrevoEmail({
+    to:      booking.email,
     subject: `Your Booking ${booking.ref} – Update Required`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
@@ -121,7 +141,7 @@ async function sendCancellationToCustomer(booking) {
           <p>Please contact us to arrange a more suitable time:</p>
           <div style="background:#f0fbfd;border-left:4px solid #009BB4;padding:16px;margin:20px 0;">
             <strong>📞 22 328 788</strong><br>
-            info@motowarehouse.com.cy
+            support@motowarehouse.com.cy
           </div>
           <p>We apologise for any inconvenience and look forward to assisting you.</p>
           <p>The Motowarehouse Team</p>
@@ -129,19 +149,14 @@ async function sendCancellationToCustomer(booking) {
       </div>
     `
   });
-
-  if (error) throw new Error(error.message || JSON.stringify(error));
 }
 
-// ── Reminder (2 hours before appointment) ───────────────────────────────────
+// ── Reminder (2 hours before appointment) ────────────────────────────────────
 async function sendReminderToCustomer(booking) {
   if (!booking.email) return;
 
-  const resend = getResend();
-  const { error } = await resend.emails.send({
-    from:     FROM,
-    reply_to: REPLY_TO,
-    to:       [booking.email],
+  await sendBrevoEmail({
+    to:      booking.email,
     subject: `Reminder: Your appointment today at ${booking.time} – ${booking.ref}`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
@@ -164,8 +179,6 @@ async function sendReminderToCustomer(booking) {
       </div>
     `
   });
-
-  if (error) throw new Error(error.message || JSON.stringify(error));
 }
 
 module.exports = {

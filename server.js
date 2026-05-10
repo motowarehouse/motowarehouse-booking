@@ -222,22 +222,16 @@ app.post('/api/admin/hours', requireAdmin, (req, res) => {
 
 // Test email (admin only)
 app.post('/api/admin/test-email', requireAdmin, async (req, res) => {
-  const to = process.env.ADMIN_EMAIL || process.env.GMAIL_USER;
-  console.log('[Email] Test requested via Resend. API key set:', !!process.env.RESEND_API_KEY, '| To:', to);
+  const to = process.env.ADMIN_EMAIL;
+  console.log('[Email] Test requested via Brevo. API key set:', !!process.env.BREVO_API_KEY, '| To:', to);
   try {
-    const { Resend } = require('resend');
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    const { data, error } = await resend.emails.send({
-      from:    'Motowarehouse <onboarding@resend.dev>',
-      to:      [to],
-      subject: 'Motowarehouse – Email Test ✓',
-      html:    '<h2 style="color:#009BB4">Email is working!</h2><p>This test was sent from Railway via Resend.</p>'
+    await emailService.sendNewBookingAlert({
+      ref: 'TEST-001', name: 'Test User', phone: '99000000',
+      email: to, serviceType: 'oil-change',
+      date: new Date().toISOString().split('T')[0], time: '09:00',
+      model: 'CFMOTO 450NK', year: '2024', plate: 'ABC123', km: '1000', notes: 'This is a test email.'
     });
-    if (error) {
-      console.error('[Email] Resend error:', error);
-      return res.status(500).json({ success: false, error: error.message || JSON.stringify(error) });
-    }
-    console.log('[Email] Test sent successfully. ID:', data?.id);
+    console.log('[Email] Test sent successfully via Brevo');
     res.json({ success: true, message: `Test email sent to ${to}` });
   } catch (e) {
     console.error('[Email] Test FAILED:', e.message);
