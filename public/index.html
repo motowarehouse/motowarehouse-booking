@@ -1074,6 +1074,11 @@
   // ── Custom model dropdown ─────────────────────────────────────────
   let activeBrandTab = null;
 
+  // Move panel to <body> at startup so it escapes any transformed ancestor
+  // (CSS transforms break position:fixed — portal pattern solves this)
+  const _modelPanel = document.getElementById('model-panel');
+  document.body.appendChild(_modelPanel);
+
   function positionDropdownPanel() {
     const trigger = document.getElementById('model-trigger');
     const panel   = document.getElementById('model-panel');
@@ -1141,10 +1146,12 @@
 
   // Close dropdown on outside click
   document.addEventListener('click', function(e) {
-    const wrap = document.querySelector('.custom-select-wrap');
-    if (!wrap.contains(e.target)) {
+    const wrap  = document.querySelector('.custom-select-wrap');
+    const panel = document.getElementById('model-panel');
+    // Click is outside both the trigger wrap AND the floating panel
+    if (!wrap.contains(e.target) && !panel.contains(e.target)) {
       document.getElementById('model-trigger').classList.remove('open');
-      document.getElementById('model-panel').classList.remove('open');
+      panel.classList.remove('open');
       wrap.classList.remove('is-open');
     }
   });
