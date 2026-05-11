@@ -32,13 +32,24 @@ function generateRef(id) {
 
 // ── Bookings ─────────────────────────────────────────────────────────────────
 
+const MECHANIC_COUNT = 2;
+
 function createBooking(data) {
   const db = readDB();
+
+  // Auto-assign to whichever mechanic is free at this slot
+  const existing = db.bookings.filter(
+    b => b.date === data.date && b.time === data.time &&
+    (b.status === 'pending' || b.status === 'accepted')
+  );
+  const mechanic = existing.some(b => b.mechanic === 1) ? 2 : 1;
+
   db.lastId += 1;
   const booking = {
     id: db.lastId,
     ref: generateRef(db.lastId),
     ...data,
+    mechanic,
     status: 'pending',
     createdAt: new Date().toISOString(),
     reminderSent: false
@@ -114,16 +125,21 @@ function getAcceptedBookingsDueForReminder() {
   });
 }
 
-// Returns all booked + manually blocked 30-min slots for a given date
+// Returns all fully-booked + manually blocked 30-min slots for a given date
+// A slot is only fully booked when all mechanics (MECHANIC_COUNT) are taken
 function getBookedSlots(date) {
   const db = readDB();
 
-  // Online bookings (pending or accepted)
-  const bookingSlots = db.bookings
+  // Count active bookings per slot
+  const slotCounts = {};
+  db.bookings
     .filter(b => b.date === date && (b.status === 'pending' || b.status === 'accepted'))
-    .map(b => b.time);
+    .forEach(b => { slotCounts[b.time] = (slotCounts[b.time] || 0) + 1; });
 
-  // Manual blocks — expand time ranges into individual 30-min slots
+  // Only mark slot as unavailable when all mechanics are booked
+  const bookingSlots = Object.keys(slotCounts).filter(s => slotCounts[s] >= MECHANIC_COUNT);
+
+  // Manual blocks always block the full slot (both mechanics)
   const blockSlots = [];
   (db.blocks || [])
     .filter(bl => bl.date === date)
