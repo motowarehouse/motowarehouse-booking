@@ -22,7 +22,8 @@
     /* ── LOGIN ── */
     .login-screen { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
     .login-card { background:var(--dark2); border:1px solid rgba(0,155,180,0.2); border-radius:12px; padding:48px 40px; width:100%; max-width:380px; text-align:center; }
-    .login-logo { font-size:13px; font-weight:500; letter-spacing:0.16em; text-transform:uppercase; color:var(--blue); margin-bottom:8px; }
+    .login-logo { margin-bottom:20px; }
+    .login-logo img { width:160px; height:auto; }
     .login-title { font-size:24px; font-weight:900; margin-bottom:32px; }
     .login-input { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:var(--white); font-family:'SupremeLL',Arial,sans-serif; font-size:15px; padding:12px 16px; width:100%; margin-bottom:12px; outline:none; transition:border-color 0.2s; }
     .login-input:focus { border-color:var(--blue); }
@@ -34,7 +35,8 @@
     .app { display:none; }
     .layout { display:flex; min-height:100vh; }
     .sidebar { background:var(--dark2); border-right:1px solid rgba(0,155,180,0.12); width:230px; flex-shrink:0; display:flex; flex-direction:column; position:sticky; top:0; height:100vh; overflow-y:auto; }
-    .sidebar-logo { padding:20px; border-bottom:1px solid rgba(255,255,255,0.06); }
+    .sidebar-logo { padding:16px 20px; border-bottom:1px solid rgba(255,255,255,0.06); }
+    .sidebar-logo img { width:130px; height:auto; display:block; margin-bottom:4px; }
     .sidebar-brand { font-size:11px; font-weight:500; letter-spacing:0.18em; text-transform:uppercase; color:var(--blue); }
     .sidebar-sub { font-size:13px; color:var(--grey); margin-top:2px; }
     .sidebar-nav { padding:12px 0; flex:1; }
@@ -251,7 +253,7 @@
 <!-- LOGIN -->
 <div class="login-screen" id="login-screen">
   <div class="login-card">
-    <div class="login-logo">Motowarehouse</div>
+    <div class="login-logo"><img src="/assets/MWH_Logo_New.png" alt="Motowarehouse"></div>
     <div class="login-title">Admin Panel</div>
     <input type="password" class="login-input" id="password-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')login()">
     <button class="login-btn" onclick="login()">Sign In</button>
@@ -266,7 +268,7 @@
     <!-- SIDEBAR -->
     <div class="sidebar">
       <div class="sidebar-logo">
-        <div class="sidebar-brand">CFMOTO / SYM</div>
+        <img src="/assets/MWH_Logo_New.png" alt="Motowarehouse">
         <div class="sidebar-sub">Service Bookings</div>
       </div>
       <nav class="sidebar-nav">
