@@ -28,6 +28,16 @@ function requireAdmin(req, res, next) {
   res.status(401).json({ error: 'Unauthorised' });
 }
 
+function requirePartner(req, res, next) {
+  if (req.session && req.session.partner) return next();
+  res.status(401).json({ error: 'Unauthorised' });
+}
+
+function requireAdminOrPartner(req, res, next) {
+  if ((req.session && req.session.admin) || (req.session && req.session.partner)) return next();
+  res.status(401).json({ error: 'Unauthorised' });
+}
+
 // ==================== PUBLIC API ====================
 
 // Get available time slots for a date
@@ -271,6 +281,140 @@ app.post('/api/admin/test-email', requireAdmin, async (req, res) => {
 // Serve admin panel
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin', 'index.html'));
+});
+
+// ==================== PARTNER API ====================
+
+// Partner login
+app.post('/api/partner/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) return res.status(400).json({ error: 'Username and password required.' });
+
+  const partner = db.getPartnerByUsername(username);
+  if (!partner || !partner.active) return res.status(401).json({ error: 'Invalid credentials.' });
+
+  const valid = await bcrypt.compare(password, partner.passwordHash);
+  if (!valid) return res.status(401).json({ error: 'Invalid credentials.' });
+
+  req.session.partner = { id: partner.id, username: partner.username, workshopName: partner.workshopName };
+  res.json({ success: true, workshopName: partner.workshopName });
+});
+
+// Partner logout
+app.post('/api/partner/logout', (req, res) => {
+  req.session.destroy();
+  res.json({ success: true });
+});
+
+// Partner auth check
+app.get('/api/partner/me', requirePartner, (req, res) => {
+  res.json({ partner: req.session.partner });
+});
+
+// Look up vehicle by plate (partner + admin)
+app.get('/api/vehicle', requireAdminOrPartner, (req, res) => {
+  const { plate } = req.query;
+  if (!plate) return res.status(400).json({ error: 'plate required' });
+  const vehicle = db.getVehicleByPlate(plate);
+  if (!vehicle) return res.status(404).json({ error: 'Vehicle not found in our records.' });
+  res.json(vehicle);
+});
+
+// Get service checklist items
+app.get('/api/service-items', requireAdminOrPartner, (req, res) => {
+  res.json(db.DEFAULT_SERVICE_ITEMS);
+});
+
+// Log a service entry (partner or admin)
+app.post('/api/service-entry', requireAdminOrPartner, (req, res) => {
+  const { regNo, km, items, notes, date } = req.body;
+  if (!regNo || !km || !items || items.length === 0) {
+    return res.status(400).json({ error: 'Plate, KM, and at least one service item are required.' });
+  }
+  if (!db.getVehicleByPlate(regNo)) {
+    return res.status(404).json({ error: 'Vehicle not found in our records.' });
+  }
+
+  const isAdmin = !!(req.session && req.session.admin);
+  const partnerInfo = req.session.partner || null;
+
+  const entry = db.createServiceEntry({
+    regNo, km, items, notes, date,
+    partnerId:    partnerInfo ? partnerInfo.id : null,
+    partnerName:  partnerInfo ? partnerInfo.workshopName : 'Motowarehouse',
+    loggedByAdmin: isAdmin
+  });
+
+  res.json({ success: true, entry });
+});
+
+// ==================== ADMIN — VEHICLES ====================
+
+// Get all vehicles (paginated search)
+app.get('/api/admin/vehicles', requireAdmin, (req, res) => {
+  const { q } = req.query;
+  let vehicles = db.getAllVehicles();
+  if (q) {
+    const search = q.toUpperCase().trim();
+    vehicles = vehicles.filter(v =>
+      v.regNo.includes(search) ||
+      v.model.toUpperCase().includes(search) ||
+      v.frameNo.toUpperCase().includes(search)
+    );
+  }
+  res.json(vehicles.slice(0, 50)); // cap at 50 results
+});
+
+// Get vehicle + full service history (admin only)
+app.get('/api/admin/vehicles/:plate', requireAdmin, (req, res) => {
+  const vehicle = db.getVehicleByPlate(req.params.plate);
+  if (!vehicle) return res.status(404).json({ error: 'Vehicle not found.' });
+  const history = db.getServiceHistoryByPlate(req.params.plate);
+  res.json({ vehicle, history });
+});
+
+// Import vehicles from JSON array (parsed from CSV/Excel by frontend)
+app.post('/api/admin/vehicles/import', requireAdmin, (req, res) => {
+  const { rows } = req.body;
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return res.status(400).json({ error: 'rows array required.' });
+  }
+  const result = db.importVehicles(rows);
+  res.json({ success: true, ...result });
+});
+
+// ==================== ADMIN — PARTNERS ====================
+
+// List all partners
+app.get('/api/admin/partners', requireAdmin, (req, res) => {
+  const partners = db.getAllPartners().map(p => ({ ...p, passwordHash: undefined }));
+  res.json(partners);
+});
+
+// Create a partner
+app.post('/api/admin/partners', requireAdmin, async (req, res) => {
+  const { username, password, workshopName, phone } = req.body;
+  if (!username || !password || !workshopName) {
+    return res.status(400).json({ error: 'username, password, and workshopName are required.' });
+  }
+  if (db.getPartnerByUsername(username)) {
+    return res.status(409).json({ error: 'Username already exists.' });
+  }
+  const passwordHash = await bcrypt.hash(password, 10);
+  const partner = db.createPartner({ username, passwordHash, workshopName, phone });
+  res.json({ success: true, partner: { ...partner, passwordHash: undefined } });
+});
+
+// Toggle partner active/inactive
+app.post('/api/admin/partners/:id/toggle', requireAdmin, (req, res) => {
+  const partner = db.togglePartnerActive(req.params.id);
+  if (!partner) return res.status(404).json({ error: 'Partner not found.' });
+  res.json({ success: true, partner: { ...partner, passwordHash: undefined } });
+});
+
+// Serve partner portal
+app.get('/partner', (req, res) => {
+  res.sendFile(path.join(__dirname, 'partner', 'index.html'));
 });
 
 // ==================== Start ====================
