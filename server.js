@@ -178,6 +178,12 @@ app.post('/api/admin/bookings/:id/reschedule', requireAdmin, async (req, res) =>
     console.error('[Email] Reschedule FAILED:', e.message);
   }
 
+  try {
+    await smsService.sendRescheduleSMS(booking);
+  } catch (e) {
+    console.error('[SMS] Reschedule FAILED:', e.message);
+  }
+
   res.json({ success: true, booking });
 });
 
