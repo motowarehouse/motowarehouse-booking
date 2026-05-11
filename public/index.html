@@ -900,7 +900,8 @@
 
       <div class="form-group field-reveal" style="transition-delay:0.07s">
         <label for="phone">Phone Number <span class="req">*</span></label>
-        <input type="tel" id="phone" placeholder="e.g. 99 123 456" autocomplete="tel">
+        <input type="tel" id="phone" placeholder="e.g. 99 123 456" autocomplete="tel"
+          oninput="autoFormatPhone(this)">
       </div>
 
       <div class="form-group full field-reveal" style="transition-delay:0.14s">
@@ -1065,6 +1066,15 @@
 </footer>
 
 <script>
+  function autoFormatPhone(input) {
+    let val = input.value.replace(/\D/g, ''); // strip non-digits
+    if (val.startsWith('00357')) val = val.slice(5);
+    else if (val.startsWith('357')) val = val.slice(3);
+    // Re-add +357 prefix
+    if (val.length > 0) input.value = '+357' + val;
+    else input.value = '';
+  }
+
   // ── Init ──────────────────────────────────────────────────────────
   let selectedService = null;
   let selectedTime = null;
