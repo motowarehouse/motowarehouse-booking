@@ -10,488 +10,228 @@
     @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Medium.ttf'); font-weight:500; }
     @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Bold.ttf'); font-weight:700; }
     @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Black.ttf'); font-weight:900; }
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --blue: #009BB4;
-      --blue-dark: #007a8f;
-      --teal: #00EFD1;
-      --dark: #0a1a1f;
-      --dark2: #0f2429;
-      --dark3: #1a3540;
-      --grey: #8a9ba0;
-      --grey-light: #d0dde0;
-      --white: #ffffff;
-      --red: #E50052;
-      --green: #00c896;
-      --orange: #f59e0b;
+      --blue: #009BB4; --blue-dark: #007a8f; --teal: #00EFD1;
+      --dark: #0a1a1f; --dark2: #0f2429; --dark3: #1a3540;
+      --grey: #8a9ba0; --white: #ffffff;
+      --red: #E50052; --green: #00c896; --orange: #f59e0b; --purple: #a78bfa;
     }
+    body { font-family:'SupremeLL',Arial,sans-serif; background:var(--dark); color:var(--white); min-height:100vh; font-weight:300; }
 
-    body {
-      font-family: 'SupremeLL', Arial, sans-serif;
-      background: var(--dark);
-      color: var(--white);
-      min-height: 100vh;
-      font-weight: 300;
-    }
+    /* ── LOGIN ── */
+    .login-screen { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+    .login-card { background:var(--dark2); border:1px solid rgba(0,155,180,0.2); border-radius:12px; padding:48px 40px; width:100%; max-width:380px; text-align:center; }
+    .login-logo { font-size:13px; font-weight:500; letter-spacing:0.16em; text-transform:uppercase; color:var(--blue); margin-bottom:8px; }
+    .login-title { font-size:24px; font-weight:900; margin-bottom:32px; }
+    .login-input { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:var(--white); font-family:'SupremeLL',Arial,sans-serif; font-size:15px; padding:12px 16px; width:100%; margin-bottom:12px; outline:none; transition:border-color 0.2s; }
+    .login-input:focus { border-color:var(--blue); }
+    .login-btn { background:var(--blue); border:none; border-radius:6px; color:white; cursor:pointer; font-family:'SupremeLL',Arial,sans-serif; font-size:14px; font-weight:700; letter-spacing:0.08em; padding:13px; text-transform:uppercase; width:100%; transition:background 0.2s; }
+    .login-btn:hover { background:var(--blue-dark); }
+    .login-error { background:rgba(229,0,82,0.12); border:1px solid rgba(229,0,82,0.3); border-radius:6px; color:#ff6b9d; font-size:13px; margin-top:12px; padding:10px; display:none; }
 
-    /* LOGIN SCREEN */
-    .login-screen {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
+    /* ── LAYOUT ── */
+    .app { display:none; }
+    .layout { display:flex; min-height:100vh; }
+    .sidebar { background:var(--dark2); border-right:1px solid rgba(0,155,180,0.12); width:230px; flex-shrink:0; display:flex; flex-direction:column; position:sticky; top:0; height:100vh; overflow-y:auto; }
+    .sidebar-logo { padding:20px; border-bottom:1px solid rgba(255,255,255,0.06); }
+    .sidebar-brand { font-size:11px; font-weight:500; letter-spacing:0.18em; text-transform:uppercase; color:var(--blue); }
+    .sidebar-sub { font-size:13px; color:var(--grey); margin-top:2px; }
+    .sidebar-nav { padding:12px 0; flex:1; }
+    .nav-section-label { font-size:10px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--grey); padding:14px 20px 5px; opacity:0.6; }
+    .nav-item { cursor:pointer; display:flex; align-items:center; gap:10px; padding:10px 20px; font-size:13px; color:var(--grey); border-left:3px solid transparent; transition:all 0.15s; }
+    .nav-item:hover { color:var(--white); background:rgba(255,255,255,0.03); }
+    .nav-item.active { color:var(--white); border-left-color:var(--blue); background:rgba(0,155,180,0.08); }
+    .nav-badge { background:var(--blue); border-radius:10px; color:white; font-size:10px; font-weight:700; margin-left:auto; padding:2px 7px; }
+    .nav-badge.orange { background:var(--orange); }
+    .nav-badge.red { background:var(--red); }
+    .sidebar-footer { padding:14px 20px; border-top:1px solid rgba(255,255,255,0.06); }
+    .logout-btn { background:none; border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:var(--grey); cursor:pointer; font-family:'SupremeLL',Arial,sans-serif; font-size:12px; padding:8px 14px; width:100%; transition:all 0.2s; }
+    .logout-btn:hover { border-color:var(--red); color:var(--red); }
+    .main { flex:1; overflow-x:hidden; min-width:0; }
+    .topbar { background:var(--dark2); border-bottom:1px solid rgba(0,155,180,0.12); padding:16px 28px; display:flex; align-items:center; justify-content:space-between; }
+    .topbar-title { font-size:18px; font-weight:700; }
+    .topbar-date { font-size:13px; color:var(--grey); }
+    .content { padding:24px 28px; }
 
-    .login-card {
-      background: var(--dark2);
-      border: 1px solid rgba(0,155,180,0.2);
-      border-radius: 12px;
-      padding: 48px 40px;
-      width: 100%;
-      max-width: 380px;
-      text-align: center;
-    }
+    /* ── STATS ── */
+    .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+    @media (max-width:900px) { .stats-grid { grid-template-columns:repeat(2,1fr); } }
+    .stat-card { background:var(--dark2); border:1px solid rgba(0,155,180,0.12); border-radius:8px; padding:18px; }
+    .stat-label { font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--grey); margin-bottom:6px; }
+    .stat-value { font-size:30px; font-weight:900; line-height:1; }
+    .stat-value.pending { color:var(--orange); }
+    .stat-value.accepted { color:var(--green); }
+    .stat-value.cancelled { color:var(--red); }
+    .stat-value.total { color:var(--blue); }
 
-    .login-logo { font-size: 13px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--blue); margin-bottom: 8px; }
-    .login-title { font-size: 24px; font-weight: 900; margin-bottom: 32px; }
+    /* ── BOOKING CARDS ── */
+    .bookings-list { display:flex; flex-direction:column; gap:10px; }
+    .booking-card { background:var(--dark2); border:1px solid rgba(0,155,180,0.12); border-radius:8px; overflow:hidden; transition:border-color 0.2s; }
+    .booking-card:hover { border-color:rgba(0,155,180,0.3); }
+    .booking-card.pending  { border-left:3px solid var(--orange); }
+    .booking-card.accepted { border-left:3px solid var(--green); }
+    .booking-card.cancelled { border-left:3px solid var(--red); }
+    .booking-card.phone    { border-left:3px solid var(--purple); }
+    .booking-header { padding:13px 18px; display:flex; align-items:center; gap:12px; cursor:pointer; }
+    .booking-ref { font-size:12px; font-weight:700; color:var(--blue); min-width:74px; }
+    .booking-name-col { flex:1; min-width:0; }
+    .booking-name { font-size:14px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .booking-phone-row { font-size:12px; color:var(--blue); margin-top:1px; font-weight:500; }
+    .booking-datetime { font-size:12px; color:var(--grey); min-width:110px; text-align:right; flex-shrink:0; }
+    .quick-actions { display:flex; gap:5px; align-items:center; flex-shrink:0; }
+    .btn-quick { width:30px; height:30px; border-radius:50%; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; transition:all 0.15s; flex-shrink:0; }
+    .btn-quick-accept { background:rgba(0,200,150,0.15); color:var(--green); border:1px solid rgba(0,200,150,0.3); }
+    .btn-quick-accept:hover { background:var(--green); color:#0a1a1f; }
+    .btn-quick-cancel { background:rgba(229,0,82,0.1); color:var(--red); border:1px solid rgba(229,0,82,0.25); }
+    .btn-quick-cancel:hover { background:rgba(229,0,82,0.25); }
+    .btn-quick-reschedule { background:rgba(0,155,180,0.12); color:var(--blue); border:1px solid rgba(0,155,180,0.3); font-size:12px; }
+    .btn-quick-reschedule:hover { background:rgba(0,155,180,0.25); }
+    .booking-service { font-size:11px; padding:3px 9px; border-radius:12px; font-weight:500; white-space:nowrap; }
+    .service-oil-change { background:rgba(0,155,180,0.15); color:var(--blue); }
+    .service-small-service { background:rgba(0,200,150,0.12); color:var(--green); }
+    .service-big-service { background:rgba(145,192,29,0.12); color:#91C01D; }
+    .status-badge { font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:3px 7px; border-radius:4px; white-space:nowrap; }
+    .status-pending { background:rgba(245,158,11,0.15); color:var(--orange); }
+    .status-accepted { background:rgba(0,200,150,0.15); color:var(--green); }
+    .status-cancelled { background:rgba(229,0,82,0.12); color:var(--red); }
+    .status-phone { background:rgba(167,139,250,0.15); color:var(--purple); }
+    .booking-detail { border-top:1px solid rgba(255,255,255,0.06); display:none; padding:16px 18px; }
+    .booking-detail.open { display:block; }
+    .detail-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:14px; }
+    @media (max-width:600px) { .detail-grid { grid-template-columns:1fr 1fr; } }
+    .detail-item label { font-size:10px; font-weight:500; letter-spacing:0.12em; text-transform:uppercase; color:var(--grey); display:block; margin-bottom:3px; }
+    .detail-item span { font-size:14px; }
+    .detail-notes { background:rgba(255,255,255,0.03); border-radius:6px; color:var(--grey); font-size:13px; margin-bottom:14px; padding:10px 14px; }
+    .action-row { display:flex; gap:8px; flex-wrap:wrap; }
+    .btn-accept { background:var(--green); border:none; border-radius:6px; color:#0a1a1f; cursor:pointer; font-family:'SupremeLL',Arial,sans-serif; font-size:13px; font-weight:700; letter-spacing:0.06em; padding:9px 18px; text-transform:uppercase; transition:opacity 0.2s; white-space:nowrap; }
+    .btn-accept:hover { opacity:0.85; }
+    .btn-accept:disabled { opacity:0.4; cursor:not-allowed; }
+    .btn-reschedule { background:rgba(0,155,180,0.15); border:1px solid rgba(0,155,180,0.4); border-radius:6px; color:var(--blue); cursor:pointer; font-family:'SupremeLL',Arial,sans-serif; font-size:13px; font-weight:700; letter-spacing:0.06em; padding:9px 18px; text-transform:uppercase; transition:all 0.2s; white-space:nowrap; }
+    .btn-reschedule:hover { background:rgba(0,155,180,0.25); }
+    .btn-cancel-booking { background:none; border:1px solid rgba(229,0,82,0.4); border-radius:6px; color:var(--red); cursor:pointer; font-family:'SupremeLL',Arial,sans-serif; font-size:13px; font-weight:700; letter-spacing:0.06em; padding:9px 18px; text-transform:uppercase; transition:all 0.2s; white-space:nowrap; }
+    .btn-cancel-booking:hover { background:rgba(229,0,82,0.1); }
+    .btn-cancel-booking:disabled { opacity:0.4; cursor:not-allowed; }
 
-    .login-input {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 6px;
-      color: var(--white);
-      font-family: 'SupremeLL', Arial, sans-serif;
-      font-size: 15px;
-      padding: 12px 16px;
-      width: 100%;
-      margin-bottom: 12px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .login-input:focus { border-color: var(--blue); }
+    /* ── CONTACT STATUS BADGES ── */
+    .contact-badge { font-size:11px; font-weight:700; letter-spacing:0.06em; padding:3px 9px; border-radius:4px; }
+    .contact-needs { background:rgba(229,0,82,0.15); color:var(--red); border:1px solid rgba(229,0,82,0.3); }
+    .contact-contacted { background:rgba(0,155,180,0.15); color:var(--blue); border:1px solid rgba(0,155,180,0.3); }
+    .contact-closed { background:rgba(255,255,255,0.06); color:var(--grey); border:1px solid rgba(255,255,255,0.1); }
+    .btn-contact-action { background:none; border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:var(--grey); cursor:pointer; font-family:'SupremeLL',Arial,sans-serif; font-size:12px; padding:7px 14px; transition:all 0.2s; white-space:nowrap; }
+    .btn-contact-action:hover { border-color:var(--blue); color:var(--blue); }
+    .btn-contact-action.close:hover { border-color:var(--grey); color:var(--grey); background:rgba(255,255,255,0.05); }
 
-    .login-btn {
-      background: var(--blue);
-      border: none;
-      border-radius: 6px;
-      color: white;
-      cursor: pointer;
-      font-family: 'SupremeLL', Arial, sans-serif;
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      padding: 13px;
-      text-transform: uppercase;
-      width: 100%;
-      transition: background 0.2s;
-    }
-    .login-btn:hover { background: var(--blue-dark); }
+    /* ── TODAY VIEW ── */
+    .today-slot { background:var(--dark2); border:1px solid rgba(0,155,180,0.12); border-radius:8px; display:flex; align-items:center; gap:14px; margin-bottom:10px; padding:13px 18px; }
+    .today-time { font-size:18px; font-weight:900; color:var(--blue); min-width:55px; }
+    .today-info { flex:1; }
+    .today-name { font-size:15px; font-weight:500; }
+    .today-vehicle { font-size:12px; color:var(--grey); margin-top:2px; }
 
-    .login-error {
-      background: rgba(229,0,82,0.12);
-      border: 1px solid rgba(229,0,82,0.3);
-      border-radius: 6px;
-      color: #ff6b9d;
-      font-size: 13px;
-      margin-top: 12px;
-      padding: 10px;
-      display: none;
-    }
+    /* ── CALENDAR ── */
+    .cal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+    .cal-month-label { font-size:18px; font-weight:700; }
+    .cal-nav-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:var(--white); cursor:pointer; font-size:15px; padding:7px 14px; transition:all 0.15s; }
+    .cal-nav-btn:hover { border-color:var(--blue); color:var(--blue); }
+    .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+    .cal-day-header { font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--grey); padding:8px 0; text-align:center; }
+    .cal-cell { background:var(--dark2); border:1px solid rgba(255,255,255,0.05); border-radius:6px; min-height:72px; padding:7px; cursor:pointer; transition:all 0.15s; position:relative; }
+    .cal-cell:hover { border-color:rgba(0,155,180,0.4); }
+    .cal-cell.other-month { opacity:0.3; }
+    .cal-cell.today { border-color:var(--blue); }
+    .cal-cell.selected { border-color:var(--blue); background:rgba(0,155,180,0.1); }
+    .cal-cell.has-events { cursor:pointer; }
+    .cal-day-num { font-size:13px; font-weight:500; margin-bottom:4px; }
+    .cal-cell.today .cal-day-num { color:var(--blue); font-weight:900; }
+    .cal-dots { display:flex; flex-wrap:wrap; gap:3px; margin-top:2px; }
+    .cal-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .cal-dot.pending  { background:var(--orange); }
+    .cal-dot.accepted { background:var(--green); }
+    .cal-dot.phone    { background:var(--purple); }
+    .cal-dot.cancelled { background:var(--red); opacity:0.5; }
+    .cal-count { font-size:10px; color:var(--grey); margin-top:3px; }
+    .cal-day-detail { background:var(--dark2); border:1px solid rgba(0,155,180,0.2); border-radius:8px; padding:20px; margin-top:16px; }
+    .cal-day-detail h4 { font-size:14px; font-weight:700; color:var(--blue); margin-bottom:14px; }
 
-    /* MAIN APP */
-    .app { display: none; }
+    /* ── PANEL CARD ── */
+    .panel-card { background:var(--dark2); border:1px solid rgba(0,155,180,0.12); border-radius:8px; padding:22px; margin-bottom:22px; }
+    .panel-card h3 { font-size:13px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--blue); margin-bottom:16px; }
 
-    .layout { display: flex; min-height: 100vh; }
+    /* ── BLOCK FORM ── */
+    .block-form-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+    @media (max-width:700px) { .block-form-grid { grid-template-columns:1fr 1fr; } }
+    .form-group label { display:block; font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--grey); margin-bottom:6px; }
+    .admin-input { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:var(--white); font-family:'SupremeLL',Arial,sans-serif; font-size:14px; padding:9px 12px; width:100%; outline:none; transition:border-color 0.2s; }
+    .admin-input:focus { border-color:var(--blue); }
+    .btn-primary { background:var(--blue); border:none; border-radius:6px; color:white; cursor:pointer; font-family:'SupremeLL',Arial,sans-serif; font-size:13px; font-weight:700; letter-spacing:0.06em; padding:9px 18px; text-transform:uppercase; transition:background 0.2s; white-space:nowrap; }
+    .btn-primary:hover { background:var(--blue-dark); }
 
-    .sidebar {
-      background: var(--dark2);
-      border-right: 1px solid rgba(0,155,180,0.12);
-      width: 220px;
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      overflow-y: auto;
-    }
+    .blocks-list { display:flex; flex-direction:column; gap:10px; }
+    .block-item { background:rgba(167,139,250,0.06); border:1px solid rgba(167,139,250,0.15); border-radius:6px; padding:14px 16px; }
+    .block-item-header { display:flex; align-items:center; gap:14px; margin-bottom:0; }
+    .block-item-date { font-size:14px; font-weight:700; color:var(--purple); min-width:100px; }
+    .block-item-time { font-size:13px; font-weight:500; min-width:110px; }
+    .block-item-reason { font-size:13px; color:var(--grey); flex:1; }
+    .block-item-detail { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.06); }
+    .block-detail-field label { font-size:10px; color:var(--grey); letter-spacing:0.1em; text-transform:uppercase; display:block; margin-bottom:2px; }
+    .block-detail-field span { font-size:13px; }
+    .btn-delete { background:none; border:1px solid rgba(229,0,82,0.3); border-radius:6px; color:var(--red); cursor:pointer; font-size:12px; padding:5px 10px; transition:all 0.2s; white-space:nowrap; flex-shrink:0; }
+    .btn-delete:hover { background:rgba(229,0,82,0.1); }
 
-    .sidebar-logo { padding: 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); }
-    .sidebar-brand { font-size: 11px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--blue); }
-    .sidebar-sub { font-size: 13px; color: var(--grey); margin-top: 2px; }
+    /* ── HOURS ── */
+    .hours-table { width:100%; border-collapse:collapse; }
+    .hours-table th { font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--grey); padding:8px 12px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08); }
+    .hours-table td { padding:9px 12px; border-bottom:1px solid rgba(255,255,255,0.04); vertical-align:middle; }
+    .hours-table tr:last-child td { border-bottom:none; }
+    .day-name { font-size:14px; font-weight:500; min-width:100px; }
+    .toggle-closed { display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:var(--grey); user-select:none; }
+    .toggle-closed input[type="checkbox"] { width:16px; height:16px; accent-color:var(--blue); cursor:pointer; }
+    .range-inputs { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+    .range-inputs span { font-size:13px; color:var(--grey); }
+    .time-input { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:var(--white); font-family:'SupremeLL',Arial,sans-serif; font-size:14px; padding:7px 10px; width:90px; outline:none; transition:border-color 0.2s; }
+    .time-input:focus { border-color:var(--blue); }
+    .time-input:disabled { opacity:0.3; cursor:not-allowed; }
+    .add-range-btn { background:none; border:1px dashed rgba(0,155,180,0.4); border-radius:6px; color:var(--blue); cursor:pointer; font-size:12px; padding:5px 10px; transition:all 0.2s; }
+    .add-range-btn:hover { background:rgba(0,155,180,0.08); }
+    .add-range-btn:disabled { opacity:0.3; cursor:not-allowed; }
+    .remove-range-btn { background:none; border:none; color:var(--red); cursor:pointer; font-size:16px; padding:4px; opacity:0.6; transition:opacity 0.2s; }
+    .remove-range-btn:hover { opacity:1; }
+    .hours-save-row { margin-top:18px; display:flex; justify-content:flex-end; gap:12px; align-items:center; }
+    .hours-saved-msg { font-size:13px; color:var(--green); display:none; }
 
-    .sidebar-nav { padding: 16px 0; flex: 1; }
+    /* ── RESCHEDULE MODAL ── */
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px; }
+    .modal-overlay.hidden { display:none; }
+    .modal { background:var(--dark2); border:1px solid rgba(0,155,180,0.3); border-radius:12px; padding:28px; width:100%; max-width:480px; }
+    .modal h3 { font-size:16px; font-weight:700; margin-bottom:6px; }
+    .modal-sub { font-size:13px; color:var(--grey); margin-bottom:22px; }
+    .modal-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px; }
+    .modal-slots { display:flex; flex-wrap:wrap; gap:7px; min-height:40px; margin-top:6px; }
+    .modal-slot-btn { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:var(--white); cursor:pointer; font-family:'SupremeLL',Arial,sans-serif; font-size:13px; font-weight:500; padding:6px 13px; transition:all 0.15s; }
+    .modal-slot-btn:hover:not(:disabled) { border-color:var(--blue); color:var(--blue); }
+    .modal-slot-btn.active { background:var(--blue); border-color:var(--blue); color:white; }
+    .modal-slots-msg { font-size:13px; color:var(--grey); padding:6px 0; }
+    .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+    .btn-secondary { background:none; border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:var(--grey); cursor:pointer; font-family:'SupremeLL',Arial,sans-serif; font-size:13px; padding:9px 18px; transition:all 0.2s; }
+    .btn-secondary:hover { border-color:var(--white); color:var(--white); }
 
-    .nav-section-label {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--grey);
-      padding: 16px 20px 6px;
-      opacity: 0.6;
-    }
-
-    .nav-item {
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 20px;
-      font-size: 13px;
-      font-weight: 400;
-      color: var(--grey);
-      border-left: 3px solid transparent;
-      transition: all 0.15s;
-    }
-    .nav-item:hover { color: var(--white); background: rgba(255,255,255,0.03); }
-    .nav-item.active { color: var(--white); border-left-color: var(--blue); background: rgba(0,155,180,0.08); }
-
-    .nav-badge {
-      background: var(--blue);
-      border-radius: 10px;
-      color: white;
-      font-size: 10px;
-      font-weight: 700;
-      margin-left: auto;
-      padding: 2px 7px;
-    }
-
-    .sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.06); }
-
-    .logout-btn {
-      background: none;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 6px;
-      color: var(--grey);
-      cursor: pointer;
-      font-family: 'SupremeLL', Arial, sans-serif;
-      font-size: 12px;
-      padding: 8px 14px;
-      width: 100%;
-      transition: all 0.2s;
-    }
-    .logout-btn:hover { border-color: var(--red); color: var(--red); }
-
-    .main { flex: 1; overflow-x: hidden; }
-
-    .topbar {
-      background: var(--dark2);
-      border-bottom: 1px solid rgba(0,155,180,0.12);
-      padding: 16px 28px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .topbar-title { font-size: 18px; font-weight: 700; }
-    .topbar-date { font-size: 13px; color: var(--grey); }
-
-    .content { padding: 28px; }
-
-    /* STATS */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 28px;
-    }
-    @media (max-width: 900px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 500px) { .stats-grid { grid-template-columns: 1fr; } }
-
-    .stat-card { background: var(--dark2); border: 1px solid rgba(0,155,180,0.12); border-radius: 8px; padding: 20px; }
-    .stat-label { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--grey); margin-bottom: 8px; }
-    .stat-value { font-size: 32px; font-weight: 900; line-height: 1; }
-    .stat-value.pending { color: var(--orange); }
-    .stat-value.accepted { color: var(--green); }
-    .stat-value.cancelled { color: var(--red); }
-    .stat-value.total { color: var(--blue); }
-
-    /* BOOKING CARDS */
-    .bookings-list { display: flex; flex-direction: column; gap: 12px; }
-
-    .booking-card {
-      background: var(--dark2);
-      border: 1px solid rgba(0,155,180,0.12);
-      border-radius: 8px;
-      overflow: hidden;
-      transition: border-color 0.2s;
-    }
-    .booking-card:hover { border-color: rgba(0,155,180,0.35); }
-    .booking-card.pending { border-left: 3px solid var(--orange); }
-    .booking-card.accepted { border-left: 3px solid var(--green); }
-    .booking-card.cancelled { border-left: 3px solid var(--red); opacity: 0.6; }
-    .booking-card.phone { border-left: 3px solid #a78bfa; }
-    .status-phone { background: rgba(167,139,250,0.15); color: #a78bfa; }
-
-    .booking-header { padding: 14px 20px; display: flex; align-items: center; gap: 14px; cursor: pointer; }
-    .booking-ref { font-size: 13px; font-weight: 700; color: var(--blue); min-width: 80px; }
-    .booking-name-col { flex: 1; }
-    .booking-name { font-size: 15px; font-weight: 500; }
-    .booking-phone { font-size: 12px; color: var(--blue); margin-top: 2px; font-weight: 500; }
-    .booking-datetime { font-size: 13px; color: var(--grey); min-width: 130px; text-align: right; }
-
-    /* Quick-action tick/cross buttons in header */
-    .quick-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
-    .btn-quick {
-      width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 15px; font-weight: 700; transition: all 0.15s; flex-shrink: 0;
-    }
-    .btn-quick-accept {
-      background: rgba(0,200,150,0.15); color: var(--green); border: 1px solid rgba(0,200,150,0.3);
-    }
-    .btn-quick-accept:hover { background: var(--green); color: #0a1a1f; }
-    .btn-quick-cancel {
-      background: rgba(229,0,82,0.1); color: var(--red); border: 1px solid rgba(229,0,82,0.25);
-    }
-    .btn-quick-cancel:hover { background: rgba(229,0,82,0.25); }
-
-    .booking-service { font-size: 12px; padding: 3px 10px; border-radius: 12px; font-weight: 500; }
-    .service-oil-change { background: rgba(0,155,180,0.15); color: var(--blue); }
-    .service-small-service { background: rgba(0,200,150,0.12); color: var(--green); }
-    .service-big-service { background: rgba(145,192,29,0.12); color: #91C01D; }
-
-    .status-badge { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; }
-    .status-pending { background: rgba(245,158,11,0.15); color: var(--orange); }
-    .status-accepted { background: rgba(0,200,150,0.15); color: var(--green); }
-    .status-cancelled { background: rgba(229,0,82,0.12); color: var(--red); }
-
-    .booking-detail { border-top: 1px solid rgba(255,255,255,0.06); display: none; padding: 16px 20px; }
-    .booking-detail.open { display: block; }
-
-    .detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
-    @media (max-width: 600px) { .detail-grid { grid-template-columns: 1fr 1fr; } }
-
-    .detail-item label { font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--grey); display: block; margin-bottom: 3px; }
-    .detail-item span { font-size: 14px; font-weight: 400; }
-
-    .detail-notes { background: rgba(255,255,255,0.03); border-radius: 6px; color: var(--grey); font-size: 13px; margin-bottom: 16px; padding: 10px 14px; }
-    .action-row { display: flex; gap: 10px; }
-
-    .btn-accept {
-      background: var(--green); border: none; border-radius: 6px; color: #0a1a1f; cursor: pointer;
-      font-family: 'SupremeLL', Arial, sans-serif; font-size: 13px; font-weight: 700;
-      letter-spacing: 0.06em; padding: 10px 20px; text-transform: uppercase; transition: opacity 0.2s;
-    }
-    .btn-cancel-booking {
-      background: none; border: 1px solid rgba(229,0,82,0.4); border-radius: 6px; color: var(--red); cursor: pointer;
-      font-family: 'SupremeLL', Arial, sans-serif; font-size: 13px; font-weight: 700;
-      letter-spacing: 0.06em; padding: 10px 20px; text-transform: uppercase; transition: all 0.2s;
-    }
-    .btn-cancel-booking:hover { background: rgba(229,0,82,0.1); }
-    .btn-accept:hover { opacity: 0.85; }
-    .btn-accept:disabled, .btn-cancel-booking:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    /* TODAY VIEW */
-    .today-slot {
-      background: var(--dark2); border: 1px solid rgba(0,155,180,0.12); border-radius: 8px;
-      display: flex; align-items: center; gap: 16px; margin-bottom: 10px; padding: 14px 18px;
-    }
-    .today-time { font-size: 18px; font-weight: 900; color: var(--blue); min-width: 60px; }
-    .today-info { flex: 1; }
-    .today-name { font-size: 15px; font-weight: 500; }
-    .today-vehicle { font-size: 12px; color: var(--grey); margin-top: 2px; }
-
-    /* EMPTY STATE */
-    .empty-state { text-align: center; padding: 60px 20px; color: var(--grey); }
-    .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
-    .empty-state p { font-size: 14px; }
-
-    /* ── SCHEDULE / BLOCK VIEW ─────────────────────────────────────────── */
-    .panel-card {
-      background: var(--dark2);
-      border: 1px solid rgba(0,155,180,0.12);
-      border-radius: 8px;
-      padding: 24px;
-      margin-bottom: 24px;
-    }
-    .panel-card h3 {
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--blue);
-      margin-bottom: 18px;
-    }
-
-    .block-form {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr 2fr auto;
-      gap: 12px;
-      align-items: end;
-    }
-    @media (max-width: 800px) { .block-form { grid-template-columns: 1fr 1fr; } }
-
-    .form-group label {
-      display: block;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--grey);
-      margin-bottom: 6px;
-    }
-
-    .admin-input {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 6px;
-      color: var(--white);
-      font-family: 'SupremeLL', Arial, sans-serif;
-      font-size: 14px;
-      padding: 10px 12px;
-      width: 100%;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .admin-input:focus { border-color: var(--blue); }
-
-    .btn-primary {
-      background: var(--blue);
-      border: none;
-      border-radius: 6px;
-      color: white;
-      cursor: pointer;
-      font-family: 'SupremeLL', Arial, sans-serif;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      padding: 10px 20px;
-      text-transform: uppercase;
-      transition: background 0.2s;
-      white-space: nowrap;
-    }
-    .btn-primary:hover { background: var(--blue-dark); }
-
-    .blocks-list { display: flex; flex-direction: column; gap: 10px; }
-
-    .block-item {
-      background: rgba(0,155,180,0.06);
-      border: 1px solid rgba(0,155,180,0.15);
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 12px 16px;
-    }
-    .block-item-date { font-size: 14px; font-weight: 700; color: var(--blue); min-width: 110px; }
-    .block-item-time { font-size: 14px; font-weight: 500; min-width: 110px; }
-    .block-item-reason { font-size: 13px; color: var(--grey); flex: 1; }
-    .btn-delete {
-      background: none;
-      border: 1px solid rgba(229,0,82,0.3);
-      border-radius: 6px;
-      color: var(--red);
-      cursor: pointer;
-      font-size: 12px;
-      padding: 6px 12px;
-      transition: all 0.2s;
-      white-space: nowrap;
-    }
-    .btn-delete:hover { background: rgba(229,0,82,0.1); }
-
-    /* ── HOURS VIEW ────────────────────────────────────────────────────── */
-    .hours-table { width: 100%; border-collapse: collapse; }
-    .hours-table th {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--grey);
-      padding: 8px 12px;
-      text-align: left;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-    }
-    .hours-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
-    .hours-table tr:last-child td { border-bottom: none; }
-
-    .day-name { font-size: 14px; font-weight: 500; min-width: 100px; }
-
-    .toggle-closed {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      font-size: 13px;
-      color: var(--grey);
-      user-select: none;
-    }
-    .toggle-closed input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--blue); cursor: pointer; }
-
-    .range-inputs { display: flex; align-items: center; gap: 8px; }
-    .range-inputs span { font-size: 13px; color: var(--grey); }
-    .time-input {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 6px;
-      color: var(--white);
-      font-family: 'SupremeLL', Arial, sans-serif;
-      font-size: 14px;
-      padding: 7px 10px;
-      width: 90px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .time-input:focus { border-color: var(--blue); }
-    .time-input:disabled { opacity: 0.3; cursor: not-allowed; }
-
-    .add-range-btn {
-      background: none;
-      border: 1px dashed rgba(0,155,180,0.4);
-      border-radius: 6px;
-      color: var(--blue);
-      cursor: pointer;
-      font-size: 12px;
-      padding: 6px 12px;
-      transition: all 0.2s;
-    }
-    .add-range-btn:hover { background: rgba(0,155,180,0.08); }
-    .add-range-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-
-    .remove-range-btn {
-      background: none;
-      border: none;
-      color: var(--red);
-      cursor: pointer;
-      font-size: 16px;
-      line-height: 1;
-      padding: 4px;
-      opacity: 0.6;
-      transition: opacity 0.2s;
-    }
-    .remove-range-btn:hover { opacity: 1; }
-
-    .hours-save-row { margin-top: 20px; display: flex; justify-content: flex-end; gap: 12px; align-items: center; }
-    .hours-saved-msg { font-size: 13px; color: var(--green); display: none; }
-
-    @media print {
-      .sidebar, .topbar, .action-row, .logout-btn { display: none !important; }
-      .booking-detail { display: block !important; }
-      body { background: white; color: black; }
-    }
-
-    .accent-bar { height: 3px; background: linear-gradient(90deg, var(--blue) 0%, var(--teal) 100%); }
-
+    /* ── MISC ── */
+    .empty-state { text-align:center; padding:50px 20px; color:var(--grey); }
+    .empty-state .icon { font-size:36px; margin-bottom:12px; }
+    .empty-state p { font-size:14px; }
+    .section-divider { font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--grey); padding:18px 0 8px; opacity:0.7; }
+    .accent-bar { height:3px; background:linear-gradient(90deg,var(--blue) 0%,var(--teal) 100%); }
     .spinner { display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,0.3); border-top-color:white; border-radius:50%; animation:spin 0.6s linear infinite; vertical-align:middle; margin-right:6px; }
     @keyframes spin { to { transform:rotate(360deg); } }
-
-    .toast {
-      position: fixed; bottom: 24px; right: 24px;
-      background: var(--dark3); border: 1px solid rgba(0,155,180,0.3);
-      border-radius: 8px; color: white; font-size: 14px;
-      padding: 14px 20px; z-index: 999;
-      transform: translateY(80px); opacity: 0; transition: all 0.3s;
-    }
-    .toast.show { transform: translateY(0); opacity: 1; }
-    .toast.success { border-color: rgba(0,200,150,0.5); }
-    .toast.error { border-color: rgba(229,0,82,0.5); }
+    .toast { position:fixed; bottom:24px; right:24px; background:var(--dark3); border:1px solid rgba(0,155,180,0.3); border-radius:8px; color:white; font-size:14px; padding:13px 18px; z-index:999; transform:translateY(80px); opacity:0; transition:all 0.3s; max-width:320px; }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .toast.success { border-color:rgba(0,200,150,0.5); }
+    .toast.error { border-color:rgba(229,0,82,0.5); }
+    @media print { .sidebar,.topbar,.action-row,.logout-btn,.quick-actions { display:none !important; } .booking-detail { display:block !important; } body { background:white; color:black; } }
   </style>
 </head>
 <body>
-
 <div class="accent-bar"></div>
 
 <!-- LOGIN -->
@@ -512,7 +252,7 @@
     <!-- SIDEBAR -->
     <div class="sidebar">
       <div class="sidebar-logo">
-        <div class="sidebar-brand">CFMOTO</div>
+        <div class="sidebar-brand">CFMOTO / SYM</div>
         <div class="sidebar-sub">Service Bookings</div>
       </div>
       <nav class="sidebar-nav">
@@ -523,16 +263,20 @@
         </div>
         <div class="nav-item" id="nav-pending" onclick="setView('pending')">
           <span>⏳</span> Pending
-          <span class="nav-badge" id="badge-pending" style="background:var(--orange);">0</span>
+          <span class="nav-badge orange" id="badge-pending">0</span>
         </div>
         <div class="nav-item" id="nav-accepted" onclick="setView('accepted')">
           <span>✅</span> Accepted
         </div>
         <div class="nav-item" id="nav-cancelled" onclick="setView('cancelled')">
           <span>❌</span> Cancelled
+          <span class="nav-badge red" id="badge-needs-contact" style="display:none;">!</span>
         </div>
         <div class="nav-item" id="nav-today" onclick="setView('today')">
           <span>📅</span> Today's Schedule
+        </div>
+        <div class="nav-item" id="nav-calendar" onclick="setView('calendar')">
+          <span>🗓️</span> Calendar
         </div>
         <div class="nav-section-label">Management</div>
         <div class="nav-item" id="nav-schedule" onclick="setView('schedule')">
@@ -556,7 +300,7 @@
       </div>
       <div class="content">
 
-        <!-- Stats (hidden on schedule/hours) -->
+        <!-- Stats -->
         <div class="stats-grid" id="stats-grid">
           <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value pending" id="stat-pending">–</div></div>
           <div class="stat-card"><div class="stat-label">Accepted</div><div class="stat-value accepted" id="stat-accepted">–</div></div>
@@ -564,40 +308,63 @@
           <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value total" id="stat-total">–</div></div>
         </div>
 
-        <!-- Bookings list -->
+        <!-- Bookings list view -->
         <div id="bookings-view">
           <div class="bookings-list" id="bookings-list"></div>
         </div>
 
+        <!-- Cancelled view -->
+        <div id="cancelled-view" style="display:none;"></div>
+
         <!-- Today view -->
         <div id="today-view" style="display:none;"></div>
 
-        <!-- ── SCHEDULE / BLOCK VIEW ───────────────────────────────────── -->
-        <div id="schedule-view" style="display:none;">
+        <!-- Calendar view -->
+        <div id="calendar-view" style="display:none;"></div>
 
+        <!-- Block Time view -->
+        <div id="schedule-view" style="display:none;">
           <div class="panel-card">
             <h3>🚫 Block Time Slot</h3>
-            <p style="font-size:13px;color:var(--grey);margin-bottom:18px;">
-              Use this to block off time for phone bookings, walk-ins, long jobs, or any reason. Blocked slots will not be available for online booking.
-            </p>
-            <div class="block-form">
+            <p style="font-size:13px;color:var(--grey);margin-bottom:18px;">Block time for phone bookings, long jobs, or any reason. Blocked slots are unavailable for online booking.</p>
+            <div class="block-form-grid" style="margin-bottom:12px;">
               <div class="form-group">
-                <label>Date</label>
+                <label>Date *</label>
                 <input type="date" class="admin-input" id="block-date">
               </div>
               <div class="form-group">
-                <label>From</label>
+                <label>From *</label>
                 <input type="time" class="admin-input" id="block-start" step="1800">
               </div>
               <div class="form-group">
-                <label>To</label>
+                <label>To *</label>
                 <input type="time" class="admin-input" id="block-end" step="1800">
               </div>
               <div class="form-group">
-                <label>Reason (optional)</label>
-                <input type="text" class="admin-input" id="block-reason" placeholder="e.g. Phone booking – Michalis, 4hr engine job">
+                <label>Customer Name</label>
+                <input type="text" class="admin-input" id="block-customer-name" placeholder="e.g. Michalis Petrou">
               </div>
-              <button class="btn-primary" onclick="createBlock()">Block</button>
+              <div class="form-group">
+                <label>Customer Phone</label>
+                <input type="text" class="admin-input" id="block-customer-phone" placeholder="e.g. 99 123 456">
+              </div>
+              <div class="form-group">
+                <label>Vehicle Model</label>
+                <input type="text" class="admin-input" id="block-vehicle" placeholder="e.g. CFMOTO 450NK">
+              </div>
+            </div>
+            <div class="block-form-grid" style="margin-bottom:14px;">
+              <div class="form-group" style="grid-column:1/-1;">
+                <label>Job Description / Reason</label>
+                <input type="text" class="admin-input" id="block-reason" placeholder="e.g. 4hr engine rebuild, phone booking">
+              </div>
+            </div>
+            <div>
+              <label class="form-group" style="display:block;margin-bottom:6px;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--grey);">Internal Notes</label>
+              <textarea class="admin-input" id="block-notes" placeholder="Any extra details, parts needed, special instructions…" style="resize:vertical;min-height:70px;"></textarea>
+            </div>
+            <div style="margin-top:14px;">
+              <button class="btn-primary" onclick="createBlock()">Block This Time</button>
             </div>
           </div>
 
@@ -607,24 +374,15 @@
               <div class="empty-state"><div class="icon">✅</div><p>No blocks — all slots are open.</p></div>
             </div>
           </div>
-
         </div>
 
-        <!-- ── HOURS VIEW ──────────────────────────────────────────────── -->
+        <!-- Opening Hours view -->
         <div id="hours-view" style="display:none;">
           <div class="panel-card">
             <h3>🕐 Opening Hours</h3>
-            <p style="font-size:13px;color:var(--grey);margin-bottom:20px;">
-              Set the days and times customers can book online. Changes take effect immediately.
-            </p>
+            <p style="font-size:13px;color:var(--grey);margin-bottom:20px;">Set the days and times customers can book online. Changes take effect immediately.</p>
             <table class="hours-table" id="hours-table">
-              <thead>
-                <tr>
-                  <th>Day</th>
-                  <th>Closed</th>
-                  <th>Time Ranges</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Day</th><th>Closed</th><th>Time Ranges</th></tr></thead>
               <tbody id="hours-tbody"></tbody>
             </table>
             <div class="hours-save-row">
@@ -639,6 +397,31 @@
   </div>
 </div>
 
+<!-- RESCHEDULE MODAL -->
+<div class="modal-overlay hidden" id="reschedule-modal">
+  <div class="modal">
+    <h3>🗓️ Reschedule Appointment</h3>
+    <div class="modal-sub" id="reschedule-modal-sub">Select a new date and time for this booking.</div>
+    <div class="modal-form-grid">
+      <div class="form-group" style="grid-column:1/-1;">
+        <label>New Date *</label>
+        <input type="date" class="admin-input" id="reschedule-date" onchange="loadRescheduleSlots()">
+      </div>
+      <div class="form-group" style="grid-column:1/-1;">
+        <label>Available Slots *</label>
+        <div class="modal-slots" id="reschedule-slots">
+          <span class="modal-slots-msg">Select a date first.</span>
+        </div>
+        <input type="hidden" id="reschedule-time">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeRescheduleModal()">Cancel</button>
+      <button class="btn-primary" onclick="confirmReschedule()">Confirm & Notify Customer</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -649,17 +432,18 @@
   let currentView = 'all';
   let expandedId = null;
   let currentHours = null;
+  let calYear = new Date().getFullYear();
+  let calMonth = new Date().getMonth();
+  let calSelectedDate = null;
+  let rescheduleBookingId = null;
+  let rescheduleSelectedTime = null;
 
   // ── AUTH ──────────────────────────────────────────────────────────────
   async function login() {
     const pw = document.getElementById('password-input').value;
     const errEl = document.getElementById('login-error');
     errEl.style.display = 'none';
-    const res = await fetch('/api/admin/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: pw })
-    });
+    const res = await fetch('/api/admin/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ password: pw }) });
     const data = await res.json();
     if (res.ok) {
       document.getElementById('login-screen').style.display = 'none';
@@ -672,7 +456,7 @@
   }
 
   async function logout() {
-    await fetch('/api/admin/logout', { method: 'POST' });
+    await fetch('/api/admin/logout', { method:'POST' });
     location.reload();
   }
 
@@ -688,21 +472,23 @@
   // ── INIT ──────────────────────────────────────────────────────────────
   function initApp() {
     document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-    // Set default date for block form to today
     document.getElementById('block-date').value = new Date().toISOString().split('T')[0];
+    const rd = document.getElementById('reschedule-date');
+    const today = new Date().toISOString().split('T')[0];
+    const maxD = new Date(); maxD.setDate(maxD.getDate() + 90);
+    rd.min = today;
+    rd.max = maxD.toISOString().split('T')[0];
     loadBookings();
     setInterval(loadBookings, 30000);
   }
 
   async function loadBookings() {
-    const [bRes, blRes] = await Promise.all([
-      fetch('/api/admin/bookings'),
-      fetch('/api/admin/blocks')
-    ]);
+    const [bRes, blRes] = await Promise.all([fetch('/api/admin/bookings'), fetch('/api/admin/blocks')]);
     if (bRes.ok)  allBookings = await bRes.json();
     if (blRes.ok) allBlocks   = await blRes.json();
     updateStats();
-    if (['all','pending','accepted','cancelled','today'].includes(currentView)) renderView();
+    if (['all','pending','accepted','today','calendar'].includes(currentView)) renderView();
+    if (currentView === 'cancelled') renderView();
   }
 
   // ── STATS ──────────────────────────────────────────────────────────────
@@ -710,19 +496,23 @@
     const pending   = allBookings.filter(b => b.status === 'pending').length;
     const accepted  = allBookings.filter(b => b.status === 'accepted').length;
     const cancelled = allBookings.filter(b => b.status === 'cancelled').length;
+    const needsContact = allBookings.filter(b => b.status === 'cancelled' && b.contactStatus === 'needs-contact').length;
     document.getElementById('stat-pending').textContent   = pending;
     document.getElementById('stat-accepted').textContent  = accepted;
     document.getElementById('stat-cancelled').textContent = cancelled;
     document.getElementById('stat-total').textContent     = allBookings.length + allBlocks.length;
     document.getElementById('badge-all').textContent      = allBookings.length + allBlocks.length;
     document.getElementById('badge-pending').textContent  = pending;
+    const ncBadge = document.getElementById('badge-needs-contact');
+    ncBadge.textContent = needsContact;
+    ncBadge.style.display = needsContact > 0 ? 'inline' : 'none';
   }
 
   // ── VIEWS ──────────────────────────────────────────────────────────────
   const VIEW_TITLES = {
     all:'All Bookings', pending:'Pending', accepted:'Accepted',
     cancelled:'Cancelled', today:"Today's Schedule",
-    schedule:'Block Time', hours:'Opening Hours'
+    calendar:'Calendar', schedule:'Block Time', hours:'Opening Hours'
   };
 
   function setView(view) {
@@ -735,50 +525,46 @@
   }
 
   function renderView() {
-    const bookingView  = document.getElementById('bookings-view');
-    const todayView    = document.getElementById('today-view');
-    const statsGrid    = document.getElementById('stats-grid');
-    const scheduleView = document.getElementById('schedule-view');
-    const hoursView    = document.getElementById('hours-view');
-
-    // Hide all
-    bookingView.style.display  = 'none';
-    todayView.style.display    = 'none';
-    scheduleView.style.display = 'none';
-    hoursView.style.display    = 'none';
-    statsGrid.style.display    = 'none';
+    const ids = ['bookings-view','cancelled-view','today-view','calendar-view','schedule-view','hours-view'];
+    ids.forEach(id => document.getElementById(id).style.display = 'none');
+    document.getElementById('stats-grid').style.display = 'none';
 
     if (currentView === 'today') {
-      todayView.style.display = 'block';
+      document.getElementById('today-view').style.display = 'block';
       renderToday();
+    } else if (currentView === 'calendar') {
+      document.getElementById('calendar-view').style.display = 'block';
+      renderCalendar();
     } else if (currentView === 'schedule') {
-      scheduleView.style.display = 'block';
+      document.getElementById('schedule-view').style.display = 'block';
       loadBlocks();
     } else if (currentView === 'hours') {
-      hoursView.style.display = 'block';
+      document.getElementById('hours-view').style.display = 'block';
       loadHours();
+    } else if (currentView === 'cancelled') {
+      document.getElementById('cancelled-view').style.display = 'block';
+      document.getElementById('stats-grid').style.display = 'grid';
+      renderCancelledView();
     } else {
-      bookingView.style.display = 'block';
-      statsGrid.style.display   = 'grid';
+      document.getElementById('bookings-view').style.display = 'block';
+      document.getElementById('stats-grid').style.display = 'grid';
       renderBookings();
     }
   }
 
+  // ── ALL BOOKINGS / PENDING / ACCEPTED ─────────────────────────────────
   function renderBookings() {
     let filtered = allBookings;
-    if (currentView !== 'all') filtered = allBookings.filter(b => b.status === currentView);
+    if (currentView === 'pending')  filtered = allBookings.filter(b => b.status === 'pending');
+    if (currentView === 'accepted') filtered = allBookings.filter(b => b.status === 'accepted');
 
-    // Build combined list: bookings + blocks (only in 'all' view)
-    let items = filtered.map(b => ({ ...b, _type: 'booking', _sortKey: b.date + 'T' + b.time }));
+    let items = filtered.map(b => ({ ...b, _type:'booking', _sortKey: b.date + 'T' + b.time }));
 
     if (currentView === 'all') {
-      const blockItems = allBlocks.map(bl => ({
-        ...bl, _type: 'block', _sortKey: bl.date + 'T' + bl.startTime
-      }));
+      const blockItems = allBlocks.map(bl => ({ ...bl, _type:'block', _sortKey: bl.date + 'T' + bl.startTime }));
       items = [...items, ...blockItems];
     }
 
-    // Sort: pending first, then by date/time
     items.sort((a, b) => {
       if (a.status === 'pending' && b.status !== 'pending') return -1;
       if (b.status === 'pending' && a.status !== 'pending') return 1;
@@ -793,103 +579,129 @@
     list.innerHTML = items.map(item => item._type === 'block' ? blockCard(item) : bookingCard(item)).join('');
   }
 
-  function blockCard(bl) {
-    const isExpanded = expandedId === 'block-' + bl.id;
-    return `
-      <div class="booking-card phone" id="card-block-${bl.id}">
-        <div class="booking-header" onclick="toggleExpandBlock(${bl.id})">
-          <div class="booking-ref" style="color:#a78bfa;">📞 Phone</div>
-          <div class="booking-name-col">
-            <div class="booking-name">${bl.reason || 'Manual Block'}</div>
-            <div class="booking-phone" style="color:#a78bfa;">${bl.startTime} – ${bl.endTime}</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-            <span class="status-badge status-phone">Via Phone</span>
-          </div>
-          <div class="booking-datetime">${bl.date}<br>${bl.startTime}–${bl.endTime}</div>
-          <div class="quick-actions" onclick="event.stopPropagation()">
-            <button class="btn-quick btn-quick-cancel" title="Remove block" onclick="deleteBlockFromList(${bl.id})">✕</button>
-          </div>
-        </div>
-        <div class="booking-detail ${isExpanded ? 'open' : ''}" id="detail-block-${bl.id}">
-          <div class="detail-grid">
-            <div class="detail-item"><label>Date</label><span>${formatDate(bl.date)}</span></div>
-            <div class="detail-item"><label>Time Range</label><span>${bl.startTime} – ${bl.endTime}</span></div>
-            <div class="detail-item"><label>Added</label><span>${new Date(bl.createdAt).toLocaleString('en-GB')}</span></div>
-          </div>
-          ${bl.reason ? `<div class="detail-notes">📝 ${bl.reason}</div>` : ''}
-          <div class="action-row">
-            <button class="btn-cancel-booking" onclick="deleteBlockFromList(${bl.id})">✕ Remove Block</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
+  // ── CANCELLED VIEW ────────────────────────────────────────────────────
+  function renderCancelledView() {
+    const el = document.getElementById('cancelled-view');
+    const cancelled = allBookings.filter(b => b.status === 'cancelled')
+      .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
 
-  function toggleExpandBlock(id) {
-    const key = 'block-' + id;
-    expandedId = expandedId === key ? null : key;
-    renderBookings();
-  }
-
-  function renderToday() {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const todayBookings = allBookings
-      .filter(b => b.date === todayStr && b.status === 'accepted')
-      .sort((a,b) => a.time.localeCompare(b.time));
-
-    const el = document.getElementById('today-view');
-    if (todayBookings.length === 0) {
-      el.innerHTML = `<div class="empty-state"><div class="icon">🏖️</div><p>No accepted appointments for today.</p></div>`;
+    if (cancelled.length === 0) {
+      el.innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>No cancelled bookings.</p></div>`;
       return;
     }
-    el.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-        <div style="font-size:16px;font-weight:700;">${todayBookings.length} appointment${todayBookings.length>1?'s':''} today</div>
-        <button onclick="window.print()" style="background:none;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:var(--grey);cursor:pointer;font-size:12px;padding:7px 14px;">🖨️ Print</button>
-      </div>
-      ${todayBookings.map(b => `
-        <div class="today-slot">
-          <div class="today-time">${b.time}</div>
-          <div class="today-info">
-            <div class="today-name">${b.name}</div>
-            <div class="today-vehicle">${b.year} ${b.model} · ${b.plate} · ${SVC[b.serviceType]}</div>
-          </div>
-          <div style="font-size:13px;color:var(--grey);">${b.phone}</div>
-        </div>
-      `).join('')}
-    `;
+
+    const needsContact = cancelled.filter(b => b.contactStatus === 'needs-contact');
+    const contacted    = cancelled.filter(b => b.contactStatus === 'contacted');
+    const closed       = cancelled.filter(b => b.contactStatus === 'closed' || !b.contactStatus);
+
+    let html = '';
+
+    if (needsContact.length > 0) {
+      html += `<div class="section-divider">🔴 Needs to be contacted (${needsContact.length})</div>`;
+      html += `<div class="bookings-list" style="margin-bottom:20px;">${needsContact.map(b => cancelledCard(b)).join('')}</div>`;
+    }
+
+    if (contacted.length > 0) {
+      html += `<div class="section-divider">🔵 Contacted – awaiting action (${contacted.length})</div>`;
+      html += `<div class="bookings-list" style="margin-bottom:20px;">${contacted.map(b => cancelledCard(b)).join('')}</div>`;
+    }
+
+    if (closed.length > 0) {
+      html += `<div class="section-divider">⚫ Closed / Handled (${closed.length})</div>`;
+      html += `<div class="bookings-list">${closed.map(b => cancelledCard(b)).join('')}</div>`;
+    }
+
+    el.innerHTML = html;
   }
 
+  function cancelledCard(b) {
+    const isExpanded = expandedId === b.id;
+    const cs = b.contactStatus || 'closed';
+    const csBadge = cs === 'needs-contact'
+      ? `<span class="contact-badge contact-needs">⚠ Needs Contact</span>`
+      : cs === 'contacted'
+      ? `<span class="contact-badge contact-contacted">📞 Contacted</span>`
+      : `<span class="contact-badge contact-closed">Closed</span>`;
+
+    let actions = '';
+    if (cs === 'needs-contact') {
+      actions = `
+        <div class="action-row">
+          <button class="btn-contact-action" onclick="setContactStatus(${b.id}, 'contacted', event)">📞 Mark as Contacted</button>
+          <button class="btn-reschedule" onclick="openRescheduleModal(${b.id}, event)">🗓️ Reschedule</button>
+          <button class="btn-cancel-booking" onclick="setContactStatus(${b.id}, 'closed', event)" title="Close without action">✓ Close</button>
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:var(--grey);">After contacting the customer, mark as contacted. Then either reschedule their appointment or close the case.</div>`;
+    } else if (cs === 'contacted') {
+      actions = `
+        <div class="action-row">
+          <button class="btn-reschedule" onclick="openRescheduleModal(${b.id}, event)">🗓️ Reschedule Appointment</button>
+          <button class="btn-contact-action close" onclick="setContactStatus(${b.id}, 'closed', event)">✓ Customer Notified – Close</button>
+        </div>`;
+    } else {
+      actions = `<div style="font-size:12px;color:var(--grey);">Handled on ${b.updatedAt ? new Date(b.updatedAt).toLocaleString('en-GB') : '—'}</div>`;
+    }
+
+    return `
+      <div class="booking-card cancelled" id="card-${b.id}">
+        <div class="booking-header" onclick="toggleExpand(${b.id})">
+          <div class="booking-ref">${b.ref}</div>
+          <div class="booking-name-col">
+            <div class="booking-name">${b.name}</div>
+            <div class="booking-phone-row">📞 ${b.phone}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
+            <span class="booking-service service-${b.serviceType}">${SVC[b.serviceType]}</span>
+            ${csBadge}
+          </div>
+          <div class="booking-datetime">${b.date}<br>${b.time}</div>
+          <div class="quick-actions" onclick="event.stopPropagation()">
+            <button class="btn-quick btn-quick-reschedule" title="Reschedule" onclick="openRescheduleModal(${b.id}, event)">↺</button>
+          </div>
+        </div>
+        <div class="booking-detail ${isExpanded ? 'open' : ''}" id="detail-${b.id}">
+          <div class="detail-grid">
+            <div class="detail-item"><label>Phone</label><span>${b.phone}</span></div>
+            <div class="detail-item"><label>Email</label><span>${b.email || '—'}</span></div>
+            <div class="detail-item"><label>Plate</label><span>${b.plate}</span></div>
+            <div class="detail-item"><label>Model</label><span>${b.model}</span></div>
+            <div class="detail-item"><label>Year</label><span>${b.year}</span></div>
+            <div class="detail-item"><label>KM</label><span>${b.km ? Number(b.km).toLocaleString() + ' km' : '—'}</span></div>
+            <div class="detail-item"><label>Cancelled</label><span>${b.updatedAt ? new Date(b.updatedAt).toLocaleString('en-GB') : '—'}</span></div>
+          </div>
+          ${b.notes ? `<div class="detail-notes">📝 ${b.notes}</div>` : ''}
+          ${actions}
+        </div>
+      </div>`;
+  }
+
+  // ── BOOKING CARD ──────────────────────────────────────────────────────
   function bookingCard(b) {
-    const svcClass = 'service-' + b.serviceType;
     const isExpanded = expandedId === b.id;
 
-    // Quick-action buttons in header row
     const quickActions = b.status === 'pending' ? `
       <div class="quick-actions" onclick="event.stopPropagation()">
         <button class="btn-quick btn-quick-accept" title="Accept" onclick="acceptBooking(${b.id}, event)">✓</button>
+        <button class="btn-quick btn-quick-reschedule" title="Reschedule" onclick="openRescheduleModal(${b.id}, event)">↺</button>
         <button class="btn-quick btn-quick-cancel" title="Cancel" onclick="cancelBooking(${b.id}, event)">✕</button>
-      </div>
-    ` : b.status === 'accepted' ? `
+      </div>` : b.status === 'accepted' ? `
       <div class="quick-actions" onclick="event.stopPropagation()">
-        <button class="btn-quick btn-quick-cancel" title="Cancel booking" onclick="cancelBooking(${b.id}, event)">✕</button>
-      </div>
-    ` : '';
+        <button class="btn-quick btn-quick-reschedule" title="Reschedule" onclick="openRescheduleModal(${b.id}, event)">↺</button>
+        <button class="btn-quick btn-quick-cancel" title="Cancel" onclick="cancelBooking(${b.id}, event)">✕</button>
+      </div>` : '';
 
-    // Expanded action row
     let actions = '';
     if (b.status === 'pending') {
-      actions = `
-        <div class="action-row">
-          <button class="btn-accept" onclick="acceptBooking(${b.id}, event)">✓ Accept & Confirm</button>
-          <button class="btn-cancel-booking" onclick="cancelBooking(${b.id}, event)">✕ Cancel</button>
-        </div>`;
+      actions = `<div class="action-row">
+        <button class="btn-accept" onclick="acceptBooking(${b.id}, event)">✓ Accept & Confirm</button>
+        <button class="btn-reschedule" onclick="openRescheduleModal(${b.id}, event)">↺ Reschedule</button>
+        <button class="btn-cancel-booking" onclick="cancelBooking(${b.id}, event)">✕ Cancel</button>
+      </div>`;
     } else if (b.status === 'accepted') {
-      actions = `
-        <div class="action-row">
-          <button class="btn-cancel-booking" onclick="cancelBooking(${b.id}, event)">✕ Cancel This Booking</button>
-        </div>`;
+      actions = `<div class="action-row">
+        <button class="btn-reschedule" onclick="openRescheduleModal(${b.id}, event)">↺ Reschedule</button>
+        <button class="btn-cancel-booking" onclick="cancelBooking(${b.id}, event)">✕ Cancel This Booking</button>
+      </div>`;
     } else {
       actions = `<div style="font-size:12px;color:var(--grey);">Cancelled: ${b.updatedAt ? new Date(b.updatedAt).toLocaleString('en-GB') : '—'}</div>`;
     }
@@ -900,10 +712,10 @@
           <div class="booking-ref">${b.ref}</div>
           <div class="booking-name-col">
             <div class="booking-name">${b.name}</div>
-            <div class="booking-phone">📞 ${b.phone}</div>
+            <div class="booking-phone-row">📞 ${b.phone}</div>
           </div>
-          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-            <span class="booking-service ${svcClass}">${SVC[b.serviceType]}</span>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+            <span class="booking-service service-${b.serviceType}">${SVC[b.serviceType]}</span>
             <span class="status-badge status-${b.status}">${b.status}</span>
           </div>
           <div class="booking-datetime">${b.date}<br>${b.time}</div>
@@ -916,54 +728,293 @@
             <div class="detail-item"><label>Plate</label><span>${b.plate}</span></div>
             <div class="detail-item"><label>Model</label><span>${b.model}</span></div>
             <div class="detail-item"><label>Year</label><span>${b.year}</span></div>
-            <div class="detail-item"><label>Current KM</label><span>${b.km ? Number(b.km).toLocaleString() + ' km' : '—'}</span></div>
+            <div class="detail-item"><label>KM</label><span>${b.km ? Number(b.km).toLocaleString() + ' km' : '—'}</span></div>
             <div class="detail-item"><label>Booked</label><span>${new Date(b.createdAt).toLocaleString('en-GB')}</span></div>
           </div>
           ${b.notes ? `<div class="detail-notes">📝 ${b.notes}</div>` : ''}
           ${actions}
         </div>
-      </div>
-    `;
+      </div>`;
+  }
+
+  function blockCard(bl) {
+    const isExpanded = expandedId === 'block-' + bl.id;
+    const hasExtra = bl.customerName || bl.customerPhone || bl.vehicleModel || bl.notes;
+    return `
+      <div class="booking-card phone" id="card-block-${bl.id}">
+        <div class="booking-header" onclick="toggleExpandBlock(${bl.id})">
+          <div class="booking-ref" style="color:var(--purple);">📞</div>
+          <div class="booking-name-col">
+            <div class="booking-name">${bl.customerName || bl.reason || 'Manual Block'}</div>
+            <div class="booking-phone-row" style="color:var(--purple);">${bl.startTime} – ${bl.endTime}${bl.vehicleModel ? ' · ' + bl.vehicleModel : ''}</div>
+          </div>
+          <span class="status-badge status-phone">Via Phone</span>
+          <div class="booking-datetime">${bl.date}<br>${bl.startTime}–${bl.endTime}</div>
+          <div class="quick-actions" onclick="event.stopPropagation()">
+            <button class="btn-quick btn-quick-cancel" title="Remove" onclick="deleteBlockFromList(${bl.id})">✕</button>
+          </div>
+        </div>
+        <div class="booking-detail ${isExpanded ? 'open' : ''}" id="detail-block-${bl.id}">
+          <div class="detail-grid">
+            <div class="detail-item"><label>Date</label><span>${formatDate(bl.date)}</span></div>
+            <div class="detail-item"><label>Time</label><span>${bl.startTime} – ${bl.endTime}</span></div>
+            <div class="detail-item"><label>Added</label><span>${new Date(bl.createdAt).toLocaleString('en-GB')}</span></div>
+            ${bl.customerName  ? `<div class="detail-item"><label>Customer</label><span>${bl.customerName}</span></div>` : ''}
+            ${bl.customerPhone ? `<div class="detail-item"><label>Phone</label><span>${bl.customerPhone}</span></div>` : ''}
+            ${bl.vehicleModel  ? `<div class="detail-item"><label>Vehicle</label><span>${bl.vehicleModel}</span></div>` : ''}
+          </div>
+          ${bl.reason ? `<div class="detail-notes">📋 ${bl.reason}</div>` : ''}
+          ${bl.notes  ? `<div class="detail-notes">📝 ${bl.notes}</div>`  : ''}
+          <div class="action-row">
+            <button class="btn-cancel-booking" onclick="deleteBlockFromList(${bl.id})">✕ Remove Block</button>
+          </div>
+        </div>
+      </div>`;
   }
 
   function toggleExpand(id) {
     expandedId = expandedId === id ? null : id;
+    renderView();
+  }
+  function toggleExpandBlock(id) {
+    const key = 'block-' + id;
+    expandedId = expandedId === key ? null : key;
     renderBookings();
+  }
+
+  // ── TODAY VIEW ────────────────────────────────────────────────────────
+  function renderToday() {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayB = allBookings.filter(b => b.date === todayStr && b.status === 'accepted').sort((a,b) => a.time.localeCompare(b.time));
+    const todayBlocks = allBlocks.filter(bl => bl.date === todayStr).sort((a,b) => a.startTime.localeCompare(b.startTime));
+    const el = document.getElementById('today-view');
+
+    if (todayB.length === 0 && todayBlocks.length === 0) {
+      el.innerHTML = `<div class="empty-state"><div class="icon">🏖️</div><p>No appointments for today.</p></div>`;
+      return;
+    }
+
+    const allToday = [
+      ...todayB.map(b => ({ ...b, _type:'booking' })),
+      ...todayBlocks.map(bl => ({ ...bl, _type:'block', time: bl.startTime }))
+    ].sort((a,b) => a.time.localeCompare(b.time));
+
+    el.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div style="font-size:16px;font-weight:700;">${allToday.length} item${allToday.length>1?'s':''} today</div>
+        <button onclick="window.print()" style="background:none;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:var(--grey);cursor:pointer;font-size:12px;padding:7px 14px;">🖨️ Print</button>
+      </div>
+      ${allToday.map(item => item._type === 'block' ? `
+        <div class="today-slot" style="border-left:3px solid var(--purple);">
+          <div class="today-time" style="color:var(--purple);">${item.startTime}</div>
+          <div class="today-info">
+            <div class="today-name">${item.customerName || item.reason || 'Manual Block'}</div>
+            <div class="today-vehicle">${item.vehicleModel || ''} ${item.customerPhone ? '· ' + item.customerPhone : ''} · Via Phone${item.endTime ? ' until ' + item.endTime : ''}</div>
+          </div>
+          <span class="status-badge status-phone">Phone</span>
+        </div>` : `
+        <div class="today-slot">
+          <div class="today-time">${item.time}</div>
+          <div class="today-info">
+            <div class="today-name">${item.name}</div>
+            <div class="today-vehicle">${item.year} ${item.model} · ${item.plate} · ${SVC[item.serviceType]}</div>
+          </div>
+          <div style="font-size:13px;color:var(--grey);">${item.phone}</div>
+        </div>`
+      ).join('')}`;
+  }
+
+  // ── CALENDAR VIEW ─────────────────────────────────────────────────────
+  function renderCalendar() {
+    const el = document.getElementById('calendar-view');
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const monthName = new Date(calYear, calMonth, 1).toLocaleDateString('en-GB', { month:'long', year:'numeric' });
+
+    // Build day-to-events map
+    const eventMap = {};
+    allBookings.forEach(b => {
+      if (!eventMap[b.date]) eventMap[b.date] = [];
+      eventMap[b.date].push({ type: b.status, label: b.name, sub: SVC[b.serviceType] + ' · ' + b.time, id: b.id, _b: b });
+    });
+    allBlocks.forEach(bl => {
+      if (!eventMap[bl.date]) eventMap[bl.date] = [];
+      eventMap[bl.date].push({ type:'phone', label: bl.customerName || bl.reason || 'Phone Block', sub: bl.startTime + '–' + bl.endTime, id: bl.id });
+    });
+
+    // First day of month
+    const firstDay = new Date(calYear, calMonth, 1).getDay();
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+    // Cells
+    let cells = '';
+    // Leading blanks
+    for (let i = 0; i < firstDay; i++) {
+      cells += `<div class="cal-cell other-month"></div>`;
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const events = eventMap[dateStr] || [];
+      const isToday = dateStr === todayStr;
+      const isSelected = dateStr === calSelectedDate;
+      const dotsHtml = events.slice(0,6).map(e => `<div class="cal-dot ${e.type}"></div>`).join('');
+      const countLabel = events.length > 0 ? `<div class="cal-count">${events.length} appt${events.length>1?'s':''}</div>` : '';
+      cells += `<div class="cal-cell${isToday?' today':''}${isSelected?' selected':''}" onclick="selectCalDay('${dateStr}')">
+        <div class="cal-day-num">${d}</div>
+        <div class="cal-dots">${dotsHtml}</div>
+        ${countLabel}
+      </div>`;
+    }
+
+    // Selected day detail
+    let dayDetail = '';
+    if (calSelectedDate) {
+      const events = eventMap[calSelectedDate] || [];
+      const label = new Date(calSelectedDate + 'T12:00:00').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
+      if (events.length === 0) {
+        dayDetail = `<div class="cal-day-detail"><h4>📅 ${label}</h4><p style="font-size:13px;color:var(--grey);">No appointments on this day.</p></div>`;
+      } else {
+        const rows = events.sort((a,b) => (a.sub||'').localeCompare(b.sub||'')).map(e => `
+          <div class="today-slot" style="border-left:3px solid var(--${e.type==='phone'?'purple':e.type==='accepted'?'green':e.type==='cancelled'?'red':'orange'});">
+            <div class="today-time" style="font-size:14px;color:var(--${e.type==='phone'?'purple':e.type==='accepted'?'green':e.type==='cancelled'?'red':'orange'});">${(e.sub||'').split(' · ')[1]||''}</div>
+            <div class="today-info">
+              <div class="today-name">${e.label}</div>
+              <div class="today-vehicle">${e.sub}</div>
+            </div>
+            ${e._b ? `<div class="quick-actions">
+              <button class="btn-quick btn-quick-reschedule" title="Reschedule" onclick="openRescheduleModal(${e._b.id}, event)">↺</button>
+            </div>` : ''}
+          </div>`).join('');
+        dayDetail = `<div class="cal-day-detail"><h4>📅 ${label} — ${events.length} appointment${events.length>1?'s':''}</h4>${rows}</div>`;
+      }
+    }
+
+    el.innerHTML = `
+      <div style="background:var(--dark2);border:1px solid rgba(0,155,180,0.12);border-radius:8px;padding:22px;">
+        <div class="cal-header">
+          <button class="cal-nav-btn" onclick="calNav(-1)">◀ Prev</button>
+          <div class="cal-month-label">${monthName}</div>
+          <button class="cal-nav-btn" onclick="calNav(1)">Next ▶</button>
+        </div>
+        <div class="cal-grid">
+          ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => `<div class="cal-day-header">${d}</div>`).join('')}
+          ${cells}
+        </div>
+        ${dayDetail}
+      </div>
+      <div style="display:flex;gap:16px;margin-top:14px;flex-wrap:wrap;">
+        <span style="font-size:12px;color:var(--grey);">Legend:</span>
+        <span style="font-size:12px;display:flex;align-items:center;gap:5px;"><span class="cal-dot pending" style="display:inline-block;"></span>Pending</span>
+        <span style="font-size:12px;display:flex;align-items:center;gap:5px;"><span class="cal-dot accepted" style="display:inline-block;"></span>Accepted</span>
+        <span style="font-size:12px;display:flex;align-items:center;gap:5px;"><span class="cal-dot phone" style="display:inline-block;"></span>Phone/Block</span>
+        <span style="font-size:12px;display:flex;align-items:center;gap:5px;"><span class="cal-dot cancelled" style="display:inline-block;"></span>Cancelled</span>
+      </div>`;
+  }
+
+  function calNav(dir) {
+    calMonth += dir;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    renderCalendar();
+  }
+
+  function selectCalDay(dateStr) {
+    calSelectedDate = calSelectedDate === dateStr ? null : dateStr;
+    renderCalendar();
   }
 
   // ── BOOKING ACTIONS ────────────────────────────────────────────────────
   async function acceptBooking(id, e) {
     e.stopPropagation();
     if (!confirm('Accept this booking and send confirmation to the customer?')) return;
-    const btn = e.target;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span>Sending…';
-    const res = await fetch(`/api/admin/bookings/${id}/accept`, { method: 'POST' });
+    const btn = e.target; btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+    const res = await fetch(`/api/admin/bookings/${id}/accept`, { method:'POST' });
     const data = await res.json();
-    if (res.ok) {
-      showToast('✅ Booking accepted – confirmation sent!', 'success');
-      await loadBookings();
-    } else {
-      showToast('Error: ' + (data.error || 'Unknown error'), 'error');
-      btn.disabled = false;
-      btn.innerHTML = '✓ Accept & Confirm';
-    }
+    if (res.ok) { showToast('✅ Accepted – confirmation sent!', 'success'); await loadBookings(); }
+    else { showToast('Error: ' + (data.error || 'Unknown'), 'error'); btn.disabled = false; btn.innerHTML = '✓ Accept & Confirm'; }
   }
 
   async function cancelBooking(id, e) {
     e.stopPropagation();
-    if (!confirm('Cancel this booking? The customer will be notified and asked to call to reschedule.')) return;
-    const btn = e.target;
-    btn.disabled = true;
-    const res = await fetch(`/api/admin/bookings/${id}/cancel`, { method: 'POST' });
+    if (!confirm('Cancel this booking? The customer will be notified.')) return;
+    const btn = e.target; btn.disabled = true;
+    const res = await fetch(`/api/admin/bookings/${id}/cancel`, { method:'POST' });
+    const data = await res.json();
+    if (res.ok) { showToast('Booking cancelled – customer notified.', 'success'); await loadBookings(); }
+    else { showToast('Error: ' + (data.error || 'Unknown'), 'error'); btn.disabled = false; }
+  }
+
+  async function setContactStatus(id, status, e) {
+    e.stopPropagation();
+    const res = await fetch(`/api/admin/bookings/${id}/contact-status`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ status })
+    });
+    if (res.ok) {
+      const labels = { 'contacted':'Marked as contacted.', 'closed':'Case closed.' };
+      showToast('✅ ' + (labels[status] || 'Updated.'), 'success');
+      await loadBookings();
+    } else { showToast('Error updating status.', 'error'); }
+  }
+
+  // ── RESCHEDULE MODAL ───────────────────────────────────────────────────
+  function openRescheduleModal(id, e) {
+    e.stopPropagation();
+    rescheduleBookingId = id;
+    rescheduleSelectedTime = null;
+    const b = allBookings.find(b => b.id === id);
+    if (b) document.getElementById('reschedule-modal-sub').textContent = `Rescheduling: ${b.name} – ${SVC[b.serviceType]} (currently ${b.date} at ${b.time})`;
+    document.getElementById('reschedule-date').value = '';
+    document.getElementById('reschedule-time').value = '';
+    document.getElementById('reschedule-slots').innerHTML = '<span class="modal-slots-msg">Select a date first.</span>';
+    document.getElementById('reschedule-modal').classList.remove('hidden');
+  }
+
+  function closeRescheduleModal() {
+    document.getElementById('reschedule-modal').classList.add('hidden');
+    rescheduleBookingId = null;
+    rescheduleSelectedTime = null;
+  }
+
+  async function loadRescheduleSlots() {
+    const date = document.getElementById('reschedule-date').value;
+    if (!date) return;
+    rescheduleSelectedTime = null;
+    document.getElementById('reschedule-time').value = '';
+    const slotsEl = document.getElementById('reschedule-slots');
+    slotsEl.innerHTML = '<span class="modal-slots-msg">Loading…</span>';
+    try {
+      const res = await fetch(`/api/slots?date=${date}`);
+      const data = await res.json();
+      if (data.closed || !data.slots || data.slots.length === 0) {
+        slotsEl.innerHTML = '<span class="modal-slots-msg">No available slots on this date.</span>';
+        return;
+      }
+      slotsEl.innerHTML = data.slots.map(s => `
+        <button type="button" class="modal-slot-btn" onclick="selectRescheduleSlot(this,'${s}')">${s}</button>
+      `).join('');
+    } catch { slotsEl.innerHTML = '<span class="modal-slots-msg" style="color:var(--red);">Could not load slots.</span>'; }
+  }
+
+  function selectRescheduleSlot(btn, time) {
+    document.querySelectorAll('.modal-slot-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    rescheduleSelectedTime = time;
+    document.getElementById('reschedule-time').value = time;
+  }
+
+  async function confirmReschedule() {
+    const date = document.getElementById('reschedule-date').value;
+    if (!date || !rescheduleSelectedTime) { showToast('Please select a date and time.', 'error'); return; }
+    const res = await fetch(`/api/admin/bookings/${rescheduleBookingId}/reschedule`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ date, time: rescheduleSelectedTime })
+    });
     const data = await res.json();
     if (res.ok) {
-      showToast('Booking cancelled – customer notified.', 'success');
+      showToast('✅ Rescheduled – customer notified by email!', 'success');
+      closeRescheduleModal();
       await loadBookings();
-    } else {
-      showToast('Error: ' + (data.error || 'Unknown error'), 'error');
-      btn.disabled = false;
-    }
+    } else { showToast('Error: ' + (data.error || 'Unknown'), 'error'); }
   }
 
   // ── BLOCK TIME ─────────────────────────────────────────────────────────
@@ -972,10 +1023,8 @@
     if (!res.ok) return;
     const blocks = await res.json();
     const list = document.getElementById('blocks-list');
-
-    // Only show future/today blocks
     const todayStr = new Date().toISOString().split('T')[0];
-    const upcoming = blocks.filter(bl => bl.date >= todayStr);
+    const upcoming = blocks.filter(bl => bl.date >= todayStr).sort((a,b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
 
     if (upcoming.length === 0) {
       list.innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>No blocks — all slots are open.</p></div>`;
@@ -984,69 +1033,61 @@
 
     list.innerHTML = upcoming.map(bl => `
       <div class="block-item">
-        <div class="block-item-date">${formatDate(bl.date)}</div>
-        <div class="block-item-time">${bl.startTime} – ${bl.endTime}</div>
-        <div class="block-item-reason">${bl.reason || '—'}</div>
-        <button class="btn-delete" onclick="deleteBlock(${bl.id})">✕ Remove</button>
+        <div class="block-item-header">
+          <div class="block-item-date">${formatDate(bl.date)}</div>
+          <div class="block-item-time">${bl.startTime} – ${bl.endTime}</div>
+          <div class="block-item-reason">${bl.reason || '—'}</div>
+          <button class="btn-delete" onclick="deleteBlock(${bl.id})">✕ Remove</button>
+        </div>
+        ${(bl.customerName || bl.customerPhone || bl.vehicleModel || bl.notes) ? `
+        <div class="block-item-detail">
+          ${bl.customerName  ? `<div class="block-detail-field"><label>Customer</label><span>${bl.customerName}</span></div>` : ''}
+          ${bl.customerPhone ? `<div class="block-detail-field"><label>Phone</label><span>${bl.customerPhone}</span></div>` : ''}
+          ${bl.vehicleModel  ? `<div class="block-detail-field"><label>Vehicle</label><span>${bl.vehicleModel}</span></div>` : ''}
+          ${bl.notes ? `<div class="block-detail-field" style="grid-column:1/-1;"><label>Notes</label><span>${bl.notes}</span></div>` : ''}
+        </div>` : ''}
       </div>
     `).join('');
   }
 
   async function createBlock() {
-    const date      = document.getElementById('block-date').value;
-    const startTime = document.getElementById('block-start').value;
-    const endTime   = document.getElementById('block-end').value;
-    const reason    = document.getElementById('block-reason').value.trim();
+    const date         = document.getElementById('block-date').value;
+    const startTime    = document.getElementById('block-start').value;
+    const endTime      = document.getElementById('block-end').value;
+    const reason       = document.getElementById('block-reason').value.trim();
+    const customerName = document.getElementById('block-customer-name').value.trim();
+    const customerPhone = document.getElementById('block-customer-phone').value.trim();
+    const vehicleModel = document.getElementById('block-vehicle').value.trim();
+    const notes        = document.getElementById('block-notes').value.trim();
 
-    if (!date || !startTime || !endTime) {
-      showToast('Please fill in date, from, and to fields.', 'error');
-      return;
-    }
-    if (startTime >= endTime) {
-      showToast('End time must be after start time.', 'error');
-      return;
-    }
+    if (!date || !startTime || !endTime) { showToast('Please fill in date, from, and to.', 'error'); return; }
+    if (startTime >= endTime) { showToast('End time must be after start time.', 'error'); return; }
 
     const res = await fetch('/api/admin/blocks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date, startTime, endTime, reason })
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ date, startTime, endTime, reason, customerName, customerPhone, vehicleModel, notes })
     });
     const data = await res.json();
     if (res.ok) {
-      showToast('✅ Time blocked successfully.', 'success');
-      document.getElementById('block-start').value = '';
-      document.getElementById('block-end').value = '';
-      document.getElementById('block-reason').value = '';
+      showToast('✅ Time blocked.', 'success');
+      ['block-start','block-end','block-reason','block-customer-name','block-customer-phone','block-vehicle','block-notes'].forEach(id => { document.getElementById(id).value = ''; });
       await loadBookings();
       loadBlocks();
-    } else {
-      showToast('Error: ' + (data.error || 'Unknown error'), 'error');
-    }
+    } else { showToast('Error: ' + (data.error || 'Unknown'), 'error'); }
   }
 
   async function deleteBlock(id) {
-    if (!confirm('Remove this block? Those time slots will become available for booking again.')) return;
-    const res = await fetch(`/api/admin/blocks/${id}`, { method: 'DELETE' });
-    if (res.ok) {
-      showToast('Block removed.', 'success');
-      await loadBookings();
-      loadBlocks();
-    } else {
-      showToast('Error removing block.', 'error');
-    }
+    if (!confirm('Remove this block? Those time slots will become available again.')) return;
+    const res = await fetch(`/api/admin/blocks/${id}`, { method:'DELETE' });
+    if (res.ok) { showToast('Block removed.', 'success'); await loadBookings(); loadBlocks(); }
+    else showToast('Error removing block.', 'error');
   }
 
   async function deleteBlockFromList(id) {
-    if (!confirm('Remove this phone booking block? Those time slots will become available for online booking again.')) return;
-    const res = await fetch(`/api/admin/blocks/${id}`, { method: 'DELETE' });
-    if (res.ok) {
-      showToast('Block removed.', 'success');
-      await loadBookings();
-      if (currentView === 'schedule') loadBlocks();
-    } else {
-      showToast('Error removing block.', 'error');
-    }
+    if (!confirm('Remove this phone booking block?')) return;
+    const res = await fetch(`/api/admin/blocks/${id}`, { method:'DELETE' });
+    if (res.ok) { showToast('Block removed.', 'success'); await loadBookings(); if (currentView === 'schedule') loadBlocks(); }
+    else showToast('Error removing block.', 'error');
   }
 
   // ── OPENING HOURS ──────────────────────────────────────────────────────
@@ -1060,81 +1101,48 @@
   function renderHoursTable() {
     const tbody = document.getElementById('hours-tbody');
     tbody.innerHTML = '';
-
     for (let d = 0; d <= 6; d++) {
-      const config = currentHours[d] || { closed: true, ranges: [] };
+      const config = currentHours[d] || { closed:true, ranges:[] };
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><div class="day-name">${DAYS[d]}</div></td>
-        <td>
-          <label class="toggle-closed">
-            <input type="checkbox" id="closed-${d}" ${config.closed ? 'checked' : ''} onchange="toggleDay(${d})">
-            Closed
-          </label>
-        </td>
-        <td id="ranges-cell-${d}">
-          ${renderRanges(d, config)}
-        </td>
-      `;
+        <td><label class="toggle-closed"><input type="checkbox" id="closed-${d}" ${config.closed?'checked':''} onchange="toggleDay(${d})"> Closed</label></td>
+        <td id="ranges-cell-${d}">${renderRanges(d, config)}</td>`;
       tbody.appendChild(tr);
     }
   }
 
   function renderRanges(d, config) {
-    if (config.closed) {
-      return '<span style="font-size:13px;color:var(--grey);opacity:0.5;">—</span>';
-    }
+    if (config.closed) return '<span style="font-size:13px;color:var(--grey);opacity:0.5;">—</span>';
     const ranges = config.ranges || [];
     const rangeHtml = ranges.map((r, i) => `
-      <div class="range-inputs" style="margin-bottom:6px;">
+      <div class="range-inputs">
         <input type="time" class="time-input" value="${r[0]}" onchange="updateRange(${d},${i},0,this.value)">
         <span>to</span>
         <input type="time" class="time-input" value="${r[1]}" onchange="updateRange(${d},${i},1,this.value)">
-        ${ranges.length > 1 ? `<button class="remove-range-btn" onclick="removeRange(${d},${i})" title="Remove">×</button>` : ''}
-      </div>
-    `).join('');
-
-    const canAdd = ranges.length < 2;
-    return rangeHtml + `<button class="add-range-btn" onclick="addRange(${d})" ${!canAdd ? 'disabled' : ''}>+ Add range</button>`;
+        ${ranges.length > 1 ? `<button class="remove-range-btn" onclick="removeRange(${d},${i})">×</button>` : ''}
+      </div>`).join('');
+    return rangeHtml + `<button class="add-range-btn" onclick="addRange(${d})" ${ranges.length >= 2?'disabled':''}>+ Add range</button>`;
   }
 
   function toggleDay(d) {
     const closed = document.getElementById(`closed-${d}`).checked;
     currentHours[d].closed = closed;
-    if (!closed && currentHours[d].ranges.length === 0) {
-      currentHours[d].ranges = [['08:30', '13:00']];
-    }
+    if (!closed && currentHours[d].ranges.length === 0) currentHours[d].ranges = [['08:30','13:00']];
     document.getElementById(`ranges-cell-${d}`).innerHTML = renderRanges(d, currentHours[d]);
   }
-
-  function updateRange(d, i, pos, val) {
-    currentHours[d].ranges[i][pos] = val;
-  }
-
-  function addRange(d) {
-    currentHours[d].ranges.push(['14:00', '17:00']);
-    document.getElementById(`ranges-cell-${d}`).innerHTML = renderRanges(d, currentHours[d]);
-  }
-
-  function removeRange(d, i) {
-    currentHours[d].ranges.splice(i, 1);
-    document.getElementById(`ranges-cell-${d}`).innerHTML = renderRanges(d, currentHours[d]);
-  }
+  function updateRange(d, i, pos, val) { currentHours[d].ranges[i][pos] = val; }
+  function addRange(d) { currentHours[d].ranges.push(['14:00','17:00']); document.getElementById(`ranges-cell-${d}`).innerHTML = renderRanges(d, currentHours[d]); }
+  function removeRange(d, i) { currentHours[d].ranges.splice(i,1); document.getElementById(`ranges-cell-${d}`).innerHTML = renderRanges(d, currentHours[d]); }
 
   async function saveHours() {
-    const res = await fetch('/api/admin/hours', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ hours: currentHours })
-    });
+    const res = await fetch('/api/admin/hours', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ hours: currentHours }) });
     if (res.ok) {
       showToast('✅ Opening hours saved!', 'success');
       const msg = document.getElementById('hours-saved-msg');
       msg.style.display = 'inline';
       setTimeout(() => { msg.style.display = 'none'; }, 3000);
-    } else {
-      showToast('Error saving hours.', 'error');
-    }
+    } else showToast('Error saving hours.', 'error');
   }
 
   // ── HELPERS ────────────────────────────────────────────────────────────
@@ -1142,9 +1150,8 @@
     return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
   }
 
-  // ── TOAST ──────────────────────────────────────────────────────────────
   let _toastTimer = null;
-  function showToast(msg, type = '', duration = 5000) {
+  function showToast(msg, type='', duration=5000) {
     const t = document.getElementById('toast');
     if (_toastTimer) clearTimeout(_toastTimer);
     t.textContent = msg;
@@ -1152,22 +1159,17 @@
     _toastTimer = setTimeout(() => { t.className = 'toast'; }, duration);
   }
 
-  // ── TEST EMAIL ─────────────────────────────────────────────────────────
   async function testEmail() {
-    showToast('⏳ Sending test email… please wait', '', 30000);
+    showToast('⏳ Sending test email…', '', 30000);
     try {
-      const res  = await fetch('/api/admin/test-email', { method: 'POST' });
+      const res = await fetch('/api/admin/test-email', { method:'POST' });
       const data = await res.json();
       if (res.ok) showToast('✅ ' + data.message, 'success', 8000);
-      else        showToast('❌ Error: ' + (data.error || 'Unknown') + (data.code ? ' (' + data.code + ')' : ''), 'error', 10000);
-    } catch (e) {
-      showToast('❌ Network error — check Railway logs', 'error', 8000);
-    }
+      else showToast('❌ ' + (data.error || 'Unknown error'), 'error', 10000);
+    } catch { showToast('❌ Network error', 'error', 8000); }
   }
 
-  // ── START ──────────────────────────────────────────────────────────────
   checkAuth();
 </script>
-
 </body>
 </html>

@@ -181,9 +181,49 @@ async function sendReminderToCustomer(booking) {
   });
 }
 
+// ── Reschedule notification to customer ──────────────────────────────────────
+async function sendRescheduleToCustomer(booking) {
+  if (!booking.email) return;
+
+  await sendBrevoEmail({
+    to:      booking.email,
+    subject: `Your Appointment Has Been Rescheduled – ${booking.ref}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+        <div style="background:#009BB4;padding:24px;text-align:center;">
+          <h1 style="color:white;margin:0;font-size:24px;">Appointment Rescheduled</h1>
+        </div>
+        <div style="padding:32px;background:#fff;">
+          <p>Dear ${booking.name},</p>
+          <p>Your service appointment at <strong>Motowarehouse</strong> has been rescheduled. Here are your updated details:</p>
+          <table style="border-collapse:collapse;width:100%;margin:20px 0;">
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Booking Reference</td><td style="padding:10px;">${booking.ref}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Service</td><td style="padding:10px;">${SERVICE_LABELS[booking.serviceType]}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">New Date</td><td style="padding:10px;">${booking.date}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">New Time</td><td style="padding:10px;">${booking.time}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${booking.year} ${booking.model}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Plate Number</td><td style="padding:10px;">${booking.plate}</td></tr>
+          </table>
+          <div style="background:#f0fbfd;border-left:4px solid #009BB4;padding:16px;margin:20px 0;">
+            <strong>Location:</strong><br>
+            Motowarehouse – 40 Athinon Str., Strovolos, Nicosia, Cyprus<br>
+            Tel: 22 328 788
+          </div>
+          <p>Please arrive a few minutes before your scheduled time. If you need to make any changes, please call us at <strong>22 328 788</strong>.</p>
+          <p>The Motowarehouse Team</p>
+        </div>
+        <div style="background:#1a1a1a;padding:16px;text-align:center;">
+          <p style="color:#999;font-size:12px;margin:0;">Motowarehouse Ltd – support@motowarehouse.com.cy</p>
+        </div>
+      </div>
+    `
+  });
+}
+
 module.exports = {
   sendNewBookingAlert,
   sendConfirmationToCustomer,
   sendCancellationToCustomer,
-  sendReminderToCustomer
+  sendReminderToCustomer,
+  sendRescheduleToCustomer
 };

@@ -59,6 +59,33 @@ function updateBookingStatus(id, status) {
   if (idx === -1) return null;
   db.bookings[idx].status = status;
   db.bookings[idx].updatedAt = new Date().toISOString();
+  if (status === 'cancelled') {
+    db.bookings[idx].contactStatus = 'needs-contact';
+  }
+  writeDB(db);
+  return db.bookings[idx];
+}
+
+function rescheduleBooking(id, newDate, newTime) {
+  const db = readDB();
+  const idx = db.bookings.findIndex(b => b.id === parseInt(id));
+  if (idx === -1) return null;
+  db.bookings[idx].date = newDate;
+  db.bookings[idx].time = newTime;
+  db.bookings[idx].status = 'accepted';
+  db.bookings[idx].contactStatus = null;
+  db.bookings[idx].reminderSent = false;
+  db.bookings[idx].updatedAt = new Date().toISOString();
+  writeDB(db);
+  return db.bookings[idx];
+}
+
+function updateContactStatus(id, contactStatus) {
+  const db = readDB();
+  const idx = db.bookings.findIndex(b => b.id === parseInt(id));
+  if (idx === -1) return null;
+  db.bookings[idx].contactStatus = contactStatus;
+  db.bookings[idx].updatedAt = new Date().toISOString();
   writeDB(db);
   return db.bookings[idx];
 }
@@ -120,6 +147,10 @@ function createBlock(data) {
     startTime: data.startTime,
     endTime: data.endTime,
     reason: data.reason || '',
+    customerName: data.customerName || '',
+    customerPhone: data.customerPhone || '',
+    vehicleModel: data.vehicleModel || '',
+    notes: data.notes || '',
     createdAt: new Date().toISOString()
   };
   db.blocks.push(block);
@@ -167,8 +198,8 @@ function saveHours(hours) {
 
 module.exports = {
   createBooking, getAllBookings, getBookingById,
-  updateBookingStatus, markReminderSent,
-  getAcceptedBookingsDueForReminder, getBookedSlots,
+  updateBookingStatus, rescheduleBooking, updateContactStatus,
+  markReminderSent, getAcceptedBookingsDueForReminder, getBookedSlots,
   createBlock, getAllBlocks, deleteBlock,
   getHours, saveHours, DEFAULT_HOURS
 };

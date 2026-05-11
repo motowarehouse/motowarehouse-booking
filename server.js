@@ -153,6 +153,36 @@ app.post('/api/admin/bookings/:id/accept', requireAdmin, async (req, res) => {
   res.json({ success: true, booking, emailError });
 });
 
+// Reschedule a booking
+app.post('/api/admin/bookings/:id/reschedule', requireAdmin, async (req, res) => {
+  const { date, time } = req.body;
+  if (!date || !time) return res.status(400).json({ error: 'date and time required' });
+
+  const booking = db.rescheduleBooking(req.params.id, date, time);
+  if (!booking) return res.status(404).json({ error: 'Booking not found' });
+
+  try {
+    await emailService.sendRescheduleToCustomer(booking);
+    console.log(`[Email] Reschedule sent to ${booking.email}`);
+  } catch (e) {
+    console.error('[Email] Reschedule FAILED:', e.message);
+  }
+
+  res.json({ success: true, booking });
+});
+
+// Update contact status for cancelled bookings
+app.post('/api/admin/bookings/:id/contact-status', requireAdmin, (req, res) => {
+  const { status } = req.body;
+  const valid = ['needs-contact', 'contacted', 'closed'];
+  if (!valid.includes(status)) return res.status(400).json({ error: 'Invalid status' });
+
+  const booking = db.updateContactStatus(req.params.id, status);
+  if (!booking) return res.status(404).json({ error: 'Booking not found' });
+
+  res.json({ success: true, booking });
+});
+
 // Cancel a booking
 app.post('/api/admin/bookings/:id/cancel', requireAdmin, async (req, res) => {
   const booking = db.updateBookingStatus(req.params.id, 'cancelled');
@@ -184,17 +214,16 @@ app.get('/api/admin/blocks', requireAdmin, (req, res) => {
 
 // Create a block
 app.post('/api/admin/blocks', requireAdmin, (req, res) => {
-  const { date, startTime, endTime, reason } = req.body;
+  const { date, startTime, endTime, reason, customerName, customerPhone, vehicleModel, notes } = req.body;
   if (!date || !startTime || !endTime) {
     return res.status(400).json({ error: 'date, startTime, and endTime are required.' });
   }
-  // Validate start < end
   const [sh, sm] = startTime.split(':').map(Number);
   const [eh, em] = endTime.split(':').map(Number);
   if (sh * 60 + sm >= eh * 60 + em) {
     return res.status(400).json({ error: 'End time must be after start time.' });
   }
-  const block = db.createBlock({ date, startTime, endTime, reason });
+  const block = db.createBlock({ date, startTime, endTime, reason, customerName, customerPhone, vehicleModel, notes });
   res.json({ success: true, block });
 });
 
