@@ -896,10 +896,24 @@
   }
 
   // ── ALL BOOKINGS / PENDING / ACCEPTED ─────────────────────────────────
+  let showCancelled = false;
+
+  function toggleCancelled() {
+    showCancelled = !showCancelled;
+    const btn = document.getElementById('toggle-cancelled-btn');
+    btn.textContent = showCancelled ? 'Hide Cancelled' : `Show Cancelled (${allBookings.filter(b => b.status === 'cancelled').length})`;
+    renderBookings();
+  }
+
   function renderBookings() {
     let filtered = allBookings;
     if (currentView === 'pending')  filtered = allBookings.filter(b => b.status === 'pending');
     if (currentView === 'accepted') filtered = allBookings.filter(b => b.status === 'accepted');
+
+    // In "all" view, hide cancelled by default
+    if (currentView === 'all' && !showCancelled) {
+      filtered = allBookings.filter(b => b.status !== 'cancelled');
+    }
 
     let items = filtered.map(b => ({ ...b, _type:'booking', _sortKey: b.date + 'T' + b.time }));
 
@@ -915,11 +929,21 @@
     });
 
     const list = document.getElementById('bookings-list');
+
+    const cancelledCount = allBookings.filter(b => b.status === 'cancelled').length;
+    const toggleHtml = currentView === 'all' && cancelledCount > 0 ? `
+      <div style="text-align:center;padding:16px 0 4px;">
+        <button id="toggle-cancelled-btn" onclick="toggleCancelled()"
+          style="background:transparent;border:1px solid rgba(255,255,255,0.1);color:var(--grey);font-size:12px;padding:7px 16px;border-radius:6px;cursor:pointer;font-family:inherit;">
+          ${showCancelled ? 'Hide Cancelled' : `Show Cancelled (${cancelledCount})`}
+        </button>
+      </div>` : '';
+
     if (items.length === 0) {
-      list.innerHTML = `<div class="empty-state"><div class="icon" style="color:var(--grey);">—</div><p>No ${currentView === 'all' ? '' : currentView} bookings.</p></div>`;
+      list.innerHTML = `<div class="empty-state"><div class="icon" style="color:var(--grey);">—</div><p>No ${currentView === 'all' ? 'active' : currentView} bookings.</p></div>${toggleHtml}`;
       return;
     }
-    list.innerHTML = items.map(item => item._type === 'block' ? blockCard(item) : bookingCard(item)).join('');
+    list.innerHTML = items.map(item => item._type === 'block' ? blockCard(item) : bookingCard(item)).join('') + toggleHtml;
   }
 
   // ── CANCELLED VIEW ────────────────────────────────────────────────────
