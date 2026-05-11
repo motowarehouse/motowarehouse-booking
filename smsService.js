@@ -8,12 +8,12 @@ const SERVICE_LABELS = {
 
 function formatPhone(phone) {
   const digits = phone.replace(/\D/g, '');
-  if (digits.startsWith('00357')) return '+' + digits.slice(2); // 0035799123456
-  if (digits.startsWith('357'))   return '+' + digits;          // 35799123456
-  if (digits.length === 8)        return '+357' + digits;       // 99123456
-  // Anything else: assume Cyprus and take the last 8 digits
-  if (digits.length > 8)          return '+357' + digits.slice(-8);
-  return '+357' + digits;
+  // If already has country code (from form), just ensure + prefix
+  if (digits.startsWith('00')) return '+' + digits.slice(2);
+  if (phone.startsWith('+'))   return phone;
+  // Fallback: assume Cyprus 8-digit number
+  if (digits.length === 8) return '+357' + digits;
+  return '+' + digits;
 }
 
 function sendBrevoSMS(to, content) {

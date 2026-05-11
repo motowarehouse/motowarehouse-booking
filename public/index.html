@@ -464,6 +464,22 @@
 
     .date-hint { font-size: 11px; color: var(--grey); margin-top: 4px; }
 
+    /* ── PHONE PICKER ── */
+    .phone-wrap { display:flex; gap:0; }
+    .phone-wrap select {
+      width: auto;
+      min-width: 110px;
+      border-radius: 6px 0 0 6px;
+      border-right: none;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .phone-wrap input {
+      border-radius: 0 6px 6px 0;
+      flex: 1;
+    }
+    .phone-wrap select:focus { z-index:1; }
+
     input[type="date"]::-webkit-calendar-picker-indicator {
       filter: invert(1);
       opacity: 0.7;
@@ -899,9 +915,40 @@
       </div>
 
       <div class="form-group field-reveal" style="transition-delay:0.07s">
-        <label for="phone">Phone Number <span class="req">*</span></label>
-        <input type="tel" id="phone" placeholder="e.g. 99 123 456" autocomplete="tel"
-          oninput="autoFormatPhone(this)">
+        <label for="phone-number">Phone Number <span class="req">*</span></label>
+        <div class="phone-wrap">
+          <select id="phone-country" onchange="updatePhoneMax()">
+            <option value="+357" data-max="8">🇨🇾 +357</option>
+            <option value="+30"  data-max="10">🇬🇷 +30</option>
+            <option value="+44"  data-max="10">🇬🇧 +44</option>
+            <option value="+49"  data-max="11">🇩🇪 +49</option>
+            <option value="+33"  data-max="9">🇫🇷 +33</option>
+            <option value="+39"  data-max="10">🇮🇹 +39</option>
+            <option value="+34"  data-max="9">🇪🇸 +34</option>
+            <option value="+31"  data-max="9">🇳🇱 +31</option>
+            <option value="+32"  data-max="9">🇧🇪 +32</option>
+            <option value="+41"  data-max="9">🇨🇭 +41</option>
+            <option value="+43"  data-max="10">🇦🇹 +43</option>
+            <option value="+46"  data-max="9">🇸🇪 +46</option>
+            <option value="+47"  data-max="8">🇳🇴 +47</option>
+            <option value="+45"  data-max="8">🇩🇰 +45</option>
+            <option value="+358" data-max="9">🇫🇮 +358</option>
+            <option value="+7"   data-max="10">🇷🇺 +7</option>
+            <option value="+380" data-max="9">🇺🇦 +380</option>
+            <option value="+40"  data-max="9">🇷🇴 +40</option>
+            <option value="+359" data-max="8">🇧🇬 +359</option>
+            <option value="+48"  data-max="9">🇵🇱 +48</option>
+            <option value="+420" data-max="9">🇨🇿 +420</option>
+            <option value="+36"  data-max="9">🇭🇺 +36</option>
+            <option value="+972" data-max="9">🇮🇱 +972</option>
+            <option value="+961" data-max="8">🇱🇧 +961</option>
+            <option value="+971" data-max="9">🇦🇪 +971</option>
+            <option value="+966" data-max="9">🇸🇦 +966</option>
+            <option value="+1"   data-max="10">🇺🇸 +1</option>
+            <option value="+61"  data-max="9">🇦🇺 +61</option>
+          </select>
+          <input type="tel" id="phone-number" placeholder="99 123 456" autocomplete="tel" maxlength="11">
+        </div>
       </div>
 
       <div class="form-group full field-reveal" style="transition-delay:0.14s">
@@ -1066,13 +1113,17 @@
 </footer>
 
 <script>
-  function autoFormatPhone(input) {
-    let val = input.value.replace(/\D/g, ''); // strip non-digits
-    if (val.startsWith('00357')) val = val.slice(5);
-    else if (val.startsWith('357')) val = val.slice(3);
-    // Re-add +357 prefix
-    if (val.length > 0) input.value = '+357' + val;
-    else input.value = '';
+  function updatePhoneMax() {
+    const sel = document.getElementById('phone-country');
+    const opt = sel.options[sel.selectedIndex];
+    const max = opt.dataset.max || '12';
+    document.getElementById('phone-number').maxLength = parseInt(max);
+  }
+
+  function getFullPhone() {
+    const code = document.getElementById('phone-country').value;
+    const num  = document.getElementById('phone-number').value.replace(/\D/g, '');
+    return num ? code + num : '';
   }
 
   // ── Init ──────────────────────────────────────────────────────────
@@ -1247,7 +1298,7 @@
     const btn = document.getElementById('submit-btn');
 
     const name  = document.getElementById('name').value.trim();
-    const phone = document.getElementById('phone').value.trim();
+    const phone = getFullPhone();
     const email = document.getElementById('email').value.trim();
     const model = document.getElementById('model').value;
     const year  = document.getElementById('year').value;
@@ -1261,6 +1312,7 @@
     if (!selectedTime)    return showError('Please select a time slot.');
     if (!name)            return showError('Please enter your full name.');
     if (!phone)           return showError('Please enter your phone number.');
+    if (phone.replace(/\D/g,'').length < 7) return showError('Please enter a valid phone number.');
     if (!email)           return showError('Please enter your email address.');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError('Please enter a valid email address (e.g. name@email.com).');
     if (!model)           return showError('Please select your vehicle model.');
