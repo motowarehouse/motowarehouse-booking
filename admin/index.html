@@ -193,6 +193,11 @@
     .toggle-track::after { content:''; position:absolute; top:3px; left:3px; width:12px; height:12px; background:var(--white); border-radius:50%; transition:transform 0.2s; }
     .toggle-closed input:checked + .toggle-track { background:var(--red); border-color:var(--red); }
     .toggle-closed input:checked + .toggle-track::after { transform:translateX(16px); }
+    /* Make native date/time picker icons white on dark background */
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="time"]::-webkit-calendar-picker-indicator { filter:invert(1); opacity:0.6; cursor:pointer; }
+    input[type="date"]::-webkit-calendar-picker-indicator:hover,
+    input[type="time"]::-webkit-calendar-picker-indicator:hover { opacity:1; }
     .range-inputs { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
     .range-inputs span { font-size:13px; color:var(--grey); }
     .time-input { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:var(--white); font-family:'SupremeLL',Arial,sans-serif; font-size:14px; padding:7px 10px; width:90px; outline:none; transition:border-color 0.2s; }
@@ -341,7 +346,7 @@
         <!-- Block Time view -->
         <div id="schedule-view" style="display:none;">
           <div class="panel-card">
-            <h3>🚫 Block Time Slot</h3>
+            <h3>Block Time Slot</h3>
             <p style="font-size:13px;color:var(--grey);margin-bottom:18px;">Block time for phone bookings, long jobs, or any reason. Blocked slots are unavailable for online booking.</p>
             <div class="block-form-grid" style="margin-bottom:12px;">
               <div class="form-group">
@@ -385,9 +390,9 @@
           </div>
 
           <div class="panel-card">
-            <h3>📋 Active Blocks</h3>
+            <h3>Active Blocks</h3>
             <div class="blocks-list" id="blocks-list">
-              <div class="empty-state"><div class="icon">✅</div><p>No blocks — all slots are open.</p></div>
+              <div class="empty-state"><div class="icon" style="color:var(--green);font-size:32px;">✓</div><p>No blocks — all slots are open.</p></div>
             </div>
           </div>
         </div>
@@ -459,7 +464,7 @@
               <tbody id="hours-tbody"></tbody>
             </table>
             <div class="hours-save-row">
-              <span class="hours-saved-msg" id="hours-saved-msg">✅ Saved!</span>
+              <span class="hours-saved-msg" id="hours-saved-msg">Saved!</span>
               <button class="btn-primary" onclick="saveHours()">Save Hours</button>
             </div>
           </div>
@@ -473,7 +478,7 @@
 <!-- RESCHEDULE MODAL -->
 <div class="modal-overlay hidden" id="reschedule-modal">
   <div class="modal">
-    <h3>🗓️ Reschedule Appointment</h3>
+    <h3>Reschedule Appointment</h3>
     <div class="modal-sub" id="reschedule-modal-sub">Select a new date and time for this booking.</div>
     <div class="modal-form-grid">
       <div class="form-group" style="grid-column:1/-1;">
@@ -906,7 +911,7 @@
 
     const list = document.getElementById('bookings-list');
     if (items.length === 0) {
-      list.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>No ${currentView === 'all' ? '' : currentView} bookings.</p></div>`;
+      list.innerHTML = `<div class="empty-state"><div class="icon" style="color:var(--grey);">—</div><p>No ${currentView === 'all' ? '' : currentView} bookings.</p></div>`;
       return;
     }
     list.innerHTML = items.map(item => item._type === 'block' ? blockCard(item) : bookingCard(item)).join('');
@@ -919,7 +924,7 @@
       .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
 
     if (cancelled.length === 0) {
-      el.innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>No cancelled bookings.</p></div>`;
+      el.innerHTML = `<div class="empty-state"><div class="icon" style="color:var(--green);">✓</div><p>No cancelled bookings.</p></div>`;
       return;
     }
 
@@ -940,7 +945,7 @@
     }
 
     if (closed.length > 0) {
-      html += `<div class="section-divider">⚫ Closed / Handled (${closed.length})</div>`;
+      html += `<div class="section-divider">Closed / Handled (${closed.length})</div>`;
       html += `<div class="bookings-list">${closed.map(b => cancelledCard(b)).join('')}</div>`;
     }
 
@@ -953,22 +958,22 @@
     const csBadge = cs === 'needs-contact'
       ? `<span class="contact-badge contact-needs">⚠ Needs Contact</span>`
       : cs === 'contacted'
-      ? `<span class="contact-badge contact-contacted">📞 Contacted</span>`
+      ? `<span class="contact-badge contact-contacted">Contacted</span>`
       : `<span class="contact-badge contact-closed">Closed</span>`;
 
     let actions = '';
     if (cs === 'needs-contact') {
       actions = `
         <div class="action-row">
-          <button class="btn-contact-action" onclick="setContactStatus(${b.id}, 'contacted', event)">📞 Mark as Contacted</button>
-          <button class="btn-reschedule" onclick="openRescheduleModal(${b.id}, event)">🗓️ Reschedule</button>
+          <button class="btn-contact-action" onclick="setContactStatus(${b.id}, 'contacted', event)">Mark as Contacted</button>
+          <button class="btn-reschedule" onclick="openRescheduleModal(${b.id}, event)">↺ Reschedule</button>
           <button class="btn-cancel-booking" onclick="setContactStatus(${b.id}, 'closed', event)" title="Close without action">✓ Close</button>
         </div>
         <div style="margin-top:10px;font-size:12px;color:var(--grey);">After contacting the customer, mark as contacted. Then either reschedule their appointment or close the case.</div>`;
     } else if (cs === 'contacted') {
       actions = `
         <div class="action-row">
-          <button class="btn-reschedule" onclick="openRescheduleModal(${b.id}, event)">🗓️ Reschedule Appointment</button>
+          <button class="btn-reschedule" onclick="openRescheduleModal(${b.id}, event)">↺ Reschedule Appointment</button>
           <button class="btn-contact-action close" onclick="setContactStatus(${b.id}, 'closed', event)">✓ Customer Notified – Close</button>
         </div>`;
     } else {
@@ -981,7 +986,7 @@
           <div class="booking-ref">${b.ref}</div>
           <div class="booking-name-col">
             <div class="booking-name">${b.name}</div>
-            <div class="booking-phone-row">📞 ${b.phone}</div>
+            <div class="booking-phone-row">${b.phone}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
             <span class="booking-service service-${b.serviceType}">${SVC[b.serviceType]}</span>
@@ -1002,7 +1007,7 @@
             <div class="detail-item"><label>KM</label><span>${b.km ? Number(b.km).toLocaleString() + ' km' : '—'}</span></div>
             <div class="detail-item"><label>Cancelled</label><span>${b.updatedAt ? new Date(b.updatedAt).toLocaleString('en-GB') : '—'}</span></div>
           </div>
-          ${b.notes ? `<div class="detail-notes">📝 ${b.notes}</div>` : ''}
+          ${b.notes ? `<div class="detail-notes">${b.notes}</div>` : ''}
           ${actions}
         </div>
       </div>`;
@@ -1045,7 +1050,7 @@
           <div class="booking-ref">${b.ref}</div>
           <div class="booking-name-col">
             <div class="booking-name">${b.name}</div>
-            <div class="booking-phone-row">📞 ${b.phone}</div>
+            <div class="booking-phone-row">${b.phone}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
             <span class="booking-service service-${b.serviceType}">${SVC[b.serviceType]}</span>
@@ -1064,7 +1069,7 @@
             <div class="detail-item"><label>KM</label><span>${b.km ? Number(b.km).toLocaleString() + ' km' : '—'}</span></div>
             <div class="detail-item"><label>Booked</label><span>${new Date(b.createdAt).toLocaleString('en-GB')}</span></div>
           </div>
-          ${b.notes ? `<div class="detail-notes">📝 ${b.notes}</div>` : ''}
+          ${b.notes ? `<div class="detail-notes">${b.notes}</div>` : ''}
           ${actions}
         </div>
       </div>`;
@@ -1076,7 +1081,7 @@
     return `
       <div class="booking-card phone" id="card-block-${bl.id}">
         <div class="booking-header" onclick="toggleExpandBlock(${bl.id})">
-          <div class="booking-ref" style="color:var(--purple);">📞</div>
+          <div class="booking-ref" style="color:var(--purple);">BLK</div>
           <div class="booking-name-col">
             <div class="booking-name">${bl.customerName || bl.reason || 'Manual Block'}</div>
             <div class="booking-phone-row" style="color:var(--purple);">${bl.startTime} – ${bl.endTime}${bl.vehicleModel ? ' · ' + bl.vehicleModel : ''}</div>
@@ -1096,8 +1101,8 @@
             ${bl.customerPhone ? `<div class="detail-item"><label>Phone</label><span>${bl.customerPhone}</span></div>` : ''}
             ${bl.vehicleModel  ? `<div class="detail-item"><label>Vehicle</label><span>${bl.vehicleModel}</span></div>` : ''}
           </div>
-          ${bl.reason ? `<div class="detail-notes">📋 ${bl.reason}</div>` : ''}
-          ${bl.notes  ? `<div class="detail-notes">📝 ${bl.notes}</div>`  : ''}
+          ${bl.reason ? `<div class="detail-notes">${bl.reason}</div>` : ''}
+          ${bl.notes  ? `<div class="detail-notes">${bl.notes}</div>`  : ''}
           <div class="action-row">
             <button class="btn-cancel-booking" onclick="deleteBlockFromList(${bl.id})">✕ Remove Block</button>
           </div>
@@ -1123,7 +1128,7 @@
     const el = document.getElementById('today-view');
 
     if (todayB.length === 0 && todayBlocks.length === 0) {
-      el.innerHTML = `<div class="empty-state"><div class="icon">🏖️</div><p>No appointments for today.</p></div>`;
+      el.innerHTML = `<div class="empty-state"><div class="icon" style="color:var(--grey);">—</div><p>No appointments for today.</p></div>`;
       return;
     }
 
@@ -1205,7 +1210,7 @@
       const events = eventMap[calSelectedDate] || [];
       const label = new Date(calSelectedDate + 'T12:00:00').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
       if (events.length === 0) {
-        dayDetail = `<div class="cal-day-detail"><h4>📅 ${label}</h4><p style="font-size:13px;color:var(--grey);">No appointments on this day.</p></div>`;
+        dayDetail = `<div class="cal-day-detail"><h4>${label}</h4><p style="font-size:13px;color:var(--grey);">No appointments on this day.</p></div>`;
       } else {
         const rows = events.sort((a,b) => (a.sub||'').localeCompare(b.sub||'')).map(e => `
           <div class="today-slot" style="border-left:3px solid var(--${e.type==='phone'?'purple':e.type==='accepted'?'green':e.type==='cancelled'?'red':'orange'});">
@@ -1218,7 +1223,7 @@
               <button class="btn-quick btn-quick-reschedule" title="Reschedule" onclick="openRescheduleModal(${e._b.id}, event)">↺</button>
             </div>` : ''}
           </div>`).join('');
-        dayDetail = `<div class="cal-day-detail"><h4>📅 ${label} — ${events.length} appointment${events.length>1?'s':''}</h4>${rows}</div>`;
+        dayDetail = `<div class="cal-day-detail"><h4>${label} — ${events.length} appointment${events.length>1?'s':''}</h4>${rows}</div>`;
       }
     }
 
@@ -1263,7 +1268,7 @@
     const btn = e.target; btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
     const res = await fetch(`/api/admin/bookings/${id}/accept`, { method:'POST' });
     const data = await res.json();
-    if (res.ok) { showToast('✅ Accepted – confirmation sent!', 'success'); await loadBookings(); }
+    if (res.ok) { showToast('Accepted – confirmation sent!', 'success'); await loadBookings(); }
     else { showToast('Error: ' + (data.error || 'Unknown'), 'error'); btn.disabled = false; btn.innerHTML = '✓ Accept & Confirm'; }
   }
 
@@ -1284,7 +1289,7 @@
     });
     if (res.ok) {
       const labels = { 'contacted':'Marked as contacted.', 'closed':'Case closed.' };
-      showToast('✅ ' + (labels[status] || 'Updated.'), 'success');
+      showToast(labels[status] || 'Updated.', 'success');
       await loadBookings();
     } else { showToast('Error updating status.', 'error'); }
   }
@@ -1344,7 +1349,7 @@
     });
     const data = await res.json();
     if (res.ok) {
-      showToast('✅ Rescheduled – customer notified by email!', 'success');
+      showToast('Rescheduled – customer notified by email!', 'success');
       closeRescheduleModal();
       await loadBookings();
     } else { showToast('Error: ' + (data.error || 'Unknown'), 'error'); }
@@ -1360,7 +1365,7 @@
     const upcoming = blocks.filter(bl => bl.date >= todayStr).sort((a,b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
 
     if (upcoming.length === 0) {
-      list.innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>No blocks — all slots are open.</p></div>`;
+      list.innerHTML = `<div class="empty-state"><div class="icon" style="color:var(--green);font-size:22px;">✓</div><p>No blocks — all slots are open.</p></div>`;
       return;
     }
 
@@ -1402,7 +1407,7 @@
     });
     const data = await res.json();
     if (res.ok) {
-      showToast('✅ Time blocked.', 'success');
+      showToast('Time blocked.', 'success');
       ['block-start','block-end','block-reason','block-customer-name','block-customer-phone','block-vehicle','block-notes'].forEach(id => { document.getElementById(id).value = ''; });
       await loadBookings();
       loadBlocks();
@@ -1471,7 +1476,7 @@
   async function saveHours() {
     const res = await fetch('/api/admin/hours', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ hours: currentHours }) });
     if (res.ok) {
-      showToast('✅ Opening hours saved!', 'success');
+      showToast('Opening hours saved!', 'success');
       const msg = document.getElementById('hours-saved-msg');
       msg.style.display = 'inline';
       setTimeout(() => { msg.style.display = 'none'; }, 3000);
@@ -1493,13 +1498,13 @@
   }
 
   async function testEmail() {
-    showToast('⏳ Sending test email…', '', 30000);
+    showToast('Sending test email…', '', 30000);
     try {
       const res = await fetch('/api/admin/test-email', { method:'POST' });
       const data = await res.json();
-      if (res.ok) showToast('✅ ' + data.message, 'success', 8000);
-      else showToast('❌ ' + (data.error || 'Unknown error'), 'error', 10000);
-    } catch { showToast('❌ Network error', 'error', 8000); }
+      if (res.ok) showToast(data.message, 'success', 8000);
+      else showToast(data.error || 'Unknown error', 'error', 10000);
+    } catch { showToast('Network error', 'error', 8000); }
   }
 
   checkAuth();
