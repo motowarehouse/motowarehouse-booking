@@ -8,7 +8,7 @@ const DB_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH
 
 function readDB() {
   if (!fs.existsSync(DB_PATH)) {
-    const initial = { bookings: [], blocks: [], hours: null, lastId: 0, vehicles: [], partners: [], serviceHistory: [] };
+    const initial = { bookings: [], blocks: [], hours: null, lastId: 0, vehicles: [], partners: [], serviceHistory: [], warrantyHistory: [] };
     fs.writeFileSync(DB_PATH, JSON.stringify(initial, null, 2));
     return initial;
   }
@@ -19,6 +19,7 @@ function readDB() {
   if (!db.vehicles) db.vehicles = [];
   if (!db.partners) db.partners = [];
   if (!db.serviceHistory) db.serviceHistory = [];
+  if (!db.warrantyHistory) db.warrantyHistory = [];
   return db;
 }
 
@@ -296,24 +297,32 @@ function togglePartnerActive(id) {
 
 // ── Service History ───────────────────────────────────────────────────────────
 
-// Placeholder checklist — will be replaced with Nikolas's official list tomorrow
+// Official 24-item service checklist (bilingual — GR/EN)
 const DEFAULT_SERVICE_ITEMS = [
-  'Oil Change',
-  'Oil Filter',
-  'Air Filter',
-  'Spark Plug(s)',
-  'Front Tyre',
-  'Rear Tyre',
-  'Front Brake Pads',
-  'Rear Brake Pads',
-  'Chain & Sprocket Kit',
-  'Drive Belt',
-  'Coolant Change',
-  'Brake Fluid Change',
-  'Fork Oil',
-  'Battery',
-  'Small Service',
-  'Big Service'
+  { en: 'ENGINE OIL',          el: 'ΛΑΔΙ ΜΗΧΑΝΗΣ' },
+  { en: 'GEAR OIL',            el: 'ΛΑΔΙ ΣΥΜΠΛΕΚΤΗ' },
+  { en: 'SPARK PLUG',          el: 'ΜΠΟΥΖΙ' },
+  { en: 'SPARK PLUG CAP',      el: 'ΚΑΠΑΚΙ ΜΠΟΥΖΙ' },
+  { en: 'CHAIN',               el: 'ΑΛΥΣΙΔΑ ΚΙΝΗΣΗΣ' },
+  { en: 'DRIVE SPROCKET',      el: 'ΓΡΑΝΑΖΙ ΚΙΝΗΣΗΣ' },
+  { en: 'REAR SPROCKET',       el: 'ΓΡΑΝΑΖΙ ΟΠΙΣΘΙΟΥ ΤΡΟΧΟΥ' },
+  { en: 'CHECK VALVES',        el: 'ΕΛΕΓΧΟΣ ΔΙΑΚΕΝΩΝ ΒΑΛΒΙΔΩΝ' },
+  { en: 'AIR FILTER',          el: 'ΦΙΛΤΡΟ ΑΕΡΟΣ' },
+  { en: 'OIL FILTER',          el: 'ΦΙΛΤΡΟ ΛΑΔΙΟΥ' },
+  { en: 'FRONT BRAKE PADS',    el: 'ΤΑΚΑΚΙΑ ΜΠΡΟΣΤΑ' },
+  { en: 'REAR BRAKE PADS',     el: 'ΤΑΚΑΚΙΑ ΠΙΣΩ' },
+  { en: 'BELT',                el: 'ΙΜΑΝΤΑΣ ΚΙΝΗΣΗΣ' },
+  { en: 'ROLLERS',             el: 'ΜΠΙΛΙΕΣ ΦΥΓΟΚΕΝΤΡΙΚΟΥ' },
+  { en: 'SLIDERS',             el: 'ΦΩΛΙΕΣ ΦΥΓΟΚΕΝΤΡΙΚΟΥ' },
+  { en: 'CLUTCH',              el: 'ΣΥΜΠΛΕΚΤΗΣ' },
+  { en: 'DRIVE FACE',          el: 'DRIVE FACE' },
+  { en: 'MOVABLE DRIVE',       el: 'MOVABLE DRIVE' },
+  { en: 'FTEROTI',             el: 'ΦΤΕΡΩΤΗ' },
+  { en: 'VARIATOR',            el: 'ΒΑΡΙΑΤΟΡ' },
+  { en: 'FRONT LAMP',          el: 'ΛΑΜΠΑ ΕΜΠΡΟΣΘΙΟΥ ΦΑΝΟΥ' },
+  { en: 'REAR LAMP',           el: 'ΛΑΜΠΑ ΟΠΙΣΘΙΟΥ ΦΑΝΟΥ' },
+  { en: 'FRONT TYRE',          el: 'ΕΛΑΣΤΙΚΟ ΜΠΡΟΣΤΑ' },
+  { en: 'REAR TYRE',           el: 'ΕΛΑΣΤΙΚΟ ΠΙΣΩ' }
 ];
 
 function createServiceEntry(data) {
@@ -343,6 +352,41 @@ function getServiceHistoryByPlate(regNo) {
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 }
 
+// ── Warranty History ──────────────────────────────────────────────────────────
+
+function createWarrantyClaim(data) {
+  // data: { regNo, frameNo, km, saleDate, symptom, priority, engineDisassembly,
+  //         defectAgreed, courtesyVehicle, notes, loggedBy, loggedByAdmin }
+  const db = readDB();
+  const claim = {
+    id:               Date.now(),
+    regNo:            (data.regNo  || '').toString().toUpperCase().replace(/\s/g, ''),
+    frameNo:          data.frameNo  || '',
+    km:               parseInt(data.km) || 0,
+    saleDate:         data.saleDate || '',
+    symptom:          data.symptom  || '',
+    priority:         data.priority || 'normal',   // 'low' | 'normal' | 'urgent'
+    engineDisassembly: !!data.engineDisassembly,
+    defectAgreed:     !!data.defectAgreed,
+    courtesyVehicle:  !!data.courtesyVehicle,
+    notes:            data.notes   || '',
+    loggedBy:         data.loggedBy   || 'Motowarehouse',
+    loggedByAdmin:    data.loggedByAdmin || false,
+    status:           'open',                       // 'open' | 'closed'
+    createdAt:        new Date().toISOString()
+  };
+  db.warrantyHistory.push(claim);
+  writeDB(db);
+  return claim;
+}
+
+function getWarrantyByPlate(regNo) {
+  const key = (regNo || '').toString().toUpperCase().replace(/\s/g, '');
+  return readDB().warrantyHistory
+    .filter(e => e.regNo === key)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
 module.exports = {
   createBooking, getAllBookings, getBookingById,
   updateBookingStatus, rescheduleBooking, updateContactStatus,
@@ -351,5 +395,6 @@ module.exports = {
   getHours, saveHours, DEFAULT_HOURS,
   importVehicles, getVehicleByPlate, getAllVehicles,
   createPartner, getPartnerByUsername, getAllPartners, togglePartnerActive,
-  createServiceEntry, getServiceHistoryByPlate, DEFAULT_SERVICE_ITEMS
+  createServiceEntry, getServiceHistoryByPlate, DEFAULT_SERVICE_ITEMS,
+  createWarrantyClaim, getWarrantyByPlate
 };

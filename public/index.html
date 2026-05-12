@@ -254,6 +254,37 @@
     .sym-note strong { color: var(--blue); }
     .sym-note.show { display: block; }
 
+    /* ── OTHER SERVICE CARD ── */
+    .service-card--other {
+      border-style: dashed;
+    }
+    .service-card--other.selected {
+      border-style: solid;
+    }
+
+    /* ── OTHER INFO BANNER ── */
+    .other-info-banner {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      background: rgba(0,155,180,0.08);
+      border: 1px solid rgba(0,155,180,0.3);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .other-info-icon { font-size: 24px; flex-shrink: 0; margin-top: 2px; }
+    .other-info-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--blue);
+      margin-bottom: 4px;
+    }
+    .other-info-sub {
+      font-size: 13px;
+      color: var(--grey);
+      line-height: 1.5;
+    }
+
     /* ── FORM ── */
     .form-card {
       background: var(--dark2);
@@ -856,23 +887,40 @@
   <div class="step-title reveal-left" style="transition-delay:0.07s">Select Service Type</div>
 
   <div class="service-cards stagger-children" id="service-cards-wrap">
-    <div class="service-card" data-value="oil-change" onclick="selectService(this)">
-      <span class="service-icon">🛢️</span>
-      <div class="service-name">Oil Change</div>
-      <div class="service-time">~30 minutes</div>
-      <div class="service-desc">Engine oil and oil filter replacement.</div>
-    </div>
     <div class="service-card" data-value="small-service" onclick="selectService(this)">
       <span class="service-icon">🔧</span>
       <div class="service-name">Small Service</div>
       <div class="service-time">~1 hour</div>
-      <div class="service-desc">Oil change, filters, fluid checks, and basic inspection.</div>
+      <div class="service-desc">Oil &amp; filter change, fluid checks, and basic safety inspection.</div>
     </div>
-    <div class="service-card" data-value="big-service" onclick="selectService(this)">
+    <div class="service-card" data-value="full-service" onclick="selectService(this)">
       <span class="service-icon">⚙️</span>
-      <div class="service-name">Big Service</div>
+      <div class="service-name">Full Service</div>
       <div class="service-time">~2.5 hours</div>
-      <div class="service-desc">Full service including plugs, brake inspection, chain, and all consumables.</div>
+      <div class="service-desc">Complete service including plugs, brake inspection, chain, belt, and all consumables.</div>
+    </div>
+    <div class="service-card service-card--other" data-value="other" onclick="selectService(this)">
+      <span class="service-icon">💬</span>
+      <div class="service-name">Other</div>
+      <div class="service-time">By appointment</div>
+      <div class="service-desc">Repair, diagnosis, or anything else. Describe your request and we will call you to arrange a time.</div>
+    </div>
+  </div>
+
+  <!-- Other service description panel -->
+  <div id="other-desc-panel" style="display:none;margin-top:16px;">
+    <div class="form-card" style="border-color:rgba(0,155,180,0.35);">
+      <div class="other-info-banner">
+        <span class="other-info-icon">📞</span>
+        <div>
+          <div class="other-info-title">We will call you to arrange your appointment</div>
+          <div class="other-info-sub">A member of our team will contact you when available to schedule a suitable date and time.</div>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:16px;">
+        <label for="other-description">Describe what you need <span class="req">*</span></label>
+        <textarea id="other-description" placeholder="e.g. Strange noise from front wheel, need a diagnostic / Χρειάζομαι έλεγχο του μοτέρ…" style="min-height:100px;"></textarea>
+      </div>
     </div>
   </div>
 
@@ -1153,6 +1201,17 @@
     document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
     selectedService = el.dataset.value;
+    const isOther = selectedService === 'other';
+    // Show/hide date-time step (step 2)
+    document.getElementById('step2-anchor').style.display     = isOther ? 'none' : '';
+    document.querySelector('[for="date"]')?.closest('.step-title') && null; // handled below
+    const step2Title = document.querySelector('#step2-anchor + .step-title') ||
+                       document.querySelector('#step2-anchor ~ .step-title');
+    if (step2Title) step2Title.style.display = isOther ? 'none' : '';
+    const step2Card = document.querySelector('#step2-anchor ~ .form-card');
+    if (step2Card) step2Card.style.display = isOther ? 'none' : '';
+    // Show/hide other description panel
+    document.getElementById('other-desc-panel').style.display = isOther ? 'block' : 'none';
     checkSymNote();
   }
 
@@ -1160,10 +1219,10 @@
   const SYM_125 = ['SR 125 CBS','SR 125 ABS','JET 14 EVO 125','CARGO 125','ADX 125','JET X 125','VF125','MIO 50'];
 
   function checkSymNote() {
+    // For SYM 125cc, small service includes oil change — no separate booking needed
     const isSym125 = selectedBrand === 'sym' && SYM_125.includes(selectedModel);
-    const isOilChange = selectedService === 'oil-change';
     const note = document.getElementById('sym-note');
-    note.classList.toggle('show', isSym125 && isOilChange);
+    note.classList.toggle('show', isSym125 && selectedService === 'small-service');
   }
 
   // ── Custom model dropdown ─────────────────────────────────────────
@@ -1307,27 +1366,38 @@
     const notes = document.getElementById('notes').value.trim();
     const date  = dateInput.value;
 
+    const isOther = selectedService === 'other';
+    const description = isOther ? document.getElementById('other-description').value.trim() : '';
+
     if (!selectedService) return showError('Please select a service type.');
-    if (!date)            return showError('Please select a date.');
-    if (!selectedTime)    return showError('Please select a time slot.');
-    if (!name)            return showError('Please enter your full name.');
-    if (!phone)           return showError('Please enter your phone number.');
+    if (!isOther) {
+      if (!date)         return showError('Please select a date.');
+      if (!selectedTime) return showError('Please select a time slot.');
+    }
+    if (!name)  return showError('Please enter your full name.');
+    if (!phone) return showError('Please enter your phone number.');
     if (phone.replace(/\D/g,'').length < 7) return showError('Please enter a valid phone number.');
-    if (!email)           return showError('Please enter your email address.');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError('Please enter a valid email address (e.g. name@email.com).');
-    if (!model)           return showError('Please select your vehicle model.');
-    if (!year)            return showError('Please select the model year.');
-    if (!plate)           return showError('Please enter your license plate number.');
+    if (!isOther) {
+      if (!email) return showError('Please enter your email address.');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError('Please enter a valid email address (e.g. name@email.com).');
+    }
+    if (!model) return showError('Please select your vehicle model.');
+    if (!year)  return showError('Please select the model year.');
+    if (!plate) return showError('Please enter your license plate number.');
     if (!km || isNaN(km) || Number(km) < 0) return showError('Please enter the current kilometres on your vehicle.');
+    if (isOther && !description) return showError('Please describe what service you need.');
 
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span>Sending…';
 
     try {
+      const payload = { name, phone, email, serviceType: selectedService, date, time: selectedTime, model, year, plate, km, notes };
+      if (isOther) payload.description = description;
+
       const res = await fetch('/api/book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone, email, serviceType: selectedService, date, time: selectedTime, model, year, plate, km, notes })
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
 
@@ -1339,7 +1409,7 @@
       }
 
       // Show success screen
-      document.getElementById('booking-section').querySelectorAll('.step-label, .step-title, .service-cards, .sym-note, .form-card').forEach(el => el.style.display = 'none');
+      document.getElementById('booking-section').querySelectorAll('.step-label, .step-title, .service-cards, .sym-note, .form-card, #other-desc-panel').forEach(el => el.style.display = 'none');
       document.getElementById('success-ref').textContent = data.ref;
       document.getElementById('success-screen').classList.add('show');
 

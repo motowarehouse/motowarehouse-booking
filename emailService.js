@@ -1,9 +1,9 @@
 const https = require('https');
 
 const SERVICE_LABELS = {
-  'oil-change':    'Oil Change',
   'small-service': 'Small Service',
-  'big-service':   'Big Service'
+  'full-service':  'Full Service',
+  'other':         'Service Request'
 };
 
 const SENDER = { name: 'Motowarehouse', email: 'motowarehouse.bookings@gmail.com' };
@@ -56,23 +56,32 @@ async function sendNewBookingAlert(booking) {
   const adminEmail = process.env.ADMIN_EMAIL;
   if (!adminEmail) return;
 
+  const isOther = booking.serviceType === 'other';
+  const subjectTag = isOther ? '[NEEDS CALL]' : '[NEW BOOKING]';
+  const headerColor = isOther ? '#E59000' : '#009BB4';
+  const headerText  = isOther ? '📞 New Service Request — Needs Call' : 'New Service Booking';
+
   await sendBrevoEmail({
     to:      adminEmail,
-    subject: `[NEW BOOKING] ${booking.ref} – ${booking.name} – ${SERVICE_LABELS[booking.serviceType]}`,
+    subject: `${subjectTag} ${booking.ref} – ${booking.name} – ${SERVICE_LABELS[booking.serviceType] || booking.serviceType}`,
     html: `
-      <h2 style="color:#009BB4;">New Service Booking</h2>
+      <h2 style="color:${headerColor};">${headerText}</h2>
       <table style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif;">
         <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Reference</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.ref}</td></tr>
         <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Name</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.name}</td></tr>
         <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Phone</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.phone}</td></tr>
         <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Email</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.email || '—'}</td></tr>
-        <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Service</td><td style="padding:8px;border-bottom:1px solid #eee;">${SERVICE_LABELS[booking.serviceType]}</td></tr>
-        <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Date &amp; Time</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.date} at ${booking.time}</td></tr>
+        <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Service</td><td style="padding:8px;border-bottom:1px solid #eee;">${SERVICE_LABELS[booking.serviceType] || booking.serviceType}</td></tr>
+        ${isOther
+          ? `<tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Description</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.description || '—'}</td></tr>`
+          : `<tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Date &amp; Time</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.date} at ${booking.time}</td></tr>`
+        }
         <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Vehicle</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.year} ${booking.model}</td></tr>
         <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Plate</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.plate}</td></tr>
         <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Current KM</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.km ? Number(booking.km).toLocaleString() + ' km' : '—'}</td></tr>
         <tr><td style="padding:8px;font-weight:bold;">Notes</td><td style="padding:8px;">${booking.notes || '—'}</td></tr>
       </table>
+      ${isOther ? `<p style="margin-top:16px;background:#fff3cd;padding:12px;border-radius:4px;color:#856404;font-family:Arial;"><strong>⚠️ Action required:</strong> This customer needs to be called to schedule a date and time.</p>` : ''}
       <p style="margin-top:20px;">
         <a href="${process.env.SITE_URL || 'https://web-production-ad678.up.railway.app'}/admin"
            style="background:#009BB4;color:white;padding:12px 24px;text-decoration:none;border-radius:4px;display:inline-block;">
@@ -85,7 +94,8 @@ async function sendNewBookingAlert(booking) {
 
 // ── Confirmation to customer ──────────────────────────────────────────────────
 async function sendConfirmationToCustomer(booking) {
-  if (!booking.email) return;
+  // 'other' type: no confirmation email until manually scheduled
+  if (booking.serviceType === 'other' || !booking.email) return;
 
   await sendBrevoEmail({
     to:      booking.email,

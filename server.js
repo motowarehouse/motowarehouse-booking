@@ -73,31 +73,55 @@ app.get('/api/slots', (req, res) => {
 
 // Submit a new booking
 app.post('/api/book', async (req, res) => {
-  const { name, phone, email, serviceType, date, time, model, year, plate, km, notes } = req.body;
+  const { name, phone, email, serviceType, date, time, model, year, plate, km, notes, description } = req.body;
 
-  // Validation
-  if (!name || !phone || !email || !serviceType || !date || !time || !model || !year || !plate || !km) {
+  const isOther = serviceType === 'other';
+  const validServices = ['small-service', 'full-service', 'other'];
+
+  // Base validation (applies to all service types)
+  if (!name || !phone || !serviceType || !model || !year || !plate || !km) {
     return res.status(400).json({ error: 'All required fields must be filled.' });
   }
 
-  const validServices = ['oil-change', 'small-service', 'big-service'];
   if (!validServices.includes(serviceType)) {
     return res.status(400).json({ error: 'Invalid service type.' });
   }
 
-  // Check slot still available
-  const booked = db.getBookedSlots(date);
-  if (booked.includes(time)) {
-    return res.status(409).json({ error: 'This time slot is no longer available. Please choose another.' });
+  // For 'other' bookings: description required, no date/time needed
+  if (isOther) {
+    if (!description || !description.trim()) {
+      return res.status(400).json({ error: 'Please describe what service you need.' });
+    }
+  } else {
+    // Normal bookings require date, time, and email
+    if (!email || !date || !time) {
+      return res.status(400).json({ error: 'All required fields must be filled.' });
+    }
+    // Check slot still available
+    const booked = db.getBookedSlots(date);
+    if (booked.includes(time)) {
+      return res.status(409).json({ error: 'This time slot is no longer available. Please choose another.' });
+    }
   }
 
   try {
-    const booking = db.createBooking({ name, phone, email, serviceType, date, time, model, year, plate, km, notes });
+    const bookingData = {
+      name, phone, email: email || '', serviceType,
+      date: date || '', time: time || '',
+      model, year, plate, km, notes: notes || '',
+      description: description || '',
+      ...(isOther && { contactStatus: 'needs-call' })
+    };
+    const booking = db.createBooking(bookingData);
 
-    // Notify admin
+    // Notify admin for all bookings
     emailService.sendNewBookingAlert(booking).catch(e => console.error('[Email alert error]', e.message));
 
-    res.json({ success: true, ref: booking.ref, message: 'Booking received. We will confirm your appointment shortly.' });
+    if (isOther) {
+      res.json({ success: true, ref: booking.ref, message: 'Request received. A member of our team will call you to arrange an appointment.' });
+    } else {
+      res.json({ success: true, ref: booking.ref, message: 'Booking received. We will confirm your appointment shortly.' });
+    }
   } catch (err) {
     console.error('[Booking error]', err);
     res.status(500).json({ error: 'Something went wrong. Please try again.' });
@@ -148,7 +172,7 @@ app.post('/api/admin/bookings/:id/accept', requireAdmin, async (req, res) => {
   let emailError = null;
   try {
     await emailService.sendConfirmationToCustomer(booking);
-    console.log(`[Email] Confirmation sent to ${booking.email}`);
+    console.log('[Email] Confirmation sent to ' + booking.email);
   } catch (e) {
     emailError = e.message;
     console.error('[Email] Confirmation FAILED:', e.message, e.code || '');
@@ -173,7 +197,7 @@ app.post('/api/admin/bookings/:id/reschedule', requireAdmin, async (req, res) =>
 
   try {
     await emailService.sendRescheduleToCustomer(booking);
-    console.log(`[Email] Reschedule sent to ${booking.email}`);
+    console.log('[Email] Reschedule sent to ' + booking.email);
   } catch (e) {
     console.error('[Email] Reschedule FAILED:', e.message);
   }
@@ -187,10 +211,10 @@ app.post('/api/admin/bookings/:id/reschedule', requireAdmin, async (req, res) =>
   res.json({ success: true, booking });
 });
 
-// Update contact status for cancelled bookings
+// Update contact status for cancelled / needs-call bookings
 app.post('/api/admin/bookings/:id/contact-status', requireAdmin, (req, res) => {
   const { status } = req.body;
-  const valid = ['needs-contact', 'contacted', 'closed'];
+  const valid = ['needs-contact', 'needs-call', 'contacted', 'closed'];
   if (!valid.includes(status)) return res.status(400).json({ error: 'Invalid status' });
 
   const booking = db.updateContactStatus(req.params.id, status);
@@ -206,7 +230,7 @@ app.post('/api/admin/bookings/:id/cancel', requireAdmin, async (req, res) => {
 
   try {
     await emailService.sendCancellationToCustomer(booking);
-    console.log(`[Email] Cancellation sent to ${booking.email}`);
+    console.log('[Email] Cancellation sent to ' + booking.email);
   } catch (e) {
     console.error('[Email] Cancellation FAILED:', e.message, e.code || '');
   }
@@ -219,8 +243,6 @@ app.post('/api/admin/bookings/:id/cancel', requireAdmin, async (req, res) => {
 
   res.json({ success: true, booking });
 });
-
-// ── Manual Blocks ─────────────────────────────────────────────────────────────
 
 // Get all blocks
 app.get('/api/admin/blocks', requireAdmin, (req, res) => {
@@ -250,8 +272,6 @@ app.delete('/api/admin/blocks/:id', requireAdmin, (req, res) => {
   res.json({ success: true });
 });
 
-// ── Opening Hours ─────────────────────────────────────────────────────────────
-
 // Get hours
 app.get('/api/admin/hours', requireAdmin, (req, res) => {
   res.json(db.getHours());
@@ -272,12 +292,12 @@ app.post('/api/admin/test-email', requireAdmin, async (req, res) => {
   try {
     await emailService.sendNewBookingAlert({
       ref: 'TEST-001', name: 'Test User', phone: '99000000',
-      email: to, serviceType: 'oil-change',
+      email: to, serviceType: 'small-service',
       date: new Date().toISOString().split('T')[0], time: '09:00',
       model: 'CFMOTO 450NK', year: '2024', plate: 'ABC123', km: '1000', notes: 'This is a test email.'
     });
     console.log('[Email] Test sent successfully via Brevo');
-    res.json({ success: true, message: `Test email sent to ${to}` });
+    res.json({ success: true, message: 'Test email sent to ' + to });
   } catch (e) {
     console.error('[Email] Test FAILED:', e.message);
     res.status(500).json({ success: false, error: e.message });
@@ -354,7 +374,7 @@ app.post('/api/service-entry', requireAdminOrPartner, (req, res) => {
   res.json({ success: true, entry });
 });
 
-// ==================== ADMIN — VEHICLES ====================
+// ==================== ADMIN - VEHICLES ====================
 
 // Get all vehicles (paginated search)
 app.get('/api/admin/vehicles', requireAdmin, (req, res) => {
@@ -368,15 +388,16 @@ app.get('/api/admin/vehicles', requireAdmin, (req, res) => {
       v.frameNo.toUpperCase().includes(search)
     );
   }
-  res.json(vehicles.slice(0, 50)); // cap at 50 results
+  res.json(vehicles.slice(0, 50));
 });
 
-// Get vehicle + full service history (admin only)
+// Get vehicle + full service + warranty history (admin only)
 app.get('/api/admin/vehicles/:plate', requireAdmin, (req, res) => {
   const vehicle = db.getVehicleByPlate(req.params.plate);
   if (!vehicle) return res.status(404).json({ error: 'Vehicle not found.' });
   const history = db.getServiceHistoryByPlate(req.params.plate);
-  res.json({ vehicle, history });
+  const warranty = db.getWarrantyByPlate(req.params.plate);
+  res.json({ vehicle, history, warranty });
 });
 
 // Import vehicles from JSON array (parsed from CSV/Excel by frontend)
@@ -389,7 +410,7 @@ app.post('/api/admin/vehicles/import', requireAdmin, (req, res) => {
   res.json({ success: true, ...result });
 });
 
-// ==================== ADMIN — PARTNERS ====================
+// ==================== ADMIN - PARTNERS ====================
 
 // List all partners
 app.get('/api/admin/partners', requireAdmin, (req, res) => {
@@ -418,6 +439,38 @@ app.post('/api/admin/partners/:id/toggle', requireAdmin, (req, res) => {
   res.json({ success: true, partner: { ...partner, passwordHash: undefined } });
 });
 
+// ==================== WARRANTY ====================
+
+// Log a warranty claim (partner or admin)
+app.post('/api/warranty-claim', requireAdminOrPartner, (req, res) => {
+  const { regNo, frameNo, km, saleDate, symptom, priority, engineDisassembly, defectAgreed, courtesyVehicle, notes } = req.body;
+  if (!regNo || !symptom) {
+    return res.status(400).json({ error: 'Registration number and symptom description are required.' });
+  }
+
+  const isAdmin = !!(req.session && req.session.admin);
+  const partnerInfo = req.session.partner || null;
+
+  const claim = db.createWarrantyClaim({
+    regNo, frameNo, km, saleDate, symptom,
+    priority: priority || 'normal',
+    engineDisassembly: !!engineDisassembly,
+    defectAgreed:      !!defectAgreed,
+    courtesyVehicle:   !!courtesyVehicle,
+    notes,
+    loggedBy:      partnerInfo ? partnerInfo.workshopName : 'Motowarehouse',
+    loggedByAdmin: isAdmin
+  });
+
+  res.json({ success: true, claim });
+});
+
+// Get warranty history for a vehicle (partner or admin)
+app.get('/api/warranty/:regNo', requireAdminOrPartner, (req, res) => {
+  const claims = db.getWarrantyByPlate(req.params.regNo);
+  res.json(claims);
+});
+
 // Serve partner portal
 app.get('/partner', (req, res) => {
   res.sendFile(path.join(__dirname, 'partner', 'index.html'));
@@ -425,8 +478,8 @@ app.get('/partner', (req, res) => {
 
 // ==================== Start ====================
 app.listen(PORT, () => {
-  console.log(`\n🏍️  Motowarehouse Service Booking Portal`);
-  console.log(`   Running at: http://localhost:${PORT}`);
-  console.log(`   Admin panel: http://localhost:${PORT}/admin\n`);
+  console.log('\n\U0001f3cd️  Motowarehouse Service Booking Portal');
+  console.log('   Running at: http://localhost:' + PORT);
+  console.log('   Admin panel: http://localhost:' + PORT + '/admin\n');
   startReminderCron();
 });

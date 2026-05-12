@@ -1,251 +1,1026 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="el">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Partner Portal – Motowarehouse</title>
   <style>
+    @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Light.ttf'); font-weight:300; }
+    @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Regular.ttf'); font-weight:400; }
+    @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Medium.ttf'); font-weight:500; }
+    @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Bold.ttf'); font-weight:700; }
+    @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Black.ttf'); font-weight:900; }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     :root {
-      --bg:#0a0f14; --surface:#111820; --card:#16202a;
-      --border:rgba(255,255,255,0.08); --blue:#00b4d8;
-      --green:#2ecc71; --red:#e74c3c; --grey:#7a8a99; --text:#e8f0f7;
+      --blue: #009BB4;
+      --blue-dark: #007a8f;
+      --teal-light: #00EFD1;
+      --dark: #001A21;
+      --dark2: #002329;
+      --dark3: #002D35;
+      --dark4: #003E47;
+      --teal-mid: #007D8E;
+      --grey: #8a9ba0;
+      --white: #ffffff;
+      --red: #E50052;
+      --green: #00c896;
+      --orange: #E59000;
+      --surface: rgba(255,255,255,0.04);
+      --border: rgba(0,155,180,0.18);
     }
-    body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:24px 16px 48px; }
-    .logo { margin-bottom:16px; }
-    .page-title { font-size:22px; font-weight:700; margin-bottom:32px; }
-    .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:28px 24px; width:100%; max-width:480px; margin-bottom:16px; }
-    .card-title { font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--blue); margin-bottom:20px; }
-    label { display:block; font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--grey); margin-bottom:6px; }
-    input[type="text"], input[type="password"], input[type="number"], textarea {
-      width:100%; background:var(--surface); border:1px solid var(--border); border-radius:8px;
-      color:var(--text); font-size:15px; padding:11px 14px; outline:none;
-      transition:border-color .15s; margin-bottom:16px;
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'SupremeLL', Arial, sans-serif;
+      background: var(--dark);
+      color: var(--white);
+      min-height: 100vh;
+      font-weight: 300;
     }
-    input:focus, textarea:focus { border-color:var(--blue); }
-    textarea { resize:vertical; min-height:80px; }
-    .btn { width:100%; padding:13px; border:none; border-radius:8px; font-size:13px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; transition:opacity .15s; }
-    .btn:hover { opacity:.85; } .btn:disabled { opacity:.4; cursor:not-allowed; }
-    .btn-primary   { background:var(--blue); color:#000; }
-    .btn-secondary { background:transparent; color:var(--grey); border:1px solid var(--border); margin-top:10px; }
-    .msg { font-size:13px; padding:10px 14px; border-radius:8px; margin-bottom:16px; display:none; }
-    .msg.error   { background:rgba(231,76,60,.15); color:#ff6b6b; border:1px solid rgba(231,76,60,.3); display:block; }
-    .msg.success { background:rgba(46,204,113,.12); color:var(--green); border:1px solid rgba(46,204,113,.3); display:block; }
-    .vehicle-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:20px; }
-    .vehicle-card .reg   { font-size:20px; font-weight:800; letter-spacing:.06em; color:var(--blue); margin-bottom:4px; }
-    .vehicle-card .model { font-size:15px; font-weight:600; margin-bottom:8px; }
-    .vehicle-meta { display:flex; gap:10px; flex-wrap:wrap; }
-    .vehicle-meta span { font-size:12px; color:var(--grey); background:rgba(255,255,255,.05); padding:3px 8px; border-radius:4px; }
-    .check-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
-    .check-item { padding:10px 12px; background:var(--surface); border:1px solid var(--border); border-radius:8px; cursor:pointer; font-size:13px; display:flex; align-items:center; gap:8px; user-select:none; transition:border-color .15s,background .15s; }
-    .check-item.selected { border-color:var(--blue); background:rgba(0,180,216,.1); color:var(--blue); }
-    .check-box { width:16px; height:16px; border-radius:4px; border:1.5px solid var(--grey); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background .15s,border-color .15s; }
-    .check-item.selected .check-box { background:var(--blue); border-color:var(--blue); }
-    .check-box svg { display:none; }
-    .check-item.selected .check-box svg { display:block; }
-    .success-screen { text-align:center; }
-    .success-icon { width:56px; height:56px; background:rgba(46,204,113,.15); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; }
-    .success-icon svg { width:28px; height:28px; stroke:var(--green); fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
-    .success-title { font-size:18px; font-weight:700; margin-bottom:6px; }
-    .success-sub   { font-size:13px; color:var(--grey); margin-bottom:24px; }
-    .workshop-bar { font-size:12px; color:var(--grey); width:100%; max-width:480px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; }
-    .workshop-bar button { background:none; border:none; color:var(--grey); font-size:12px; cursor:pointer; text-decoration:underline; }
-    .workshop-bar button:hover { color:var(--text); }
-    .section        { display:none; }
-    .section.active { display:block; width:100%; max-width:480px; }
-    .plate-input-wrap { position:relative; }
-    .plate-input-wrap input { text-transform:uppercase; font-size:18px; font-weight:700; letter-spacing:.1em; padding-right:90px; margin-bottom:0; }
-    .plate-search-btn { position:absolute; right:10px; top:50%; transform:translateY(-50%); background:var(--blue); border:none; border-radius:6px; padding:6px 14px; color:#000; font-weight:700; font-size:12px; cursor:pointer; }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--dark2);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo-mark { height: 44px; width: auto; border-radius: 6px; object-fit: contain; display: block; }
+    .logo-wrap { display: flex; align-items: center; gap: 12px; }
+    .logo-text { font-size: 13px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--white); }
+    .logo-sub  { font-size: 9px; font-weight: 400; letter-spacing: 0.1em; color: var(--blue); text-transform: uppercase; margin-top: 1px; }
+
+    /* Header right */
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .workshop-name { font-size: 12px; color: var(--grey); }
+
+    /* Language toggle */
+    .lang-toggle {
+      display: flex;
+      background: var(--dark3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .lang-btn {
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--grey);
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .lang-btn.active {
+      background: var(--blue);
+      color: var(--dark);
+    }
+
+    .btn-signout {
+      background: none;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      color: var(--grey);
+      font-size: 11px;
+      padding: 5px 12px;
+      cursor: pointer;
+      font-family: inherit;
+      letter-spacing: 0.06em;
+      transition: all 0.15s;
+    }
+    .btn-signout:hover { color: var(--white); border-color: rgba(255,255,255,0.3); }
+
+    /* ── PAGE WRAPPER ── */
+    .page-wrap {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+    }
+
+    /* ── SECTIONS ── */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--dark2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 24px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 500px) { .card { padding: 20px 16px; } }
+
+    .card-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 20px;
+    }
+
+    /* ── INPUTS ── */
+    label {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--grey);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"], input[type="password"], input[type="number"], input[type="date"], textarea, select {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      color: var(--white);
+      font-family: 'SupremeLL', Arial, sans-serif;
+      font-size: 15px;
+      font-weight: 400;
+      padding: 11px 14px;
+      outline: none;
+      transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+      margin-bottom: 16px;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--blue);
+      background: rgba(0,155,180,0.06);
+      box-shadow: 0 0 0 3px rgba(0,155,180,0.12);
+    }
+    select option { background: #002329; color: var(--white); }
+    textarea { resize: vertical; min-height: 80px; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-family: 'SupremeLL', Arial, sans-serif;
+      transition: all 0.15s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary   { background: var(--blue); color: var(--dark); }
+    .btn-secondary { background: transparent; color: var(--grey); border: 1px solid rgba(255,255,255,0.1); margin-top: 10px; }
+    .btn-warranty  { background: rgba(229,144,0,0.15); color: var(--orange); border: 1px solid rgba(229,144,0,0.35); margin-top: 10px; }
+
+    /* ── MESSAGES ── */
+    .msg { font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; display: none; }
+    .msg.error   { background: rgba(229,0,82,0.12); color: #ff6b6b; border: 1px solid rgba(229,0,82,0.3); display: block; }
+    .msg.success { background: rgba(0,200,150,0.1); color: var(--green); border: 1px solid rgba(0,200,150,0.3); display: block; }
+
+    /* ── VEHICLE CARD ── */
+    .vehicle-card {
+      background: var(--dark3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .vehicle-reg   { font-size: 22px; font-weight: 900; letter-spacing: 0.08em; color: var(--blue); margin-bottom: 4px; }
+    .vehicle-model { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+    .vehicle-meta  { display: flex; gap: 8px; flex-wrap: wrap; }
+    .vehicle-tag   { font-size: 11px; color: var(--grey); background: rgba(255,255,255,0.05); padding: 3px 9px; border-radius: 4px; }
+
+    /* ── PLATE SEARCH ── */
+    .plate-wrap { position: relative; }
+    .plate-wrap input {
+      text-transform: uppercase;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding-right: 90px;
+      margin-bottom: 0;
+    }
+    .plate-search-btn {
+      position: absolute;
+      right: 10px; top: 50%;
+      transform: translateY(-50%);
+      background: var(--blue);
+      border: none;
+      border-radius: 6px;
+      padding: 7px 16px;
+      color: var(--dark);
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── TABS ── */
+    .tab-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+    .tab-btn {
+      padding: 10px 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--grey);
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-family: inherit;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.15s;
+    }
+    .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* ── YES/NO QUESTIONS ── */
+    .yn-group { margin-bottom: 18px; }
+    .yn-label { font-size: 13px; font-weight: 500; color: var(--white); margin-bottom: 10px; line-height: 1.4; }
+    .yn-options { display: flex; gap: 10px; }
+    .yn-option {
+      flex: 1;
+      padding: 9px 12px;
+      border: 1.5px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      color: var(--grey);
+      background: var(--surface);
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .yn-option:hover { border-color: rgba(0,155,180,0.4); color: var(--white); }
+    .yn-option.selected-yes { border-color: var(--green); background: rgba(0,200,150,0.1); color: var(--green); }
+    .yn-option.selected-no  { border-color: rgba(229,0,82,0.5); background: rgba(229,0,82,0.08); color: var(--red); }
+
+    /* ── SERVICE CHECKLIST TABLE ── */
+    .checklist-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+    .checklist-table th {
+      background: var(--dark3);
+      color: var(--blue);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .checklist-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: middle;
+    }
+    .checklist-table tr:last-child td { border-bottom: none; }
+    .checklist-table tr:hover td { background: rgba(0,155,180,0.04); }
+    .check-num { font-size: 11px; color: var(--grey); width: 28px; font-weight: 500; }
+    .check-name-en { font-weight: 600; color: var(--white); }
+    .check-name-el { color: var(--grey); font-size: 12px; margin-top: 2px; }
+
+    /* State buttons */
+    .state-btns { display: flex; gap: 6px; justify-content: flex-end; }
+    .state-btn {
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1.5px solid transparent;
+      font-family: inherit;
+      transition: all 0.12s;
+      white-space: nowrap;
+    }
+    .state-btn-ok     { background: rgba(0,200,150,0.1); color: var(--green); border-color: rgba(0,200,150,0.3); }
+    .state-btn-ok.active  { background: var(--green); color: var(--dark); }
+    .state-btn-rep    { background: rgba(229,0,82,0.08); color: var(--red); border-color: rgba(229,0,82,0.25); }
+    .state-btn-rep.active { background: var(--red); color: var(--white); }
+    .state-btn-na     { background: rgba(255,255,255,0.04); color: var(--grey); border-color: rgba(255,255,255,0.1); }
+    .state-btn-na.active  { background: rgba(255,255,255,0.12); color: var(--white); }
+
+    /* ── SUCCESS SCREEN ── */
+    .success-screen { text-align: center; padding: 16px 0; }
+    .success-icon {
+      width: 60px; height: 60px;
+      background: rgba(0,200,150,0.12);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .success-icon svg { width: 30px; height: 30px; stroke: var(--green); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .success-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .success-sub   { font-size: 13px; color: var(--grey); margin-bottom: 24px; }
+
+    /* ── DIVIDER ── */
+    .form-divider { border: none; border-top: 1px solid rgba(255,255,255,0.07); margin: 20px 0; }
+
+    /* ── LOGIN SCREEN ── */
+    .login-wrap { max-width: 400px; margin: 0 auto; padding-top: 20px; }
+    .login-title { font-size: 22px; font-weight: 900; letter-spacing: -0.01em; text-align: center; margin-bottom: 28px; }
+    .login-title span { color: var(--blue); }
   </style>
 </head>
 <body>
-  <div class="logo"><img src="/assets/MWH_Logo_New.png" alt="Motowarehouse" style="width:140px;height:auto;"></div>
-  <div class="page-title">Partner Portal</div>
 
-  <!-- LOGIN -->
-  <div class="section active" id="section-login">
-    <div class="card">
-      <div class="card-title">Workshop Login</div>
-      <div id="login-msg" class="msg"></div>
-      <label>Username</label>
-      <input type="text" id="login-username" placeholder="Your workshop username" autocomplete="username">
-      <label>Password</label>
-      <input type="password" id="login-password" placeholder="Password" autocomplete="current-password"
-        onkeydown="if(event.key==='Enter') doLogin()">
-      <button class="btn btn-primary" onclick="doLogin()">Sign In</button>
+<!-- ── HEADER ── -->
+<header>
+  <div class="logo-wrap">
+    <img src="/assets/MWH_Logo_New.png" alt="Motowarehouse" class="logo-mark"
+         onerror="this.style.display='none'">
+    <div>
+      <div class="logo-text">Motowarehouse</div>
+      <div class="logo-sub">Partner Portal</div>
     </div>
   </div>
-
-  <!-- MAIN -->
-  <div class="section" id="section-main">
-    <div class="workshop-bar">
-      <span id="workshop-label"></span>
-      <button onclick="doLogout()">Sign out</button>
+  <div class="header-right" id="header-right">
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="lang-el" onclick="setLang('el')">GR</button>
+      <button class="lang-btn" id="lang-en" onclick="setLang('en')">EN</button>
     </div>
+    <span class="workshop-name" id="workshop-display" style="display:none;"></span>
+    <button class="btn-signout" id="signout-btn" onclick="doLogout()" style="display:none;">
+      <span data-gr="Αποσύνδεση" data-en="Sign out"></span>
+    </button>
+  </div>
+</header>
 
-    <!-- Step 1: Search -->
+<!-- ── LOGIN SECTION ── -->
+<div class="section active" id="section-login">
+  <div class="page-wrap">
+    <div class="login-wrap">
+      <div class="login-title"><span data-gr="Είσοδος" data-en="Sign In"></span></div>
+      <div class="card">
+        <div class="card-title"><span data-gr="Σύνδεση Συνεργείου" data-en="Workshop Login"></span></div>
+        <div id="login-msg" class="msg"></div>
+        <label><span data-gr="Όνομα Χρήστη" data-en="Username"></span></label>
+        <input type="text" id="login-username" autocomplete="username"
+          onkeydown="if(event.key==='Enter') document.getElementById('login-password').focus()">
+        <label><span data-gr="Κωδικός" data-en="Password"></span></label>
+        <input type="password" id="login-password" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter') doLogin()">
+        <button class="btn btn-primary" onclick="doLogin()">
+          <span data-gr="Είσοδος" data-en="Sign In"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN SECTION ── -->
+<div class="section" id="section-main">
+  <div class="page-wrap">
+
+    <!-- STEP 1: Search -->
     <div id="step-search">
       <div class="card">
-        <div class="card-title">Step 1 — Find Vehicle</div>
+        <div class="card-title">
+          <span data-gr="Αναζήτηση Οχήματος" data-en="Find Vehicle"></span>
+        </div>
         <div id="search-msg" class="msg"></div>
-        <label>Registration Plate</label>
-        <div class="plate-input-wrap">
-          <input type="text" id="plate-input" placeholder="e.g. ABC 123" maxlength="12"
+        <label><span data-gr="Αριθμός Κυκλοφορίας" data-en="Registration Plate"></span></label>
+        <div class="plate-wrap">
+          <input type="text" id="plate-input"
+            placeholder="π.χ. ABC 123"
+            maxlength="12"
             oninput="this.value=this.value.toUpperCase()"
             onkeydown="if(event.key==='Enter') searchVehicle()">
-          <button class="plate-search-btn" onclick="searchVehicle()">Search</button>
+          <button class="plate-search-btn" onclick="searchVehicle()">
+            <span data-gr="Αναζήτηση" data-en="Search"></span>
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Step 2+3: Log -->
+    <!-- STEP 2+: Log work or file warranty -->
     <div id="step-log" style="display:none;">
-      <div class="card">
-        <div class="card-title">Vehicle Found</div>
-        <div id="vehicle-result"></div>
-        <div class="card-title" style="margin-top:4px;">Log Service Work</div>
-        <div id="log-msg" class="msg"></div>
-        <label>Current KM Reading *</label>
-        <input type="number" id="log-km" placeholder="e.g. 12500" min="1">
-        <label>Work Performed</label>
-        <div class="check-grid" id="check-grid"></div>
-        <label>Additional Notes</label>
-        <textarea id="log-notes" placeholder="Any other work, observations, or parts not listed above…"></textarea>
-        <button class="btn btn-primary" onclick="submitLog()">Save Service Entry</button>
-        <button class="btn btn-secondary" onclick="resetToSearch()">Search Another Vehicle</button>
-      </div>
-    </div>
 
-    <!-- Success -->
+      <!-- Vehicle found card -->
+      <div class="card" id="vehicle-found-card">
+        <div class="card-title"><span data-gr="Όχημα" data-en="Vehicle"></span></div>
+        <div id="vehicle-result"></div>
+      </div>
+
+      <!-- TABS -->
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tab-service-btn" onclick="switchTab('service')">
+          <span data-gr="Εργασία Σέρβις" data-en="Service Work"></span>
+        </button>
+        <button class="tab-btn" id="tab-warranty-btn" onclick="switchTab('warranty')">
+          <span data-gr="Εγγύηση" data-en="Warranty Claim"></span>
+        </button>
+      </div>
+
+      <!-- ─── SERVICE TAB ─── -->
+      <div class="tab-pane active" id="tab-service">
+        <div class="card">
+          <div class="card-title"><span data-gr="Καταχώρηση Εργασίας" data-en="Log Service Entry"></span></div>
+          <div id="log-msg" class="msg"></div>
+
+          <!-- Date & KM -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+              <label><span data-gr="Ημερομηνία Σέρβις" data-en="Date of Service"></span></label>
+              <input type="date" id="log-date">
+            </div>
+            <div>
+              <label><span data-gr="Χιλιόμετρα *" data-en="Current KM *"></span></label>
+              <input type="number" id="log-km" placeholder="π.χ. 12500" min="1">
+            </div>
+          </div>
+
+          <hr class="form-divider">
+
+          <!-- Yes/No Questions -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue);margin-bottom:16px;">
+              <span data-gr="Ελέγξτε τα παρακάτω" data-en="Quick Checks"></span>
+            </div>
+
+            <div class="yn-group">
+              <div class="yn-label">
+                <span data-gr="Ανεφοδιάστηκε το λάδι σε κατάλληλο επίπεδο;" data-en="Was oil topped up to the correct level?"></span>
+              </div>
+              <div class="yn-options">
+                <button class="yn-option" data-q="oil" data-v="yes" onclick="selectYN(this)">
+                  <span data-gr="ΝΑΙ" data-en="YES"></span>
+                </button>
+                <button class="yn-option" data-q="oil" data-v="no" onclick="selectYN(this)">
+                  <span data-gr="ΟΧΙ" data-en="NO"></span>
+                </button>
+              </div>
+            </div>
+
+            <div class="yn-group">
+              <div class="yn-label">
+                <span data-gr="Παρατηρήθηκε ασυνήθιστος θόρυβος από τον κινητήρα;" data-en="Was any abnormal engine noise noticed?"></span>
+              </div>
+              <div class="yn-options">
+                <button class="yn-option" data-q="noise" data-v="yes" onclick="selectYN(this)">
+                  <span data-gr="ΝΑΙ" data-en="YES"></span>
+                </button>
+                <button class="yn-option" data-q="noise" data-v="no" onclick="selectYN(this)">
+                  <span data-gr="ΟΧΙ" data-en="NO"></span>
+                </button>
+              </div>
+            </div>
+
+            <div class="yn-group" style="margin-bottom:0;">
+              <div class="yn-label">
+                <span data-gr="Έγινε αλλαγή λαδιού;" data-en="Was an oil change carried out?"></span>
+              </div>
+              <div class="yn-options">
+                <button class="yn-option" data-q="oilchange" data-v="yes" onclick="selectYN(this)">
+                  <span data-gr="ΝΑΙ" data-en="YES"></span>
+                </button>
+                <button class="yn-option" data-q="oilchange" data-v="no" onclick="selectYN(this)">
+                  <span data-gr="ΟΧΙ" data-en="NO"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <hr class="form-divider">
+
+          <!-- 24-item Checklist -->
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue);margin-bottom:12px;">
+            <span data-gr="Λίστα Ελέγχου Σέρβις" data-en="Service Checklist"></span>
+          </div>
+          <table class="checklist-table" id="checklist-table">
+            <thead>
+              <tr>
+                <th style="width:28px;">#</th>
+                <th><span data-gr="Ανταλλακτικό / Εργασία" data-en="Part / Work"></span></th>
+                <th style="text-align:right;"><span data-gr="Κατάσταση" data-en="Status"></span></th>
+              </tr>
+            </thead>
+            <tbody id="checklist-body"></tbody>
+          </table>
+
+          <hr class="form-divider">
+
+          <!-- Notes -->
+          <div>
+            <label><span data-gr="Σχόλια / Παρατηρήσεις" data-en="Notes / Observations"></span></label>
+            <textarea id="log-notes"></textarea>
+          </div>
+
+          <button class="btn btn-primary" onclick="submitLog()">
+            <span data-gr="Αποθήκευση Εγγραφής" data-en="Save Service Entry"></span>
+          </button>
+          <button class="btn btn-secondary" onclick="resetToSearch()">
+            <span data-gr="Αναζήτηση Άλλου Οχήματος" data-en="Search Another Vehicle"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ─── WARRANTY TAB ─── -->
+      <div class="tab-pane" id="tab-warranty">
+        <div class="card">
+          <div class="card-title" style="color:var(--orange);">
+            <span data-gr="Δήλωση Εγγύησης" data-en="Warranty Claim"></span>
+          </div>
+          <div id="warranty-msg" class="msg"></div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+              <label><span data-gr="Αριθμός Πλαισίου (Frame No.)" data-en="Frame No."></span></label>
+              <input type="text" id="w-frame" placeholder="π.χ. LCETJKBM…">
+            </div>
+            <div>
+              <label><span data-gr="Χιλιόμετρα" data-en="KM Reading"></span></label>
+              <input type="number" id="w-km" placeholder="π.χ. 3200" min="0">
+            </div>
+            <div>
+              <label><span data-gr="Ημερομηνία Πώλησης" data-en="Sale Date"></span></label>
+              <input type="date" id="w-saledate">
+            </div>
+            <div>
+              <label><span data-gr="Προτεραιότητα" data-en="Priority"></span></label>
+              <select id="w-priority">
+                <option value="low"><span data-gr="Χαμηλή" data-en="Low"></span></option>
+                <option value="normal" selected><span data-gr="Κανονική" data-en="Normal"></span></option>
+                <option value="urgent"><span data-gr="Επείγον 🚨" data-en="Urgent 🚨"></span></option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label><span data-gr="Περιγραφή Βλάβης / Παραπόνου *" data-en="Fault / Symptom Description *"></span></label>
+            <textarea id="w-symptom" style="min-height:90px;"></textarea>
+          </div>
+
+          <!-- Yes/No flags -->
+          <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px;">
+
+            <div class="yn-group" style="margin-bottom:0;">
+              <div class="yn-label">
+                <span data-gr="Απαιτείται αποσυναρμολόγηση κινητήρα;" data-en="Is engine disassembly required?"></span>
+              </div>
+              <div class="yn-options">
+                <button class="yn-option" data-q="w-engine" data-v="yes" onclick="selectYN(this)">
+                  <span data-gr="ΝΑΙ" data-en="YES"></span>
+                </button>
+                <button class="yn-option" data-q="w-engine" data-v="no" onclick="selectYN(this)">
+                  <span data-gr="ΟΧΙ" data-en="NO"></span>
+                </button>
+              </div>
+            </div>
+
+            <div class="yn-group" style="margin-bottom:0;">
+              <div class="yn-label">
+                <span data-gr="Αναγνωρίστηκε το ελάττωμα από τη CFMOTO;" data-en="Has the defect been agreed by CFMOTO?"></span>
+              </div>
+              <div class="yn-options">
+                <button class="yn-option" data-q="w-defect" data-v="yes" onclick="selectYN(this)">
+                  <span data-gr="ΝΑΙ" data-en="YES"></span>
+                </button>
+                <button class="yn-option" data-q="w-defect" data-v="no" onclick="selectYN(this)">
+                  <span data-gr="ΟΧΙ" data-en="NO"></span>
+                </button>
+              </div>
+            </div>
+
+            <div class="yn-group" style="margin-bottom:0;">
+              <div class="yn-label">
+                <span data-gr="Παρασχέθηκε αντικατάσταση οχήματος;" data-en="Was a courtesy vehicle provided?"></span>
+              </div>
+              <div class="yn-options">
+                <button class="yn-option" data-q="w-courtesy" data-v="yes" onclick="selectYN(this)">
+                  <span data-gr="ΝΑΙ" data-en="YES"></span>
+                </button>
+                <button class="yn-option" data-q="w-courtesy" data-v="no" onclick="selectYN(this)">
+                  <span data-gr="ΟΧΙ" data-en="NO"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label><span data-gr="Πρόσθετες Σημειώσεις" data-en="Additional Notes"></span></label>
+            <textarea id="w-notes"></textarea>
+          </div>
+
+          <button class="btn btn-warranty" onclick="submitWarranty()">
+            <span data-gr="Υποβολή Δήλωσης Εγγύησης" data-en="Submit Warranty Claim"></span>
+          </button>
+          <button class="btn btn-secondary" onclick="resetToSearch()">
+            <span data-gr="Αναζήτηση Άλλου Οχήματος" data-en="Search Another Vehicle"></span>
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /step-log -->
+
+    <!-- SUCCESS -->
     <div id="step-success" style="display:none;">
       <div class="card success-screen">
         <div class="success-icon">
           <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
-        <div class="success-title">Service Entry Saved</div>
+        <div class="success-title" id="success-title">
+          <span data-gr="Αποθηκεύτηκε" data-en="Entry Saved"></span>
+        </div>
         <div class="success-sub" id="success-detail"></div>
-        <button class="btn btn-primary" onclick="resetToSearch()">Log Another Vehicle</button>
+        <button class="btn btn-primary" onclick="resetToSearch()">
+          <span data-gr="Αναζήτηση Άλλου Οχήματος" data-en="Log Another Vehicle"></span>
+        </button>
       </div>
     </div>
-  </div>
 
-  <script>
-    let serviceItems = [];
+  </div><!-- /page-wrap -->
+</div><!-- /section-main -->
 
-    async function checkAuth() {
-      try {
-        const res = await fetch('/api/partner/me');
-        if (res.ok) { const d = await res.json(); showMain(d.partner.workshopName); await loadServiceItems(); }
-      } catch(e) {}
+<script>
+  // ── DATA ─────────────────────────────────────────────────────────────────────
+  const SERVICE_ITEMS = [
+    { en: 'ENGINE OIL',       el: 'ΛΑΔΙ ΜΗΧΑΝΗΣ' },
+    { en: 'GEAR OIL',         el: 'ΛΑΔΙ ΣΥΜΠΛΕΚΤΗ' },
+    { en: 'SPARK PLUG',       el: 'ΜΠΟΥΖΙ' },
+    { en: 'SPARK PLUG CAP',   el: 'ΚΑΠΑΚΙ ΜΠΟΥΖΙ' },
+    { en: 'CHAIN',            el: 'ΑΛΥΣΙΔΑ ΚΙΝΗΣΗΣ' },
+    { en: 'DRIVE SPROCKET',   el: 'ΓΡΑΝΑΖΙ ΚΙΝΗΣΗΣ' },
+    { en: 'REAR SPROCKET',    el: 'ΓΡΑΝΑΖΙ ΟΠΙΣΘΙΟΥ ΤΡΟΧΟΥ' },
+    { en: 'CHECK VALVES',     el: 'ΕΛΕΓΧΟΣ ΔΙΑΚΕΝΩΝ ΒΑΛΒΙΔΩΝ' },
+    { en: 'AIR FILTER',       el: 'ΦΙΛΤΡΟ ΑΕΡΟΣ' },
+    { en: 'OIL FILTER',       el: 'ΦΙΛΤΡΟ ΛΑΔΙΟΥ' },
+    { en: 'FRONT BRAKE PADS', el: 'ΤΑΚΑΚΙΑ ΜΠΡΟΣΤΑ' },
+    { en: 'REAR BRAKE PADS',  el: 'ΤΑΚΑΚΙΑ ΠΙΣΩ' },
+    { en: 'BELT',             el: 'ΙΜΑΝΤΑΣ ΚΙΝΗΣΗΣ' },
+    { en: 'ROLLERS',          el: 'ΜΠΙΛΙΕΣ ΦΥΓΟΚΕΝΤΡΙΚΟΥ' },
+    { en: 'SLIDERS',          el: 'ΦΩΛΙΕΣ ΦΥΓΟΚΕΝΤΡΙΚΟΥ' },
+    { en: 'CLUTCH',           el: 'ΣΥΜΠΛΕΚΤΗΣ' },
+    { en: 'DRIVE FACE',       el: 'DRIVE FACE' },
+    { en: 'MOVABLE DRIVE',    el: 'MOVABLE DRIVE' },
+    { en: 'FTEROTI',          el: 'ΦΤΕΡΩΤΗ' },
+    { en: 'VARIATOR',         el: 'ΒΑΡΙΑΤΟΡ' },
+    { en: 'FRONT LAMP',       el: 'ΛΑΜΠΑ ΕΜΠΡΟΣΘΙΟΥ ΦΑΝΟΥ' },
+    { en: 'REAR LAMP',        el: 'ΛΑΜΠΑ ΟΠΙΣΘΙΟΥ ΦΑΝΟΥ' },
+    { en: 'FRONT TYRE',       el: 'ΕΛΑΣΤΙΚΟ ΜΠΡΟΣΤΑ' },
+    { en: 'REAR TYRE',        el: 'ΕΛΑΣΤΙΚΟ ΠΙΣΩ' }
+  ];
+
+  // ── STATE ─────────────────────────────────────────────────────────────────────
+  let currentLang  = 'el';
+  let currentPlate = '';
+  const ynAnswers  = {}; // { oil: 'yes', noise: 'no', ... }
+  // itemStates[i] = 'ok' | 'replace' | 'na' | null
+  const itemStates = new Array(SERVICE_ITEMS.length).fill(null);
+
+  // ── LANGUAGE ─────────────────────────────────────────────────────────────────
+  function setLang(lang) {
+    currentLang = lang;
+    document.getElementById('lang-el').classList.toggle('active', lang === 'el');
+    document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+    document.documentElement.lang = lang;
+    // Update all translatable spans
+    document.querySelectorAll('[data-gr]').forEach(el => {
+      el.textContent = lang === 'el' ? el.dataset.gr : el.dataset.en;
+    });
+    // Update input placeholders
+    if (lang === 'el') {
+      const p = document.getElementById('plate-input');
+      if (p) p.placeholder = 'π.χ. ABC 123';
+    } else {
+      const p = document.getElementById('plate-input');
+      if (p) p.placeholder = 'e.g. ABC 123';
     }
+    // Rebuild checklist with correct language focus
+    buildChecklist();
+  }
 
-    async function doLogin() {
-      const username = document.getElementById('login-username').value.trim();
-      const password = document.getElementById('login-password').value;
-      const msg = document.getElementById('login-msg');
-      if (!username || !password) { showMsg(msg,'Please enter your username and password.','error'); return; }
-      try {
-        const res = await fetch('/api/partner/login',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username,password}) });
-        const data = await res.json();
-        if (res.ok) { showMain(data.workshopName); await loadServiceItems(); }
-        else showMsg(msg, data.error||'Login failed.', 'error');
-      } catch(e) { showMsg(msg,'Connection error. Please try again.','error'); }
+  // ── AUTH ─────────────────────────────────────────────────────────────────────
+  async function checkAuth() {
+    try {
+      const res = await fetch('/api/partner/me');
+      if (res.ok) {
+        const d = await res.json();
+        showMain(d.partner.workshopName);
+      }
+    } catch(e) {}
+  }
+
+  async function doLogin() {
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+    const msg = document.getElementById('login-msg');
+    if (!username || !password) {
+      showMsg(msg, currentLang === 'el' ? 'Εισάγετε όνομα χρήστη και κωδικό.' : 'Please enter your username and password.', 'error');
+      return;
     }
-
-    async function doLogout() {
-      await fetch('/api/partner/logout',{method:'POST'});
-      document.getElementById('section-main').classList.remove('active');
-      document.getElementById('section-login').classList.add('active');
-      document.getElementById('login-username').value='';
-      document.getElementById('login-password').value='';
-      resetToSearch();
-    }
-
-    function showMain(name) {
-      document.getElementById('section-login').classList.remove('active');
-      document.getElementById('section-main').classList.add('active');
-      document.getElementById('workshop-label').textContent = name;
-    }
-
-    async function loadServiceItems() {
-      try { const res = await fetch('/api/service-items'); if (res.ok) { serviceItems = await res.json(); buildChecklist(); } } catch(e) {}
-    }
-
-    function buildChecklist() {
-      const grid = document.getElementById('check-grid');
-      grid.innerHTML = '';
-      serviceItems.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'check-item';
-        div.dataset.item = item;
-        div.innerHTML = `<div class="check-box"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div><span>${item}</span>`;
-        div.onclick = () => div.classList.toggle('selected');
-        grid.appendChild(div);
+    try {
+      const res = await fetch('/api/partner/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
       });
+      const data = await res.json();
+      if (res.ok) {
+        showMain(data.workshopName);
+      } else {
+        showMsg(msg, data.error || (currentLang === 'el' ? 'Σφάλμα σύνδεσης.' : 'Login failed.'), 'error');
+      }
+    } catch(e) {
+      showMsg(msg, currentLang === 'el' ? 'Σφάλμα σύνδεσης.' : 'Connection error.', 'error');
     }
+  }
 
-    async function searchVehicle() {
-      const plate = document.getElementById('plate-input').value.trim();
-      const msg = document.getElementById('search-msg');
-      if (!plate) { showMsg(msg,'Please enter a registration plate.','error'); return; }
-      try {
-        const res = await fetch(`/api/vehicle?plate=${encodeURIComponent(plate)}`);
-        const data = await res.json();
-        if (res.ok) { showVehicle(data); }
-        else showMsg(msg, data.error||'Vehicle not found in our records.', 'error');
-      } catch(e) { showMsg(msg,'Connection error. Please try again.','error'); }
-    }
+  async function doLogout() {
+    await fetch('/api/partner/logout', { method: 'POST' });
+    document.getElementById('section-main').classList.remove('active');
+    document.getElementById('section-login').classList.add('active');
+    document.getElementById('workshop-display').style.display = 'none';
+    document.getElementById('signout-btn').style.display = 'none';
+    document.getElementById('login-username').value = '';
+    document.getElementById('login-password').value = '';
+    resetToSearch();
+  }
 
-    function showVehicle(v) {
-      document.getElementById('vehicle-result').innerHTML = `
-        <div class="vehicle-card">
-          <div class="reg">${v.regNo}</div>
-          <div class="model">${v.model||'—'}${v.year?' · '+v.year:''}</div>
-          <div class="vehicle-meta">
-            ${v.frameNo?`<span>Frame: ${v.frameNo}</span>`:''}
-            ${v.engineNo?`<span>Engine: ${v.engineNo}</span>`:''}
+  function showMain(workshopName) {
+    document.getElementById('section-login').classList.remove('active');
+    document.getElementById('section-main').classList.add('active');
+    const wd = document.getElementById('workshop-display');
+    wd.textContent = workshopName;
+    wd.style.display = 'inline';
+    document.getElementById('signout-btn').style.display = 'inline-flex';
+    buildChecklist();
+    setLang(currentLang); // re-apply translations
+    // Set today as default date
+    document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
+  }
+
+  // ── TABS ─────────────────────────────────────────────────────────────────────
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + tab + '-btn').classList.add('active');
+    document.getElementById('tab-' + tab).classList.add('active');
+  }
+
+  // ── YES/NO ─────────────────────────────────────────────────────────────────
+  function selectYN(btn) {
+    const q = btn.dataset.q;
+    const v = btn.dataset.v;
+    ynAnswers[q] = v;
+    // Update siblings
+    btn.closest('.yn-options').querySelectorAll('.yn-option').forEach(b => {
+      b.classList.remove('selected-yes', 'selected-no');
+    });
+    btn.classList.add(v === 'yes' ? 'selected-yes' : 'selected-no');
+  }
+
+  // ── CHECKLIST ─────────────────────────────────────────────────────────────
+  function buildChecklist() {
+    const tbody = document.getElementById('checklist-body');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    SERVICE_ITEMS.forEach((item, i) => {
+      const nameHtml = currentLang === 'el'
+        ? `<div class="check-name-en">${item.el}</div><div class="check-name-el">${item.en}</div>`
+        : `<div class="check-name-en">${item.en}</div><div class="check-name-el">${item.el}</div>`;
+
+      const state = itemStates[i];
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="check-num">${i + 1}</td>
+        <td>${nameHtml}</td>
+        <td>
+          <div class="state-btns">
+            <button class="state-btn state-btn-ok  ${state === 'ok'      ? 'active' : ''}" onclick="setItemState(${i},'ok',      this)" title="${currentLang==='el'?'Εντάξει':'OK'}">✓</button>
+            <button class="state-btn state-btn-rep ${state === 'replace' ? 'active' : ''}" onclick="setItemState(${i},'replace', this)" title="${currentLang==='el'?'Αλλαγή':'Replace'}">↺</button>
+            <button class="state-btn state-btn-na  ${state === 'na'      ? 'active' : ''}" onclick="setItemState(${i},'na',      this)" title="${currentLang==='el'?'Δ/Ε':'N/A'}">—</button>
           </div>
-        </div>`;
-      document.getElementById('log-km').value='';
-      document.getElementById('log-notes').value='';
-      document.querySelectorAll('.check-item').forEach(el=>el.classList.remove('selected'));
-      clearMsg(document.getElementById('log-msg'));
-      document.getElementById('step-search').style.display='none';
-      document.getElementById('step-log').style.display='block';
-      document.getElementById('step-success').style.display='none';
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function setItemState(index, state, btn) {
+    itemStates[index] = state;
+    const row = btn.closest('tr');
+    row.querySelectorAll('.state-btn').forEach(b => {
+      b.classList.remove('active');
+    });
+    btn.classList.add('active');
+  }
+
+  // ── VEHICLE SEARCH ────────────────────────────────────────────────────────
+  async function searchVehicle() {
+    const plate = document.getElementById('plate-input').value.trim();
+    const msg = document.getElementById('search-msg');
+    if (!plate) {
+      showMsg(msg, currentLang === 'el' ? 'Εισάγετε αριθμό κυκλοφορίας.' : 'Please enter a registration plate.', 'error');
+      return;
+    }
+    try {
+      const res = await fetch(`/api/vehicle?plate=${encodeURIComponent(plate)}`);
+      const data = await res.json();
+      if (res.ok) {
+        currentPlate = data.regNo;
+        showVehicle(data);
+      } else {
+        showMsg(msg, currentLang === 'el' ? 'Το όχημα δεν βρέθηκε στη βάση δεδομένων.' : 'Vehicle not found in our records.', 'error');
+      }
+    } catch(e) {
+      showMsg(msg, currentLang === 'el' ? 'Σφάλμα σύνδεσης.' : 'Connection error.', 'error');
+    }
+  }
+
+  function showVehicle(v) {
+    document.getElementById('vehicle-result').innerHTML = `
+      <div class="vehicle-card">
+        <div class="vehicle-reg">${v.regNo}</div>
+        <div class="vehicle-model">${v.model || '—'}${v.year ? ' · ' + v.year : ''}</div>
+        <div class="vehicle-meta">
+          ${v.frameNo  ? `<span class="vehicle-tag">Frame: ${v.frameNo}</span>` : ''}
+          ${v.engineNo ? `<span class="vehicle-tag">Engine: ${v.engineNo}</span>` : ''}
+        </div>
+      </div>`;
+
+    // Reset forms
+    resetForms();
+    document.getElementById('step-search').style.display = 'none';
+    document.getElementById('step-log').style.display    = 'block';
+    document.getElementById('step-success').style.display = 'none';
+    switchTab('service');
+  }
+
+  function resetForms() {
+    // Service form
+    document.getElementById('log-km').value = '';
+    document.getElementById('log-notes').value = '';
+    document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
+    // Reset checklist states
+    itemStates.fill(null);
+    buildChecklist();
+    // Reset yn answers
+    Object.keys(ynAnswers).forEach(k => delete ynAnswers[k]);
+    document.querySelectorAll('.yn-option').forEach(b => b.classList.remove('selected-yes', 'selected-no'));
+    clearMsg(document.getElementById('log-msg'));
+    // Warranty form
+    ['w-frame','w-km','w-saledate','w-symptom','w-notes'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    document.getElementById('w-priority').value = 'normal';
+    clearMsg(document.getElementById('warranty-msg'));
+  }
+
+  // ── SUBMIT SERVICE LOG ────────────────────────────────────────────────────
+  async function submitLog() {
+    const km    = document.getElementById('log-km').value.trim();
+    const notes = document.getElementById('log-notes').value.trim();
+    const date  = document.getElementById('log-date').value;
+    const msg   = document.getElementById('log-msg');
+
+    if (!km || isNaN(km) || parseInt(km) <= 0) {
+      showMsg(msg, currentLang === 'el' ? 'Εισάγετε έγκυρη ένδειξη χιλιομέτρων.' : 'Please enter a valid KM reading.', 'error');
+      return;
     }
 
-    async function submitLog() {
-      const plate = document.getElementById('plate-input').value.trim();
-      const km    = document.getElementById('log-km').value.trim();
-      const notes = document.getElementById('log-notes').value.trim();
-      const msg   = document.getElementById('log-msg');
-      const items = [...document.querySelectorAll('.check-item.selected')].map(el=>el.dataset.item);
-      if (!km||isNaN(km)||parseInt(km)<=0) { showMsg(msg,'Please enter a valid KM reading.','error'); return; }
-      if (!items.length&&!notes) { showMsg(msg,'Please select at least one item or add notes.','error'); return; }
-      try {
-        const res = await fetch('/api/service-entry',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({regNo:plate,km,items,notes})});
-        const data = await res.json();
-        if (res.ok) {
-          document.getElementById('step-log').style.display='none';
-          document.getElementById('step-success').style.display='block';
-          document.getElementById('success-detail').textContent=`${plate} · ${Number(km).toLocaleString()} km`;
-        } else showMsg(msg, data.error||'Failed to save.','error');
-      } catch(e) { showMsg(msg,'Connection error. Please try again.','error'); }
+    // Build items list from states
+    const items = [];
+    itemStates.forEach((state, i) => {
+      if (state === 'replace') items.push({ key: SERVICE_ITEMS[i].en, state: 'replaced', en: SERVICE_ITEMS[i].en, el: SERVICE_ITEMS[i].el });
+      else if (state === 'ok') items.push({ key: SERVICE_ITEMS[i].en, state: 'ok', en: SERVICE_ITEMS[i].en, el: SERVICE_ITEMS[i].el });
+    });
+
+    // Append yn answers as notes prefix
+    const ynText = formatYNAnswers();
+    const finalNotes = ynText ? ynText + (notes ? '\n' + notes : '') : notes;
+
+    if (!items.length && !finalNotes) {
+      showMsg(msg, currentLang === 'el' ? 'Επιλέξτε τουλάχιστον ένα στοιχείο ή προσθέστε σημειώσεις.' : 'Please check at least one item or add notes.', 'error');
+      return;
     }
 
-    function resetToSearch() {
-      document.getElementById('plate-input').value='';
-      clearMsg(document.getElementById('search-msg'));
-      document.getElementById('step-search').style.display='block';
-      document.getElementById('step-log').style.display='none';
-      document.getElementById('step-success').style.display='none';
+    try {
+      const res = await fetch('/api/service-entry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ regNo: currentPlate, km: parseInt(km), items, notes: finalNotes, date })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        document.getElementById('step-log').style.display    = 'none';
+        document.getElementById('step-success').style.display = 'block';
+        document.getElementById('success-detail').textContent = `${currentPlate} · ${Number(km).toLocaleString()} km`;
+      } else {
+        showMsg(msg, data.error || (currentLang === 'el' ? 'Αποτυχία αποθήκευσης.' : 'Failed to save.'), 'error');
+      }
+    } catch(e) {
+      showMsg(msg, currentLang === 'el' ? 'Σφάλμα σύνδεσης.' : 'Connection error.', 'error');
     }
+  }
 
-    function showMsg(el,text,type) { el.textContent=text; el.className='msg '+type; }
-    function clearMsg(el) { el.textContent=''; el.className='msg'; }
+  function formatYNAnswers() {
+    const labels = {
+      el: {
+        oil:       { q: 'Λάδι ανεφοδιάστηκε σε σωστό επίπεδο', yes: 'ΝΑΙ', no: 'ΟΧΙ' },
+        noise:     { q: 'Ασυνήθιστος θόρυβος κινητήρα', yes: 'ΝΑΙ', no: 'ΟΧΙ' },
+        oilchange: { q: 'Αλλαγή λαδιού', yes: 'ΝΑΙ', no: 'ΟΧΙ' }
+      },
+      en: {
+        oil:       { q: 'Oil topped up correctly', yes: 'YES', no: 'NO' },
+        noise:     { q: 'Abnormal engine noise', yes: 'YES', no: 'NO' },
+        oilchange: { q: 'Oil change carried out', yes: 'YES', no: 'NO' }
+      }
+    };
+    const l = labels[currentLang] || labels.en;
+    const parts = Object.keys(ynAnswers).filter(k => ['oil','noise','oilchange'].includes(k)).map(k => {
+      const v = ynAnswers[k];
+      return `${l[k].q}: ${v === 'yes' ? l[k].yes : l[k].no}`;
+    });
+    return parts.length ? parts.join(' | ') : '';
+  }
 
-    checkAuth();
-  </script>
+  // ── SUBMIT WARRANTY CLAIM ─────────────────────────────────────────────────
+  async function submitWarranty() {
+    const symptom = document.getElementById('w-symptom').value.trim();
+    const msg     = document.getElementById('warranty-msg');
+    if (!symptom) {
+      showMsg(msg, currentLang === 'el' ? 'Η περιγραφή βλάβης είναι υποχρεωτική.' : 'Fault description is required.', 'error');
+      return;
+    }
+    try {
+      const res = await fetch('/api/warranty-claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          regNo:            currentPlate,
+          frameNo:          document.getElementById('w-frame').value.trim(),
+          km:               document.getElementById('w-km').value,
+          saleDate:         document.getElementById('w-saledate').value,
+          symptom,
+          priority:         document.getElementById('w-priority').value,
+          engineDisassembly: ynAnswers['w-engine']   === 'yes',
+          defectAgreed:      ynAnswers['w-defect']   === 'yes',
+          courtesyVehicle:   ynAnswers['w-courtesy'] === 'yes',
+          notes:            document.getElementById('w-notes').value.trim()
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        document.getElementById('step-log').style.display = 'none';
+        document.getElementById('step-success').style.display = 'block';
+        const successTitle = document.getElementById('success-title');
+        successTitle.innerHTML = currentLang === 'el' ? 'Δήλωση Εγγύησης Υποβλήθηκε' : 'Warranty Claim Submitted';
+        document.getElementById('success-detail').textContent = currentPlate;
+      } else {
+        showMsg(msg, data.error || (currentLang === 'el' ? 'Αποτυχία υποβολής.' : 'Submission failed.'), 'error');
+      }
+    } catch(e) {
+      showMsg(msg, currentLang === 'el' ? 'Σφάλμα σύνδεσης.' : 'Connection error.', 'error');
+    }
+  }
+
+  // ── RESET ─────────────────────────────────────────────────────────────────
+  function resetToSearch() {
+    currentPlate = '';
+    document.getElementById('plate-input').value = '';
+    clearMsg(document.getElementById('search-msg'));
+    document.getElementById('step-search').style.display  = 'block';
+    document.getElementById('step-log').style.display     = 'none';
+    document.getElementById('step-success').style.display = 'none';
+    // Restore success title default
+    const st = document.getElementById('success-title');
+    if (st) st.innerHTML = currentLang === 'el' ? 'Αποθηκεύτηκε' : 'Entry Saved';
+  }
+
+  // ── HELPERS ────────────────────────────────────────────────────────────────
+  function showMsg(el, text, type) { el.textContent = text; el.className = 'msg ' + type; }
+  function clearMsg(el) { if (el) { el.textContent = ''; el.className = 'msg'; } }
+
+  // ── INIT ──────────────────────────────────────────────────────────────────
+  checkAuth();
+  setLang('el'); // default Greek
+</script>
 </body>
 </html>

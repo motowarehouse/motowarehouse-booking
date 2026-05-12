@@ -92,9 +92,10 @@
     .btn-quick-reschedule { background:rgba(0,155,180,0.12); color:var(--blue); border:1px solid rgba(0,155,180,0.3); font-size:12px; }
     .btn-quick-reschedule:hover { background:rgba(0,155,180,0.25); }
     .booking-service { font-size:11px; padding:3px 9px; border-radius:12px; font-weight:500; white-space:nowrap; }
-    .service-oil-change { background:rgba(0,155,180,0.15); color:var(--blue); }
     .service-small-service { background:rgba(0,200,150,0.12); color:var(--green); }
-    .service-big-service { background:rgba(145,192,29,0.12); color:#91C01D; }
+    .service-full-service  { background:rgba(145,192,29,0.12); color:#91C01D; }
+    .service-other         { background:rgba(229,144,0,0.15); color:#E59000; }
+    .contact-needs-call    { background:rgba(229,144,0,0.15); color:#E59000; border:1px solid rgba(229,144,0,0.4); }
     .status-badge { font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:3px 7px; border-radius:4px; white-space:nowrap; }
     .status-pending { background:rgba(245,158,11,0.15); color:var(--orange); }
     .status-accepted { background:rgba(0,200,150,0.15); color:var(--green); }
@@ -529,10 +530,68 @@
   </div>
 </div>
 
+<!-- WARRANTY CLAIM MODAL -->
+<div class="modal-overlay hidden" id="warranty-modal">
+  <div class="modal" style="max-width:580px;">
+    <h3 style="color:#E59000;">Log Warranty Claim</h3>
+    <div class="modal-sub">Vehicle: <strong id="warranty-modal-plate"></strong></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+      <div>
+        <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);margin-bottom:6px;">Frame No.</label>
+        <input type="text" class="admin-input" id="w-frame" placeholder="e.g. LCETJKBM8P…">
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);margin-bottom:6px;">KM Reading</label>
+        <input type="number" class="admin-input" id="w-km" placeholder="e.g. 3200" min="0">
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);margin-bottom:6px;">Sale Date</label>
+        <input type="date" class="admin-input" id="w-saledate">
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);margin-bottom:6px;">Priority</label>
+        <select class="admin-input" id="w-priority">
+          <option value="low">Low</option>
+          <option value="normal" selected>Normal</option>
+          <option value="urgent">🚨 Urgent</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);margin-bottom:6px;">Symptom / Issue Description *</label>
+      <textarea class="admin-input" id="w-symptom" style="resize:vertical;min-height:80px;" placeholder="Describe the defect or complaint in detail…"></textarea>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
+        <input type="checkbox" id="w-engine"> Engine disassembly required
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
+        <input type="checkbox" id="w-defect"> Defect agreed by CFMOTO
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
+        <input type="checkbox" id="w-courtesy"> Courtesy vehicle provided
+      </label>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);margin-bottom:6px;">Additional Notes</label>
+      <textarea class="admin-input" id="w-notes" style="resize:vertical;min-height:60px;" placeholder="Any additional details…"></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="document.getElementById('warranty-modal').classList.add('hidden')">Cancel</button>
+      <button onclick="submitWarrantyClaim()" style="background:rgba(229,144,0,0.2);color:#E59000;border:1px solid rgba(229,144,0,0.4);border-radius:6px;padding:10px 20px;cursor:pointer;font-family:inherit;font-weight:700;font-size:13px;letter-spacing:0.06em;">Save Warranty Claim</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-  const SVC = { 'oil-change':'Oil Change', 'small-service':'Small Service', 'big-service':'Big Service' };
+  const SVC = { 'small-service':'Small Service', 'full-service':'Full Service', 'other':'Other Request' };
   const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   let allBookings = [];
   let allBlocks = [];
@@ -600,19 +659,20 @@
 
   // ── STATS ──────────────────────────────────────────────────────────────
   function updateStats() {
-    const pending   = allBookings.filter(b => b.status === 'pending').length;
-    const accepted  = allBookings.filter(b => b.status === 'accepted').length;
-    const cancelled = allBookings.filter(b => b.status === 'cancelled').length;
+    const pending      = allBookings.filter(b => b.status === 'pending' && b.contactStatus !== 'needs-call').length;
+    const needsCall    = allBookings.filter(b => b.status === 'pending' && b.contactStatus === 'needs-call').length;
+    const accepted     = allBookings.filter(b => b.status === 'accepted').length;
+    const cancelled    = allBookings.filter(b => b.status === 'cancelled').length;
     const needsContact = allBookings.filter(b => b.status === 'cancelled' && b.contactStatus === 'needs-contact').length;
     document.getElementById('stat-pending').textContent   = pending;
     document.getElementById('stat-accepted').textContent  = accepted;
     document.getElementById('stat-cancelled').textContent = cancelled;
     document.getElementById('stat-total').textContent     = allBookings.length + allBlocks.length;
     document.getElementById('badge-all').textContent      = allBookings.length + allBlocks.length;
-    document.getElementById('badge-pending').textContent  = pending;
+    document.getElementById('badge-pending').textContent  = pending + needsCall;
     const ncBadge = document.getElementById('badge-needs-contact');
-    ncBadge.textContent = needsContact;
-    ncBadge.style.display = needsContact > 0 ? 'inline' : 'none';
+    ncBadge.textContent = needsContact + needsCall;
+    ncBadge.style.display = (needsContact + needsCall) > 0 ? 'inline' : 'none';
   }
 
   // ── VIEWS ──────────────────────────────────────────────────────────────
@@ -709,32 +769,69 @@
       const res = await fetch(`/api/admin/vehicles/${encodeURIComponent(plate)}`);
       const data = await res.json();
       if (!res.ok) { content.innerHTML = `<p style="color:var(--red);">${data.error}</p>`; return; }
-      const { vehicle: v, history } = data;
+      const { vehicle: v, history, warranty = [] } = data;
+      // Merge service + warranty entries into a single timeline sorted newest first
+      const timeline = [
+        ...history.map(e => ({ ...e, _type: 'service' })),
+        ...warranty.map(e => ({ ...e, _type: 'warranty', date: e.createdAt.split('T')[0] }))
+      ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      const PRIORITY_LABEL = { low: 'Low', normal: 'Normal', urgent: '🚨 Urgent' };
+      const PRIORITY_COLOR = { low: 'var(--green)', normal: 'var(--blue)', urgent: 'var(--red)' };
+
       content.innerHTML = `
         <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
           <div>
             <div style="font-size:26px;font-weight:900;letter-spacing:0.1em;color:var(--blue);">${v.regNo}</div>
             <div style="font-size:15px;font-weight:700;margin-top:4px;">${v.year||''} ${v.model||''}</div>
-            <div style="font-size:12px;color:var(--grey);margin-top:4px)">Frame: ${v.frameNo||'—'} &nbsp;|&nbsp; Engine: ${v.engineNo||'—'}</div>
+            <div style="font-size:12px;color:var(--grey);margin-top:4px;">Frame: ${v.frameNo||'—'} &nbsp;|&nbsp; Engine: ${v.engineNo||'—'}</div>
           </div>
-          <button class="btn-primary" onclick="openLogEntryModal('${v.regNo}')" style="width:auto;padding:10px 20px;font-size:13px;">+ Log Service Entry</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-primary" onclick="openLogEntryModal('${v.regNo}')" style="width:auto;padding:10px 20px;font-size:13px;">+ Log Service</button>
+            <button onclick="openWarrantyModal('${v.regNo}')" style="width:auto;padding:10px 20px;font-size:13px;background:rgba(229,144,0,0.15);color:#E59000;border:1px solid rgba(229,144,0,0.3);border-radius:6px;cursor:pointer;font-family:inherit;font-weight:700;letter-spacing:0.06em;">+ Warranty Claim</button>
+          </div>
         </div>
         <div style="font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);margin-bottom:12px;">
-          Service History ${history.length ? `(${history.length} entries)` : '— No entries yet'}
+          Vehicle History ${timeline.length ? `(${timeline.length} entries)` : '— No entries yet'}
         </div>
-        ${history.length === 0
+        ${timeline.length === 0
           ? '<div class="empty-state" style="padding:30px 0;"><p>No service records for this vehicle yet.</p></div>'
-          : history.map(e => `
+          : timeline.map(e => e._type === 'service' ? `
             <div style="border-left:3px solid var(--blue);padding:12px 16px;margin-bottom:10px;background:rgba(0,155,180,0.05);border-radius:0 6px 6px 0;">
               <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
-                <div style="font-weight:700;font-size:14px;">${e.date} &nbsp;·&nbsp; <span style="color:var(--blue);">${Number(e.km).toLocaleString()} km</span></div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span style="font-size:10px;font-weight:700;letter-spacing:0.1em;background:rgba(0,155,180,0.15);color:var(--blue);padding:2px 8px;border-radius:4px;text-transform:uppercase;">Service</span>
+                  <div style="font-weight:700;font-size:14px;">${e.date} &nbsp;·&nbsp; <span style="color:var(--blue);">${Number(e.km).toLocaleString()} km</span></div>
+                </div>
                 <div style="font-size:12px;color:var(--grey);">${e.partnerName}</div>
               </div>
               ${e.items && e.items.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:${e.notes?'8px':'0'};">
-                ${e.items.map(i => `<span style="background:rgba(0,155,180,0.12);color:var(--blue);border-radius:12px;font-size:11px;font-weight:500;padding:3px 10px;">${i}</span>`).join('')}
+                ${e.items.map(i => `<span style="background:rgba(0,155,180,0.12);color:var(--blue);border-radius:12px;font-size:11px;font-weight:500;padding:3px 10px;">${typeof i === 'object' ? (i.en || i.el || JSON.stringify(i)) : i}</span>`).join('')}
               </div>` : ''}
               ${e.notes ? `<div style="font-size:13px;color:var(--grey);margin-top:4px;">${e.notes}</div>` : ''}
-            </div>`).join('')
+            </div>` : `
+            <div style="border-left:3px solid #E59000;padding:12px 16px;margin-bottom:10px;background:rgba(229,144,0,0.05);border-radius:0 6px 6px 0;">
+              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span style="font-size:10px;font-weight:700;letter-spacing:0.1em;background:rgba(229,144,0,0.15);color:#E59000;padding:2px 8px;border-radius:4px;text-transform:uppercase;">Warranty</span>
+                  <div style="font-weight:700;font-size:14px;">${e.date} ${e.km ? `&nbsp;·&nbsp; <span style="color:#E59000;">${Number(e.km).toLocaleString()} km</span>` : ''}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span style="font-size:11px;font-weight:600;color:${PRIORITY_COLOR[e.priority]||'var(--blue)'};">${PRIORITY_LABEL[e.priority]||e.priority}</span>
+                  <span style="font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;background:${e.status==='open'?'rgba(229,0,82,0.12)':'rgba(0,200,150,0.12)'};color:${e.status==='open'?'var(--red)':'var(--green)'};">${e.status}</span>
+                  <div style="font-size:12px;color:var(--grey);">${e.loggedBy}</div>
+                </div>
+              </div>
+              <div style="font-size:13px;font-weight:600;margin-bottom:4px;">${e.symptom}</div>
+              ${e.engineDisassembly||e.defectAgreed||e.courtesyVehicle ? `
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">
+                ${e.engineDisassembly ? `<span style="font-size:11px;padding:2px 9px;border-radius:10px;background:rgba(229,0,82,0.1);color:var(--red);font-weight:500;">Engine Disassembly</span>` : ''}
+                ${e.defectAgreed ? `<span style="font-size:11px;padding:2px 9px;border-radius:10px;background:rgba(229,144,0,0.1);color:#E59000;font-weight:500;">Defect Agreed</span>` : ''}
+                ${e.courtesyVehicle ? `<span style="font-size:11px;padding:2px 9px;border-radius:10px;background:rgba(0,155,180,0.1);color:var(--blue);font-weight:500;">Courtesy Vehicle</span>` : ''}
+              </div>` : ''}
+              ${e.notes ? `<div style="font-size:13px;color:var(--grey);margin-top:6px;">${e.notes}</div>` : ''}
+            </div>`
+          ).join('')
         }`;
     } catch(e) { content.innerHTML = '<p style="color:var(--red);">Error loading vehicle details.</p>'; }
   }
@@ -752,11 +849,14 @@
     document.getElementById('log-km').value = '';
     document.getElementById('log-notes').value = '';
     const cl = document.getElementById('log-checklist');
-    cl.innerHTML = adminServiceItems.map(item => `
-      <div class="check-item-admin" onclick="this.classList.toggle('sel')" data-item="${item}"
-        style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;cursor:pointer;padding:7px 12px;font-size:13px;transition:all 0.15s;user-select:none;">
-        ${item}
-      </div>`).join('');
+    cl.innerHTML = adminServiceItems.map(item => {
+      const label = typeof item === 'object' ? `${item.en} / ${item.el}` : item;
+      const val   = typeof item === 'object' ? item.en : item;
+      return `<div class="check-item-admin" onclick="this.classList.toggle('sel')" data-item="${val}"
+        style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;cursor:pointer;padding:7px 12px;font-size:12px;transition:all 0.15s;user-select:none;line-height:1.35;">
+        ${label}
+      </div>`;
+    }).join('');
     document.getElementById('log-entry-modal').classList.remove('hidden');
   }
 
@@ -778,6 +878,54 @@
         loadVehicleDetail(adminLogPlate);
       } else {
         showToast(data.error || 'Failed to save.', 'error');
+      }
+    } catch(e) { showToast('Connection error.', 'error'); }
+  }
+
+  // ── WARRANTY CLAIM MODAL (admin) ─────────────────────────────────────────
+  let warrantyPlate = null;
+
+  function openWarrantyModal(plate) {
+    warrantyPlate = plate;
+    document.getElementById('warranty-modal-plate').textContent = plate;
+    ['w-frame','w-km','w-saledate','w-symptom','w-notes'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    ['w-engine','w-defect','w-courtesy'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.checked = false;
+    });
+    document.getElementById('w-priority').value = 'normal';
+    document.getElementById('warranty-modal').classList.remove('hidden');
+  }
+
+  async function submitWarrantyClaim() {
+    const symptom = document.getElementById('w-symptom').value.trim();
+    if (!symptom) { showToast('Symptom description is required.', 'error'); return; }
+    try {
+      const res = await fetch('/api/warranty-claim', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          regNo:            warrantyPlate,
+          frameNo:          document.getElementById('w-frame').value.trim(),
+          km:               document.getElementById('w-km').value,
+          saleDate:         document.getElementById('w-saledate').value,
+          symptom,
+          priority:         document.getElementById('w-priority').value,
+          engineDisassembly: document.getElementById('w-engine').checked,
+          defectAgreed:     document.getElementById('w-defect').checked,
+          courtesyVehicle:  document.getElementById('w-courtesy').checked,
+          notes:            document.getElementById('w-notes').value.trim()
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        document.getElementById('warranty-modal').classList.add('hidden');
+        showToast('Warranty claim saved.', 'success');
+        loadVehicleDetail(warrantyPlate);
+      } else {
+        showToast(data.error || 'Failed to save claim.', 'error');
       }
     } catch(e) { showToast('Connection error.', 'error'); }
   }
@@ -907,7 +1055,28 @@
 
   function renderBookings() {
     let filtered = allBookings;
-    if (currentView === 'pending')  filtered = allBookings.filter(b => b.status === 'pending');
+    if (currentView === 'pending') {
+      // In pending view: show "Needs Call" section first, then regular pending
+      const needsCall    = allBookings.filter(b => b.status === 'pending' && b.contactStatus === 'needs-call')
+                                      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const regularPending = allBookings.filter(b => b.status === 'pending' && b.contactStatus !== 'needs-call')
+                                        .sort((a, b) => (a.date+'T'+a.time).localeCompare(b.date+'T'+b.time));
+      const list = document.getElementById('bookings-list');
+      let html = '';
+      if (needsCall.length > 0) {
+        html += `<div class="section-divider" style="color:#E59000;border-color:rgba(229,144,0,0.3);">📞 Needs Call — Schedule Appointment (${needsCall.length})</div>`;
+        html += `<div class="bookings-list" style="margin-bottom:20px;">${needsCall.map(b => bookingCard(b)).join('')}</div>`;
+      }
+      if (regularPending.length > 0) {
+        if (needsCall.length > 0) html += `<div class="section-divider">⏳ Awaiting Confirmation (${regularPending.length})</div>`;
+        html += regularPending.map(b => bookingCard(b)).join('');
+      }
+      if (!needsCall.length && !regularPending.length) {
+        html = `<div class="empty-state"><div class="icon" style="color:var(--grey);">—</div><p>No pending bookings.</p></div>`;
+      }
+      list.innerHTML = html;
+      return;
+    }
     if (currentView === 'accepted') filtered = allBookings.filter(b => b.status === 'accepted');
 
     // In "all" view, hide cancelled by default
@@ -1046,20 +1215,36 @@
   // ── BOOKING CARD ──────────────────────────────────────────────────────
   function bookingCard(b) {
     const isExpanded = expandedId === b.id;
+    const isOther    = b.serviceType === 'other';
+    const isNeedsCall = b.contactStatus === 'needs-call';
 
-    const quickActions = b.status === 'pending' ? `
+    const quickActions = b.status === 'pending' ? (isNeedsCall ? `
+      <div class="quick-actions" onclick="event.stopPropagation()">
+        <button class="btn-quick btn-quick-reschedule" title="Schedule" onclick="openRescheduleModal(${b.id}, event)" style="background:rgba(229,144,0,0.15);color:#E59000;border-color:rgba(229,144,0,0.3);">📅</button>
+        <button class="btn-quick btn-quick-cancel" title="Cancel" onclick="cancelBooking(${b.id}, event)">✕</button>
+      </div>` : `
       <div class="quick-actions" onclick="event.stopPropagation()">
         <button class="btn-quick btn-quick-accept" title="Accept" onclick="acceptBooking(${b.id}, event)">✓</button>
         <button class="btn-quick btn-quick-reschedule" title="Reschedule" onclick="openRescheduleModal(${b.id}, event)">↺</button>
         <button class="btn-quick btn-quick-cancel" title="Cancel" onclick="cancelBooking(${b.id}, event)">✕</button>
-      </div>` : b.status === 'accepted' ? `
+      </div>`) : b.status === 'accepted' ? `
       <div class="quick-actions" onclick="event.stopPropagation()">
         <button class="btn-quick btn-quick-reschedule" title="Reschedule" onclick="openRescheduleModal(${b.id}, event)">↺</button>
         <button class="btn-quick btn-quick-cancel" title="Cancel" onclick="cancelBooking(${b.id}, event)">✕</button>
       </div>` : '';
 
     let actions = '';
-    if (b.status === 'pending') {
+    if (b.status === 'pending' && isNeedsCall) {
+      actions = `
+        <div style="background:rgba(229,144,0,0.08);border:1px solid rgba(229,144,0,0.3);border-radius:8px;padding:12px 14px;margin-bottom:10px;">
+          <div style="font-size:12px;font-weight:700;color:#E59000;margin-bottom:4px;">📞 NEEDS CALL</div>
+          <div style="font-size:12px;color:var(--grey);">Call this customer to discuss their request and arrange a date &amp; time. Then use Reschedule to assign the appointment, or Cancel if it cannot be arranged.</div>
+        </div>
+        <div class="action-row">
+          <button class="btn-reschedule" onclick="openRescheduleModal(${b.id}, event)" style="background:rgba(229,144,0,0.15);color:#E59000;border-color:rgba(229,144,0,0.35);">📅 Schedule Appointment</button>
+          <button class="btn-cancel-booking" onclick="cancelBooking(${b.id}, event)">✕ Cancel</button>
+        </div>`;
+    } else if (b.status === 'pending') {
       actions = `<div class="action-row">
         <button class="btn-accept" onclick="acceptBooking(${b.id}, event)">✓ Accept & Confirm</button>
         <button class="btn-reschedule" onclick="openRescheduleModal(${b.id}, event)">↺ Reschedule</button>
@@ -1074,20 +1259,24 @@
       actions = `<div style="font-size:12px;color:var(--grey);">Cancelled: ${b.updatedAt ? new Date(b.updatedAt).toLocaleString('en-GB') : '—'}</div>`;
     }
 
+    const datetimeCol = isOther && !b.date
+      ? `<div class="booking-datetime" style="color:#E59000;font-size:11px;">Needs<br>Call</div>`
+      : `<div class="booking-datetime">${b.date || '—'}<br>${b.time || '—'}</div>`;
+
     return `
-      <div class="booking-card ${b.status}" id="card-${b.id}">
+      <div class="booking-card ${b.status}${isNeedsCall ? '" style="border-left-color:#E59000;' : '"'}" id="card-${b.id}">
         <div class="booking-header" onclick="toggleExpand(${b.id})">
           <div class="booking-ref">${b.ref}</div>
           <div class="booking-name-col">
             <div class="booking-name">${b.name}</div>
             <div class="booking-phone-row">${b.phone}</div>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-            <span class="booking-service service-${b.serviceType}">${SVC[b.serviceType]}</span>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
+            <span class="booking-service service-${b.serviceType}">${SVC[b.serviceType] || b.serviceType}</span>
             ${b.mechanic ? `<span class="mechanic-badge mechanic-${b.mechanic}">M${b.mechanic}</span>` : ''}
-            <span class="status-badge status-${b.status}">${b.status}</span>
+            ${isNeedsCall ? `<span class="contact-badge contact-needs-call">📞 Needs Call</span>` : `<span class="status-badge status-${b.status}">${b.status}</span>`}
           </div>
-          <div class="booking-datetime">${b.date}<br>${b.time}</div>
+          ${datetimeCol}
           ${quickActions}
         </div>
         <div class="booking-detail ${isExpanded ? 'open' : ''}" id="detail-${b.id}">
@@ -1100,6 +1289,7 @@
             <div class="detail-item"><label>KM</label><span>${b.km ? Number(b.km).toLocaleString() + ' km' : '—'}</span></div>
             <div class="detail-item"><label>Booked</label><span>${new Date(b.createdAt).toLocaleString('en-GB')}</span></div>
           </div>
+          ${b.description ? `<div class="detail-notes" style="border-left-color:#E59000;background:rgba(229,144,0,0.06);"><strong style="color:#E59000;">Customer request:</strong> ${b.description}</div>` : ''}
           ${b.notes ? `<div class="detail-notes">${b.notes}</div>` : ''}
           ${actions}
         </div>
