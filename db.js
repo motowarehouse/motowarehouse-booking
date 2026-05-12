@@ -192,7 +192,7 @@ function deleteBlock(id) {
 }
 
 // ── Opening Hours ─────────────────────────────────────────────────────────────
-// Stored as an object keyed by day index (0=Sun … 6=Sat)
+// Stored as an object keyed by day index (0=Sun ... 6=Sat)
 // Each day: { closed: bool, ranges: [['HH:MM','HH:MM'], ...] }
 
 const DEFAULT_HOURS = {
@@ -220,21 +220,38 @@ function saveHours(hours) {
 
 function importVehicles(rows) {
   // rows: array of { regNo, frameNo, engineNo, model, manufacturer, description, year }
-  // Upserts by regNo (normalised to uppercase, no spaces)
+  // Primary key: regNo (normalised). Fallback for unregistered/stock units: frameNo (stored as "FN:<frameNo>").
+  // This means a vehicle with no plate but a frame number is kept as a stock unit and can be
+  // updated to a registered vehicle later by re-importing with the reg number filled in.
   const db = readDB();
-  let added = 0, updated = 0;
+  let added = 0, updated = 0, skipped = 0;
   for (const row of rows) {
-    const regNo = (row.regNo || '').toString().toUpperCase().replace(/\s/g, '');
-    if (!regNo) continue;
-    const idx = db.vehicles.findIndex(v => v.regNo === regNo);
+    const rawReg   = (row.regNo   || '').toString().toUpperCase().replace(/\s/g, '');
+    const rawFrame = (row.frameNo || '').toString().trim().toUpperCase().replace(/\s/g, '');
+
+    // Determine the lookup key
+    let key;
+    let isStock = false;
+    if (rawReg) {
+      key = rawReg;
+    } else if (rawFrame) {
+      key = 'FN:' + rawFrame;   // prefix distinguishes from real plates
+      isStock = true;
+    } else {
+      skipped++;
+      continue; // nothing to identify this row by
+    }
+
+    const idx = db.vehicles.findIndex(v => v.regNo === key);
     const record = {
-      regNo,
+      regNo:        key,
       frameNo:      (row.frameNo || '').toString().trim(),
       engineNo:     (row.engineNo || '').toString().trim(),
       model:        (row.model || '').toString().trim(),
       manufacturer: (row.manufacturer || '').toString().trim(),
       description:  (row.description || '').toString().trim(),
       year:         (row.year || '').toString().trim(),
+      status:       isStock ? 'stock' : 'registered',
       updatedAt:    new Date().toISOString()
     };
     if (idx === -1) {
@@ -247,7 +264,7 @@ function importVehicles(rows) {
     }
   }
   writeDB(db);
-  return { added, updated, total: db.vehicles.length };
+  return { added, updated, skipped, total: db.vehicles.length };
 }
 
 function getVehicleByPlate(regNo) {
@@ -297,7 +314,7 @@ function togglePartnerActive(id) {
 
 // ── Service History ───────────────────────────────────────────────────────────
 
-// Official 24-item service checklist (bilingual — GR/EN)
+// Official 24-item service checklist (bilingual GR/EN)
 const DEFAULT_SERVICE_ITEMS = [
   { en: 'ENGINE OIL',          el: 'ΛΑΔΙ ΜΗΧΑΝΗΣ' },
   { en: 'GEAR OIL',            el: 'ΛΑΔΙ ΣΥΜΠΛΕΚΤΗ' },
@@ -355,8 +372,6 @@ function getServiceHistoryByPlate(regNo) {
 // ── Warranty History ──────────────────────────────────────────────────────────
 
 function createWarrantyClaim(data) {
-  // data: { regNo, frameNo, km, saleDate, symptom, priority, engineDisassembly,
-  //         defectAgreed, courtesyVehicle, notes, loggedBy, loggedByAdmin }
   const db = readDB();
   const claim = {
     id:               Date.now(),
@@ -365,14 +380,14 @@ function createWarrantyClaim(data) {
     km:               parseInt(data.km) || 0,
     saleDate:         data.saleDate || '',
     symptom:          data.symptom  || '',
-    priority:         data.priority || 'normal',   // 'low' | 'normal' | 'urgent'
+    priority:         data.priority || 'normal',
     engineDisassembly: !!data.engineDisassembly,
     defectAgreed:     !!data.defectAgreed,
     courtesyVehicle:  !!data.courtesyVehicle,
     notes:            data.notes   || '',
     loggedBy:         data.loggedBy   || 'Motowarehouse',
     loggedByAdmin:    data.loggedByAdmin || false,
-    status:           'open',                       // 'open' | 'closed'
+    status:           'open',
     createdAt:        new Date().toISOString()
   };
   db.warrantyHistory.push(claim);

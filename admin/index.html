@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin – Motowarehouse Bookings</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Light.ttf'); font-weight:300; }
     @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Regular.ttf'); font-weight:400; }
@@ -419,7 +420,7 @@
           </div>
           <div class="panel-card">
             <h3>Import Vehicles</h3>
-            <p style="font-size:13px;color:var(--grey);margin-bottom:14px;">Upload your weekly Excel file (saved as CSV). New vehicles are added, existing ones are updated.</p>
+            <p style="font-size:13px;color:var(--grey);margin-bottom:14px;">Upload your weekly Excel file or CSV. New vehicles are added, existing ones are updated. Vehicles without a registration plate are saved as stock units using the frame number.</p>
             <input type="file" id="vehicle-csv-input" accept=".csv,.xlsx,.xls" style="display:none;" onchange="handleVehicleImport(event)">
             <button class="btn-primary" onclick="document.getElementById('vehicle-csv-input').click()" style="width:auto;padding:10px 24px;">Upload CSV / Excel</button>
             <div id="import-result" style="margin-top:12px;font-size:13px;"></div>
@@ -745,16 +746,22 @@
           <th style="padding:8px 4px;text-align:left;">Frame No.</th>
           <th style="padding:8px 4px;"></th>
         </tr></thead>
-        <tbody>${data.map(v => `
+        <tbody>${data.map(v => {
+          const isStock = v.regNo.startsWith('FN:') || v.status === 'stock';
+          const plateDisplay = isStock
+            ? `<span style="font-size:10px;font-weight:700;background:rgba(229,144,0,0.15);color:#E59000;padding:2px 7px;border-radius:4px;letter-spacing:0.08em;">STOCK</span>`
+            : `<span style="font-weight:700;color:var(--blue);">${v.regNo}</span>`;
+          return `
           <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-            <td style="padding:10px 4px;font-weight:700;color:var(--blue);">${v.regNo}</td>
+            <td style="padding:10px 4px;">${plateDisplay}</td>
             <td style="padding:10px 4px;">${v.model||'—'}</td>
             <td style="padding:10px 4px;">${v.year||'—'}</td>
             <td style="padding:10px 4px;color:var(--grey);">${v.frameNo||'—'}</td>
             <td style="padding:10px 4px;text-align:right;">
               <button class="btn-reschedule" style="padding:5px 12px;font-size:12px;" onclick="loadVehicleDetail('${v.regNo}')">View History</button>
             </td>
-          </tr>`).join('')}
+          </tr>`;
+        }).join('')}
         </tbody></table>`;
     } catch(e) { el.innerHTML = '<p style="color:var(--red);font-size:13px;">Error searching vehicles.</p>'; }
   }
@@ -779,12 +786,18 @@
       const PRIORITY_LABEL = { low: 'Low', normal: 'Normal', urgent: '🚨 Urgent' };
       const PRIORITY_COLOR = { low: 'var(--green)', normal: 'var(--blue)', urgent: 'var(--red)' };
 
+      const isStockUnit = v.regNo.startsWith('FN:') || v.status === 'stock';
+      const plateLabel  = isStockUnit
+        ? `<span style="font-size:22px;font-weight:900;letter-spacing:0.08em;color:#E59000;">UNREGISTERED STOCK</span>`
+        : `<span style="font-size:26px;font-weight:900;letter-spacing:0.1em;color:var(--blue);">${v.regNo}</span>`;
+
       content.innerHTML = `
         <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
           <div>
-            <div style="font-size:26px;font-weight:900;letter-spacing:0.1em;color:var(--blue);">${v.regNo}</div>
+            ${plateLabel}
             <div style="font-size:15px;font-weight:700;margin-top:4px;">${v.year||''} ${v.model||''}</div>
             <div style="font-size:12px;color:var(--grey);margin-top:4px;">Frame: ${v.frameNo||'—'} &nbsp;|&nbsp; Engine: ${v.engineNo||'—'}</div>
+            ${isStockUnit ? `<div style="font-size:11px;background:rgba(229,144,0,0.12);color:#E59000;padding:4px 10px;border-radius:4px;margin-top:8px;display:inline-block;">Stock unit — no registration plate yet</div>` : ''}
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn-primary" onclick="openLogEntryModal('${v.regNo}')" style="width:auto;padding:10px 20px;font-size:13px;">+ Log Service</button>
@@ -931,6 +944,33 @@
   }
 
   // ── VEHICLE IMPORT ────────────────────────────────────────────────────────
+  function mapHeaders(headers) {
+    const hMap = {};
+    headers.forEach((h, i) => {
+      const k = (h || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (k.includes('reg') || k.includes('plate') || k === 'regno') hMap.regNo = i;
+      else if (k.includes('frame') || k.includes('chassis') || k.includes('vin')) hMap.frameNo = i;
+      else if (k.includes('engine')) hMap.engineNo = i;
+      else if (k.includes('model')) hMap.model = i;
+      else if (k.includes('manuf') || k.includes('make') || k.includes('brand')) hMap.manufacturer = i;
+      else if (k.includes('desc') || k.includes('colour') || k.includes('color')) hMap.description = i;
+      else if (k.includes('year') || k === 'my' || k.includes('vintage')) hMap.year = i;
+    });
+    return hMap;
+  }
+
+  function buildRows(rawRows, hMap) {
+    return rawRows.map(cols => ({
+      regNo:        (cols[hMap.regNo        ?? 0] || '').toString().trim(),
+      frameNo:      (cols[hMap.frameNo      ?? 1] || '').toString().trim(),
+      engineNo:     (cols[hMap.engineNo     ?? 2] || '').toString().trim(),
+      model:        (cols[hMap.model        ?? 3] || '').toString().trim(),
+      manufacturer: (cols[hMap.manufacturer ?? 4] || '').toString().trim(),
+      description:  (cols[hMap.description  ?? 5] || '').toString().trim(),
+      year:         (cols[hMap.year         ?? 6] || '').toString().trim()
+    })).filter(r => r.regNo);
+  }
+
   async function handleVehicleImport(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -938,48 +978,51 @@
     resultEl.style.color = 'var(--grey)';
     resultEl.textContent = 'Reading file…';
     try {
-      const text = await file.text();
-      const lines = text.split(/\r?\n/).filter(l => l.trim());
-      if (lines.length < 2) { resultEl.style.color='var(--red)'; resultEl.textContent='File appears empty.'; return; }
-      // Auto-detect CSV headers (case-insensitive)
-      const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/[^a-z0-9]/g,''));
-      const map = { regno:0, frameno:1, engineno:2, model:3, manufacturer:4, description:5, year:6 };
-      const hMap = {};
-      headers.forEach((h, i) => {
-        if (h.includes('reg') || h.includes('plate')) hMap.regNo = i;
-        else if (h.includes('frame')) hMap.frameNo = i;
-        else if (h.includes('engine')) hMap.engineNo = i;
-        else if (h.includes('model')) hMap.model = i;
-        else if (h.includes('manuf')) hMap.manufacturer = i;
-        else if (h.includes('desc')) hMap.description = i;
-        else if (h.includes('year') || h.includes('my') || h.includes('vintage')) hMap.year = i;
-      });
-      const rows = lines.slice(1).map(line => {
-        const cols = line.split(',');
-        return {
-          regNo:        cols[hMap.regNo  ?? 0] || '',
-          frameNo:      cols[hMap.frameNo ?? 1] || '',
-          engineNo:     cols[hMap.engineNo?? 2] || '',
-          model:        cols[hMap.model   ?? 3] || '',
-          manufacturer: cols[hMap.manufacturer ?? 4] || '',
-          description:  cols[hMap.description  ?? 5] || '',
-          year:         cols[hMap.year    ?? 6] || ''
-        };
-      }).filter(r => r.regNo.trim());
-      if (!rows.length) { resultEl.style.color='var(--red)'; resultEl.textContent='No valid rows found. Check the file format.'; return; }
+      let rows = [];
+      const isXLSX = /\.(xlsx|xls)$/i.test(file.name);
+
+      if (isXLSX) {
+        // ── Excel path (SheetJS) ──────────────────────────────────────────────
+        const buf = await file.arrayBuffer();
+        const wb = XLSX.read(buf, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        if (data.length < 2) { resultEl.style.color='var(--red)'; resultEl.textContent='File appears empty.'; return; }
+        const hMap = mapHeaders(data[0]);
+        rows = buildRows(data.slice(1), hMap);
+      } else {
+        // ── CSV path ─────────────────────────────────────────────────────────
+        const text = await file.text();
+        const lines = text.split(/\r?\n/).filter(l => l.trim());
+        if (lines.length < 2) { resultEl.style.color='var(--red)'; resultEl.textContent='File appears empty.'; return; }
+        const hMap = mapHeaders(lines[0].split(','));
+        rows = buildRows(lines.slice(1).map(l => l.split(',')), hMap);
+      }
+
+      if (!rows.length) {
+        resultEl.style.color='var(--red)';
+        resultEl.textContent='No valid rows found — make sure the Registration No column is filled.';
+        return;
+      }
+
       const res = await fetch('/api/admin/vehicles/import', {
-        method:'POST', headers:{'Content-Type':'application/json'},
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rows })
       });
       const data = await res.json();
       if (res.ok) {
         resultEl.style.color='var(--green)';
-        resultEl.textContent = `Done — ${data.added} added, ${data.updated} updated. Total in database: ${data.total}.`;
+        const skippedNote = data.skipped ? ` (${data.skipped} rows skipped — no reg plate or frame number)` : '';
+        resultEl.textContent = `Done — ${data.added} added, ${data.updated} updated. Total in database: ${data.total}.${skippedNote}`;
         showToast(`Import complete: ${data.added} added, ${data.updated} updated.`, 'success');
       } else {
-        resultEl.style.color='var(--red)'; resultEl.textContent = data.error || 'Import failed.';
+        resultEl.style.color='var(--red)';
+        resultEl.textContent = data.error || 'Import failed.';
       }
-    } catch(e) { resultEl.style.color='var(--red)'; resultEl.textContent='Error reading file: '+e.message; }
+    } catch(e) {
+      resultEl.style.color='var(--red)';
+      resultEl.textContent = 'Error reading file: ' + e.message;
+    }
     event.target.value = '';
   }
 
