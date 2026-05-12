@@ -180,6 +180,14 @@
     .btn-primary:hover { background:var(--blue-dark); }
 
     .blocks-list { display:flex; flex-direction:column; gap:10px; }
+
+    /* ── HELP / MANUAL ── */
+    .help-section { margin-bottom:28px; }
+    .help-section-title { font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--blue); margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid rgba(0,155,180,0.15); }
+    .help-block { margin-bottom:14px; }
+    .help-q { font-size:14px; font-weight:700; color:var(--white); margin-bottom:5px; }
+    .help-block p { font-size:13px; color:var(--grey); line-height:1.65; }
+    .help-block p strong { color:var(--white); font-weight:600; }
     .block-item { background:rgba(167,139,250,0.06); border:1px solid rgba(167,139,250,0.15); border-radius:6px; padding:14px 16px; }
     .block-item-header { display:flex; align-items:center; gap:14px; margin-bottom:0; }
     .block-item-date { font-size:14px; font-weight:700; color:var(--purple); min-width:100px; }
@@ -316,6 +324,9 @@
         </div>
         <div class="nav-item" id="nav-partners" onclick="setView('partners')">
           <i class="nav-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></i> Partners
+        </div>
+        <div class="nav-item" id="nav-help" onclick="setView('help')" style="margin-top:auto;">
+          <i class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-width="2.5"/></svg></i> User Manual
         </div>
         <div class="nav-item" id="nav-warranty" onclick="setView('warranty')">
           <i class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></i>
@@ -508,6 +519,97 @@
               </div>
             </div>
             <div id="warranty-list"><div class="empty-state"><p>Loading…</p></div></div>
+          </div>
+        </div>
+
+        <!-- ── ADMIN USER MANUAL ── -->
+        <div id="help-view" style="display:none;">
+          <div class="panel-card" style="max-width:820px;">
+            <h3 style="font-size:18px;font-weight:900;color:var(--white);margin-bottom:4px;text-transform:none;letter-spacing:0;">Admin User Manual</h3>
+            <p style="font-size:13px;color:var(--grey);margin-bottom:28px;">Everything you need to manage the Motowarehouse Service Booking Portal.</p>
+
+            <!-- Section -->
+            <div class="help-section">
+              <div class="help-section-title">Bookings</div>
+              <div class="help-block">
+                <div class="help-q">How do I accept or cancel a booking?</div>
+                <p>Go to <strong>All Bookings</strong> or <strong>Pending</strong>. Each booking card has a green <strong>✓</strong> button (accept) and a red <strong>✕</strong> button (cancel) on the right. Click the card to expand it and see full details before deciding. When you accept, the customer receives a confirmation email automatically.</p>
+              </div>
+              <div class="help-block">
+                <div class="help-q">How do I reschedule a booking?</div>
+                <p>Expand the booking card by clicking it, then use the <strong>Reschedule</strong> button inside. Pick a new date and time — the customer will receive a reschedule notification email.</p>
+              </div>
+              <div class="help-block">
+                <div class="help-q">What does "Needs Call" mean?</div>
+                <p>Some bookings come in without a confirmed time — usually walk-ins or enquiries. These appear in the <strong>Needs Call</strong> queue (orange badge in the sidebar). Call the customer to confirm a date and time, then manually accept or add them as a block.</p>
+              </div>
+            </div>
+
+            <!-- Section -->
+            <div class="help-section">
+              <div class="help-section-title">Block Time</div>
+              <div class="help-block">
+                <div class="help-q">How do I block a time slot?</div>
+                <p>Go to <strong>Block Time</strong> in the sidebar. Select a date — the <strong>From</strong> and <strong>To</strong> dropdowns will automatically show only valid time slots for that day based on your opening hours. Fill in a reason (optional) and click <strong>Block This Time</strong>. Blocked slots will not be available for online bookings.</p>
+              </div>
+              <div class="help-block">
+                <div class="help-q">How do I remove a block?</div>
+                <p>Scroll down to <strong>Active Blocks</strong> on the same page. Click the <strong>✕ Remove</strong> button on any block to delete it — those time slots become available again immediately.</p>
+              </div>
+            </div>
+
+            <!-- Section -->
+            <div class="help-section">
+              <div class="help-section-title">Opening Hours</div>
+              <div class="help-block">
+                <div class="help-q">How do I change opening hours?</div>
+                <p>Go to <strong>Opening Hours</strong>. Toggle each day on or off, and set the opening and closing times. Changes take effect immediately for the customer booking form. Wednesday is morning-only by default.</p>
+              </div>
+            </div>
+
+            <!-- Section -->
+            <div class="help-section">
+              <div class="help-section-title">Vehicles</div>
+              <div class="help-block">
+                <div class="help-q">How do I search for a vehicle?</div>
+                <p>Go to <strong>Vehicles</strong> and type the registration plate number into the search box. The full vehicle record will appear, including model, frame number, engine number, and complete service history.</p>
+              </div>
+              <div class="help-block">
+                <div class="help-q">How do I import the weekly vehicle list?</div>
+                <p>Every Monday, export the latest <strong>MOTO MOVEMENT</strong> Excel file (.xlsm) from your system. In the Vehicles tab, drag and drop the file onto the import zone — or click it to browse. The portal reads all year sheets automatically and updates the vehicle database. The 7-day countdown badge shows when the next import is due.</p>
+              </div>
+            </div>
+
+            <!-- Section -->
+            <div class="help-section">
+              <div class="help-section-title">Partners</div>
+              <div class="help-block">
+                <div class="help-q">How do I create a partner account?</div>
+                <p>Go to <strong>Partners</strong> and fill in the workshop name, username, and password. Click <strong>Create Account</strong>. Share the username and password with the workshop — they log in at the partner portal URL. You can also delete partner accounts from the same page.</p>
+              </div>
+              <div class="help-block">
+                <div class="help-q">How do I reset a partner's password?</div>
+                <p>If a partner forgets their password, go to <strong>Partners</strong>, find the account, delete it, and create a new one with the same workshop name but a new password.</p>
+              </div>
+            </div>
+
+            <!-- Section -->
+            <div class="help-section">
+              <div class="help-section-title">Warranty Inbox</div>
+              <div class="help-block">
+                <div class="help-q">How do I review warranty claims?</div>
+                <p>Go to <strong>Warranty</strong> in the sidebar — the orange badge shows how many open claims are waiting. Each claim shows the registration plate, workshop, priority level, fault description, and any photos. Click a photo thumbnail to view it full screen.</p>
+              </div>
+              <div class="help-block">
+                <div class="help-q">How do I approve or reject a warranty claim?</div>
+                <p>Expand the claim, add optional internal notes in the text box, then click <strong>Approve</strong> or <strong>Reject</strong>. The claim moves to the appropriate filter tab (Approved / Rejected).</p>
+              </div>
+              <div class="help-block">
+                <div class="help-q">Will I be notified of new warranty claims?</div>
+                <p>Yes — an email is sent to <strong>info@motowarehouse.com.cy</strong> as soon as a partner submits a claim, including the registration plate, workshop name, priority level, and fault description.</p>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -776,7 +878,8 @@
     all:'All Bookings', pending:'Pending', accepted:'Accepted',
     cancelled:'Cancelled', today:"Today's Schedule",
     calendar:'Calendar', schedule:'Block Time', hours:'Opening Hours',
-    vehicles:'Vehicles', partners:'Partners'
+    vehicles:'Vehicles', partners:'Partners', warranty:'Warranty Inbox',
+    help:'User Manual'
   };
 
   function setView(view) {
@@ -789,7 +892,7 @@
   }
 
   function renderView() {
-    const ids = ['bookings-view','cancelled-view','today-view','calendar-view','schedule-view','hours-view','vehicles-view','partners-view','warranty-view'];
+    const ids = ['bookings-view','cancelled-view','today-view','calendar-view','schedule-view','hours-view','vehicles-view','partners-view','warranty-view','help-view'];
     ids.forEach(id => document.getElementById(id).style.display = 'none');
     document.getElementById('stats-grid').style.display = 'none';
 
@@ -820,6 +923,8 @@
     } else if (currentView === 'warranty') {
       document.getElementById('warranty-view').style.display = 'block';
       loadWarrantyQueue('open');
+    } else if (currentView === 'help') {
+      document.getElementById('help-view').style.display = 'block';
     } else {
       document.getElementById('bookings-view').style.display = 'block';
       document.getElementById('stats-grid').style.display = 'grid';

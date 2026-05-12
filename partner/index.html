@@ -259,6 +259,13 @@
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
 
+    /* ── PARTNER HELP ── */
+    .p-help-section { margin-bottom: 24px; }
+    .p-help-title { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--blue); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(0,155,180,0.15); }
+    .p-help-block { margin-bottom: 14px; }
+    .p-help-q { font-size: 14px; font-weight: 700; color: var(--white); margin-bottom: 5px; }
+    .p-help-block p { font-size: 13px; color: var(--grey); line-height: 1.65; }
+
     /* ── YES/NO QUESTIONS ── */
     .yn-group { margin-bottom: 18px; }
     .yn-label { font-size: 13px; font-weight: 500; color: var(--white); margin-bottom: 10px; line-height: 1.4; }
@@ -462,6 +469,9 @@
         <button class="tab-btn" id="tab-warranty-btn" onclick="switchTab('warranty')">
           <span data-gr="Εγγύηση" data-en="Warranty Claim"></span>
         </button>
+        <button class="tab-btn" id="tab-help-btn" onclick="switchTab('help')">
+          <span data-gr="Οδηγίες" data-en="Help"></span>
+        </button>
       </div>
 
       <!-- ─── SERVICE TAB ─── -->
@@ -623,6 +633,64 @@
       </div>
 
     </div><!-- /step-log -->
+
+    <!-- ─── HELP TAB ─── -->
+    <div class="tab-pane" id="tab-help">
+      <div class="card" style="max-width:680px;margin:0 auto;">
+        <div class="card-title" style="font-size:16px;margin-bottom:20px;">
+          <span data-gr="Οδηγίες Χρήσης" data-en="How to Use This Portal"></span>
+        </div>
+
+        <div class="p-help-section">
+          <div class="p-help-title" data-gr="Σύνδεση & Κωδικός" data-en="Login & Password"></div>
+          <div class="p-help-block">
+            <div class="p-help-q" data-gr="Πώς συνδέομαι;" data-en="How do I log in?"></div>
+            <p data-gr="Εισάγετε το όνομα χρήστη και τον κωδικό που σας έδωσε η Motowarehouse και πατήστε Είσοδος." data-en="Enter the username and password provided by Motowarehouse and press Login."></p>
+          </div>
+          <div class="p-help-block">
+            <div class="p-help-q" data-gr="Πώς αλλάζω τον κωδικό μου;" data-en="How do I change my password?"></div>
+            <p data-gr="Στην οθόνη σύνδεσης, πατήστε 'Αλλαγή Κωδικού'. Εισάγετε το όνομα χρήστη, τον τρέχοντα κωδικό, τον νέο κωδικό και επιβεβαίωση. Αν ξεχάσατε τον κωδικό σας, επικοινωνήστε με τη Motowarehouse για επαναφορά." data-en="On the login screen, click 'Change Password'. Enter your username, current password, new password and confirmation. If you have forgotten your password, contact Motowarehouse to reset it."></p>
+          </div>
+        </div>
+
+        <div class="p-help-section">
+          <div class="p-help-title" data-gr="Καταχώρηση Σέρβις" data-en="Logging a Service Entry"></div>
+          <div class="p-help-block">
+            <div class="p-help-q" data-gr="Πώς καταχωρώ ένα σέρβις;" data-en="How do I log a service job?"></div>
+            <p data-gr="1. Πληκτρολογήστε τον αριθμό πινακίδας του οχήματος και πατήστε Αναζήτηση. 2. Επιβεβαιώστε ότι το όχημα είναι σωστό. 3. Συμπληρώστε ημερομηνία και χιλιόμετρα. 4. Επιλέξτε τι έγινε από τη λίστα — πατήστε κάθε εργασία για να ορίσετε κατάσταση (OK / Αντικατάσταση / Δ/Ι). 5. Προσθέστε σημειώσεις αν χρειάζεται. 6. Πατήστε Αποθήκευση." data-en="1. Type the vehicle registration plate and press Search. 2. Confirm the vehicle is correct. 3. Fill in the date and current KM reading. 4. Tap each service item to set its status (OK / Replace / N/A). 5. Add any notes if needed. 6. Press Save Entry."></p>
+          </div>
+          <div class="p-help-block">
+            <div class="p-help-q" data-gr="Τι σημαίνουν οι καταστάσεις των εργασιών;" data-en="What do the chip states mean?"></div>
+            <p data-gr="Πατήστε κάθε εργασία για να κυκλώσετε μεταξύ: Μη ελεγμένο (γκρι) → OK (πράσινο) → Αντικατάσταση (πορτοκαλί) → Δ/Ι (γκρι). Αντικατάσταση σημαίνει ότι το εξάρτημα αντικαταστάθηκε κατά τη διάρκεια του σέρβις." data-en="Tap each item to cycle through: Unchecked (grey) → OK (green) → Replace (orange) → N/A (grey). Replace means the part was replaced during this service."></p>
+          </div>
+        </div>
+
+        <div class="p-help-section">
+          <div class="p-help-title" data-gr="Δήλωση Εγγύησης" data-en="Warranty Claims"></div>
+          <div class="p-help-block">
+            <div class="p-help-q" data-gr="Πώς υποβάλλω δήλωση εγγύησης;" data-en="How do I submit a warranty claim?"></div>
+            <p data-gr="Μετά την αναζήτηση του οχήματος, επιλέξτε την καρτέλα 'Εγγύηση'. Συμπληρώστε χιλιόμετρα, επίπεδο προτεραιότητας, περιγραφή βλάβης και προσθέστε φωτογραφίες αν χρειάζεται. Πατήστε Υποβολή — η Motowarehouse θα ειδοποιηθεί αμέσως." data-en="After searching for the vehicle, select the 'Warranty' tab. Fill in the KM reading, priority level, fault description, and attach photos if needed. Press Submit — Motowarehouse will be notified immediately."></p>
+          </div>
+          <div class="p-help-block">
+            <div class="p-help-q" data-gr="Τι γίνεται μετά την υποβολή;" data-en="What happens after submission?"></div>
+            <p data-gr="Η Motowarehouse λαμβάνει email ειδοποίηση και ελέγχει τη δήλωση. Θα επικοινωνήσουν μαζί σας για έγκριση ή απόρριψη." data-en="Motowarehouse receives an email notification and reviews the claim. They will contact you regarding approval or rejection."></p>
+          </div>
+        </div>
+
+        <div class="p-help-section">
+          <div class="p-help-title" data-gr="Γενικά" data-en="General"></div>
+          <div class="p-help-block">
+            <div class="p-help-q" data-gr="Πώς αλλάζω γλώσσα;" data-en="How do I change the language?"></div>
+            <p data-gr="Πατήστε το κουμπί EN / ΕΛ στην επάνω δεξιά γωνία για εναλλαγή μεταξύ Αγγλικών και Ελληνικών." data-en="Press the EN / EL button in the top right corner to toggle between English and Greek."></p>
+          </div>
+          <div class="p-help-block">
+            <div class="p-help-q" data-gr="Χρειάζομαι βοήθεια;" data-en="Need help?"></div>
+            <p data-gr="Επικοινωνήστε με τη Motowarehouse στο 22 328 788 ή info@motowarehouse.com.cy." data-en="Contact Motowarehouse at 22 328 788 or info@motowarehouse.com.cy."></p>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /tab-help -->
 
     <!-- SUCCESS -->
     <div id="step-success" style="display:none;">
