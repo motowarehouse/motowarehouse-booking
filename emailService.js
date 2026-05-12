@@ -230,10 +230,48 @@ async function sendRescheduleToCustomer(booking) {
   });
 }
 
+// ── Notify admin of a new warranty claim ─────────────────────────────────────
+async function sendWarrantyAlert(claim) {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!adminEmail) return;
+
+  const priorityColor = claim.priority === 'urgent' ? '#E50052' : claim.priority === 'high' ? '#E59000' : '#009BB4';
+  const priorityLabel = (claim.priority || 'normal').toUpperCase();
+
+  await sendBrevoEmail({
+    to:      adminEmail,
+    subject: `[WARRANTY] ${claim.regNo} – ${claim.loggedBy || 'Partner'} – ${priorityLabel}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+        <div style="background:#001A21;padding:24px;text-align:center;">
+          <h1 style="color:#E59000;margin:0;font-size:22px;">🛡️ New Warranty Claim</h1>
+        </div>
+        <div style="padding:32px;background:#fff;">
+          <table style="border-collapse:collapse;width:100%;font-size:14px;">
+            <tr><td style="padding:8px 0;color:#666;width:140px;">Registration</td><td style="padding:8px 0;font-weight:bold;font-size:18px;">${claim.regNo}</td></tr>
+            <tr><td style="padding:8px 0;color:#666;">Workshop</td><td style="padding:8px 0;">${claim.loggedBy || 'Unknown'}</td></tr>
+            <tr><td style="padding:8px 0;color:#666;">Priority</td><td style="padding:8px 0;"><span style="background:${priorityColor};color:#fff;padding:2px 10px;border-radius:4px;font-size:12px;font-weight:bold;">${priorityLabel}</span></td></tr>
+            ${claim.frameNo ? `<tr><td style="padding:8px 0;color:#666;">Frame No.</td><td style="padding:8px 0;">${claim.frameNo}</td></tr>` : ''}
+            ${claim.km     ? `<tr><td style="padding:8px 0;color:#666;">KM</td><td style="padding:8px 0;">${Number(claim.km).toLocaleString()} km</td></tr>` : ''}
+            <tr><td style="padding:8px 0;color:#666;vertical-align:top;">Fault</td><td style="padding:8px 0;">${claim.symptom}</td></tr>
+            ${claim.notes  ? `<tr><td style="padding:8px 0;color:#666;vertical-align:top;">Notes</td><td style="padding:8px 0;">${claim.notes}</td></tr>` : ''}
+          </table>
+          ${claim.photos && claim.photos.length ? `<p style="margin-top:16px;color:#666;font-size:13px;">${claim.photos.length} photo(s) attached — view in the admin panel.</p>` : ''}
+          <div style="margin-top:24px;">
+            <a href="${process.env.SITE_URL || ''}/admin" style="background:#E59000;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:bold;">View in Admin Panel →</a>
+          </div>
+        </div>
+        <div style="padding:16px 32px;background:#f5f5f5;font-size:12px;color:#999;">Motowarehouse Ltd · Warranty Management Portal</div>
+      </div>
+    `
+  });
+}
+
 module.exports = {
   sendNewBookingAlert,
   sendConfirmationToCustomer,
   sendCancellationToCustomer,
   sendReminderToCustomer,
-  sendRescheduleToCustomer
+  sendRescheduleToCustomer,
+  sendWarrantyAlert
 };

@@ -314,6 +314,11 @@
         <div class="nav-item" id="nav-partners" onclick="setView('partners')">
           <i class="nav-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></i> Partners
         </div>
+        <div class="nav-item" id="nav-warranty" onclick="setView('warranty')">
+          <i class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></i>
+          Warranty
+          <span id="warranty-badge" style="display:none;margin-left:auto;background:var(--orange);color:var(--dark);font-size:10px;font-weight:900;padding:1px 7px;border-radius:10px;"></span>
+        </div>
       </nav>
       <div class="sidebar-footer">
         <button class="logout-btn" onclick="testEmail()" style="margin-bottom:8px;border-color:rgba(0,155,180,0.3);color:var(--blue);">✉ Test Email</button>
@@ -420,10 +425,32 @@
             <div id="vehicle-detail-content"></div>
           </div>
           <div class="panel-card">
-            <h3>Import Vehicles</h3>
-            <p style="font-size:13px;color:var(--grey);margin-bottom:14px;">Upload your weekly Excel file or CSV. New vehicles are added, existing ones are updated. Vehicles without a registration plate are saved as stock units using the frame number.</p>
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+              <div>
+                <h3 style="margin-bottom:4px;">Import Vehicles</h3>
+                <p style="font-size:13px;color:var(--grey);">Upload your weekly Excel file. New vehicles are added, existing ones are updated.</p>
+              </div>
+              <!-- 7-day countdown badge -->
+              <div id="import-countdown" style="flex-shrink:0;min-width:140px;border-radius:10px;padding:12px 16px;text-align:center;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);">
+                <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);margin-bottom:4px;">Next Import</div>
+                <div id="countdown-value" style="font-size:22px;font-weight:900;line-height:1;">—</div>
+                <div id="countdown-label" style="font-size:11px;color:var(--grey);margin-top:2px;">Loading…</div>
+              </div>
+            </div>
+
+            <!-- Drag-drop zone -->
+            <div id="drop-zone"
+              style="border:2px dashed rgba(0,155,180,0.3);border-radius:10px;padding:28px 20px;text-align:center;cursor:pointer;transition:all 0.15s;background:rgba(0,155,180,0.03);"
+              onclick="document.getElementById('vehicle-csv-input').click()"
+              ondragover="dropZoneDrag(event,true)"
+              ondragleave="dropZoneDrag(event,false)"
+              ondrop="dropZoneDrop(event)">
+              <div style="font-size:28px;margin-bottom:8px;">📂</div>
+              <div style="font-size:14px;font-weight:700;color:var(--white);margin-bottom:4px;">Drop Excel file here</div>
+              <div style="font-size:12px;color:var(--grey);">or click to browse &nbsp;·&nbsp; .xlsx, .xls, .csv</div>
+              <div id="drop-filename" style="display:none;margin-top:10px;font-size:13px;font-weight:600;color:var(--blue);"></div>
+            </div>
             <input type="file" id="vehicle-csv-input" accept=".csv,.xlsx,.xls" style="display:none;" onchange="handleVehicleImport(event)">
-            <button class="btn-primary" onclick="document.getElementById('vehicle-csv-input').click()" style="width:auto;padding:10px 24px;">Upload CSV / Excel</button>
             <div id="import-result" style="margin-top:12px;font-size:13px;"></div>
           </div>
         </div>
@@ -459,6 +486,25 @@
           <div class="panel-card">
             <h3>Partner Accounts</h3>
             <div id="partners-list"><div class="empty-state"><p>No partner accounts yet.</p></div></div>
+          </div>
+        </div>
+
+        <!-- ── WARRANTY INBOX ── -->
+        <div id="warranty-view" style="display:none;">
+          <div class="panel-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+              <div>
+                <h3 style="margin-bottom:2px;">Warranty Claims</h3>
+                <p style="font-size:13px;color:var(--grey);">All claims submitted by partner workshops.</p>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button onclick="loadWarrantyQueue('open')"    id="wf-open"     class="wf-btn wf-active" style="font-size:12px;padding:6px 14px;border-radius:6px;border:1px solid rgba(229,144,0,0.4);background:rgba(229,144,0,0.12);color:var(--orange);cursor:pointer;font-family:inherit;font-weight:700;">Open</button>
+                <button onclick="loadWarrantyQueue('approved')" id="wf-approved" class="wf-btn"          style="font-size:12px;padding:6px 14px;border-radius:6px;border:1px solid rgba(0,200,150,0.3);background:rgba(0,200,150,0.07);color:var(--green);cursor:pointer;font-family:inherit;font-weight:700;">Approved</button>
+                <button onclick="loadWarrantyQueue('rejected')" id="wf-rejected" class="wf-btn"          style="font-size:12px;padding:6px 14px;border-radius:6px;border:1px solid rgba(229,0,82,0.3);background:rgba(229,0,82,0.07);color:var(--red);cursor:pointer;font-family:inherit;font-weight:700;">Rejected</button>
+                <button onclick="loadWarrantyQueue('all')"      id="wf-all"      class="wf-btn"          style="font-size:12px;padding:6px 14px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:var(--grey);cursor:pointer;font-family:inherit;font-weight:700;">All</button>
+              </div>
+            </div>
+            <div id="warranty-list"><div class="empty-state"><p>Loading…</p></div></div>
           </div>
         </div>
 
@@ -605,6 +651,23 @@
   </div>
 </div>
 
+<!-- RESET PASSWORD MODAL -->
+<div class="modal-overlay hidden" id="reset-pw-modal">
+  <div class="modal" style="max-width:400px;">
+    <h3 style="color:var(--blue);">🔑 Reset Password</h3>
+    <div class="modal-sub">Partner: <strong id="reset-pw-name"></strong></div>
+    <div style="margin-bottom:14px;">
+      <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);margin-bottom:6px;">New Password</label>
+      <input type="text" class="admin-input" id="reset-pw-input" placeholder="Enter new password (min 6 chars)">
+    </div>
+    <div id="reset-pw-msg" style="display:none;font-size:13px;margin-bottom:12px;"></div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn-primary" style="flex:1;" onclick="submitResetPassword()">Set Password</button>
+      <button onclick="document.getElementById('reset-pw-modal').classList.add('hidden')" style="flex:1;background:none;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:var(--grey);cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;padding:11px;">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -669,6 +732,12 @@
     rd.max = maxD.toISOString().split('T')[0];
     loadBookings();
     setInterval(loadBookings, 30000);
+    // Load warranty badge count on startup
+    fetch('/api/admin/warranties').then(r => r.json()).then(data => {
+      const open = data.filter(w => w.status === 'open').length;
+      const badge = document.getElementById('warranty-badge');
+      if (badge && open > 0) { badge.textContent = open; badge.style.display = 'inline'; }
+    }).catch(() => {});
   }
 
   async function loadBookings() {
@@ -716,7 +785,7 @@
   }
 
   function renderView() {
-    const ids = ['bookings-view','cancelled-view','today-view','calendar-view','schedule-view','hours-view','vehicles-view','partners-view'];
+    const ids = ['bookings-view','cancelled-view','today-view','calendar-view','schedule-view','hours-view','vehicles-view','partners-view','warranty-view'];
     ids.forEach(id => document.getElementById(id).style.display = 'none');
     document.getElementById('stats-grid').style.display = 'none';
 
@@ -740,9 +809,13 @@
       document.getElementById('vehicles-view').style.display = 'block';
       document.getElementById('vehicle-search-results').innerHTML = '';
       document.getElementById('vehicle-detail-card').style.display = 'none';
+      loadImportStatus();
     } else if (currentView === 'partners') {
       document.getElementById('partners-view').style.display = 'block';
       loadPartners();
+    } else if (currentView === 'warranty') {
+      document.getElementById('warranty-view').style.display = 'block';
+      loadWarrantyQueue('open');
     } else {
       document.getElementById('bookings-view').style.display = 'block';
       document.getElementById('stats-grid').style.display = 'grid';
@@ -868,6 +941,10 @@
                 ${e.courtesyVehicle ? `<span style="font-size:11px;padding:2px 9px;border-radius:10px;background:rgba(0,155,180,0.1);color:var(--blue);font-weight:500;">Courtesy Vehicle</span>` : ''}
               </div>` : ''}
               ${e.notes ? `<div style="font-size:13px;color:var(--grey);margin-top:6px;">${e.notes}</div>` : ''}
+              ${e.photos && e.photos.length ? `
+              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
+                ${e.photos.map((src, i) => `<span onclick="viewPhoto('${src}')" style="cursor:pointer;"><img src="${src}" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:1.5px solid rgba(229,144,0,0.35);" title="Photo ${i+1}"></span>`).join('')}
+              </div>` : ''}
             </div>`
           ).join('')
         }`;
@@ -1084,55 +1161,208 @@
     } catch(e) { showToast('Connection error.', 'error'); }
   }
 
+  // ── IMPORT COUNTDOWN ─────────────────────────────────────────────────────
+  async function loadImportStatus() {
+    try {
+      const res = await fetch('/api/admin/vehicles/import-status');
+      const data = await res.json();
+      renderCountdown(data.lastImportAt);
+    } catch(e) { renderCountdown(null); }
+  }
+
+  function renderCountdown(lastImportAt) {
+    const valEl   = document.getElementById('countdown-value');
+    const lblEl   = document.getElementById('countdown-label');
+    const wrapEl  = document.getElementById('import-countdown');
+    if (!lastImportAt) {
+      valEl.textContent = '!';
+      lblEl.textContent = 'Never imported';
+      wrapEl.style.background = 'rgba(229,0,82,0.1)';
+      wrapEl.style.borderColor = 'rgba(229,0,82,0.4)';
+      valEl.style.color = 'var(--red)';
+      return;
+    }
+    const last     = new Date(lastImportAt);
+    const dueAt    = new Date(last.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const msLeft   = dueAt - Date.now();
+    const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
+
+    if (daysLeft <= 0) {
+      valEl.textContent = 'DUE';
+      valEl.style.color = 'var(--red)';
+      lblEl.textContent = `${Math.abs(daysLeft)}d overdue`;
+      wrapEl.style.background = 'rgba(229,0,82,0.1)';
+      wrapEl.style.borderColor = 'rgba(229,0,82,0.4)';
+    } else if (daysLeft <= 2) {
+      valEl.textContent = daysLeft + 'd';
+      valEl.style.color = 'var(--orange)';
+      lblEl.textContent = 'due soon';
+      wrapEl.style.background = 'rgba(245,158,11,0.08)';
+      wrapEl.style.borderColor = 'rgba(245,158,11,0.35)';
+    } else {
+      valEl.textContent = daysLeft + 'd';
+      valEl.style.color = 'var(--green)';
+      lblEl.textContent = 'days remaining';
+      wrapEl.style.background = 'rgba(0,200,150,0.06)';
+      wrapEl.style.borderColor = 'rgba(0,200,150,0.25)';
+    }
+
+    // Tooltip: last imported date
+    wrapEl.title = 'Last imported: ' + last.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+  }
+
+  // ── DRAG-DROP ─────────────────────────────────────────────────────────────
+  function dropZoneDrag(e, active) {
+    e.preventDefault();
+    const dz = document.getElementById('drop-zone');
+    dz.style.borderColor  = active ? 'var(--blue)' : 'rgba(0,155,180,0.3)';
+    dz.style.background   = active ? 'rgba(0,155,180,0.08)' : 'rgba(0,155,180,0.03)';
+  }
+
+  function dropZoneDrop(e) {
+    e.preventDefault();
+    dropZoneDrag(e, false);
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    showDropFilename(file.name);
+    processImportFile(file);
+  }
+
+  function showDropFilename(name) {
+    const el = document.getElementById('drop-filename');
+    el.textContent = '📄 ' + name;
+    el.style.display = 'block';
+  }
+
   // ── VEHICLE IMPORT ────────────────────────────────────────────────────────
+
+  // Detect column positions from a header row
   function mapHeaders(headers) {
     const hMap = {};
     headers.forEach((h, i) => {
       const k = (h || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '');
-      if (k.includes('reg') || k.includes('plate') || k === 'regno') hMap.regNo = i;
-      else if (k.includes('frame') || k.includes('chassis') || k.includes('vin')) hMap.frameNo = i;
-      else if (k.includes('engine')) hMap.engineNo = i;
-      else if (k.includes('model')) hMap.model = i;
-      else if (k.includes('manuf') || k.includes('make') || k.includes('brand')) hMap.manufacturer = i;
-      else if (k.includes('desc') || k.includes('colour') || k.includes('color')) hMap.description = i;
-      else if (k.includes('year') || k === 'my' || k.includes('vintage')) hMap.year = i;
+      if      (k.includes('reg') || k.includes('plate') || k === 'regno')           hMap.regNo = i;
+      else if (k.includes('frame') || k.includes('chassis') || k.includes('vin'))   hMap.frameNo = i;
+      else if (k.includes('engine'))                                                  hMap.engineNo = i;
+      else if (k.includes('model'))                                                   hMap.model = i;
+      else if (k.includes('stockcode') || k.includes('stock'))                       hMap.stockCode = i;
+      else if (k.includes('manuf') || k.includes('make') || k.includes('brand'))    hMap.manufacturer = i;
+      else if (k.includes('desc') || k.includes('colour') || k.includes('color'))   hMap.description = i;
+      else if (k.includes('year') || k === 'my' || k.includes('vintage'))            hMap.year = i;
+      else if (k.includes('date') || k.includes('receiv') || k.includes('deliv'))   hMap.dateReceived = i;
     });
     return hMap;
   }
 
-  function buildRows(rawRows, hMap) {
-    return rawRows.map(cols => ({
-      regNo:        (cols[hMap.regNo        ?? 0] || '').toString().trim(),
-      frameNo:      (cols[hMap.frameNo      ?? 1] || '').toString().trim(),
-      engineNo:     (cols[hMap.engineNo     ?? 2] || '').toString().trim(),
-      model:        (cols[hMap.model        ?? 3] || '').toString().trim(),
-      manufacturer: (cols[hMap.manufacturer ?? 4] || '').toString().trim(),
-      description:  (cols[hMap.description  ?? 5] || '').toString().trim(),
-      year:         (cols[hMap.year         ?? 6] || '').toString().trim()
-    })).filter(r => r.regNo);
+  // Non-plate values to treat as "no registration"
+  const INVALID_PLATES = new Set(['RMA','N/A','NA','NONE','TBD','—','-','']);
+
+  function cleanReg(val) {
+    const s = (val || '').toString().trim().toUpperCase();
+    return INVALID_PLATES.has(s) ? '' : s;
   }
 
-  async function handleVehicleImport(event) {
+  function extractYear(val) {
+    if (!val) return '';
+    // Handle Excel serial date numbers
+    if (typeof val === 'number') {
+      const d = new Date(Math.round((val - 25569) * 864e5));
+      return isNaN(d) ? '' : String(d.getFullYear());
+    }
+    const s = val.toString();
+    const m = s.match(/\b(20\d{2}|19\d{2})\b/);
+    return m ? m[1] : '';
+  }
+
+  function buildRows(rawRows, hMap) {
+    return rawRows
+      .filter(cols => cols.some(c => c !== '' && c !== null && c !== undefined)) // skip empty rows
+      .map(cols => {
+        const raw = v => (cols[v] !== undefined && cols[v] !== null) ? cols[v] : '';
+        // model: prefer explicit MODEL col, then DESCRIPTION, then STOCK CODE
+        const model = hMap.model !== undefined
+          ? raw(hMap.model).toString().trim()
+          : hMap.description !== undefined
+            ? raw(hMap.description).toString().trim()
+            : hMap.stockCode !== undefined
+              ? raw(hMap.stockCode).toString().trim()
+              : '';
+        // year: prefer YEAR col, then extract from DATE RECEIVED
+        const year = hMap.year !== undefined
+          ? raw(hMap.year).toString().trim()
+          : extractYear(hMap.dateReceived !== undefined ? raw(hMap.dateReceived) : '');
+        return {
+          regNo:        cleanReg(hMap.regNo        !== undefined ? raw(hMap.regNo)        : ''),
+          frameNo:      (hMap.frameNo      !== undefined ? raw(hMap.frameNo)      : '').toString().trim(),
+          engineNo:     (hMap.engineNo     !== undefined ? raw(hMap.engineNo)     : '').toString().trim(),
+          model,
+          manufacturer: (hMap.manufacturer !== undefined ? raw(hMap.manufacturer) : '').toString().trim(),
+          description:  (hMap.description  !== undefined ? raw(hMap.description)  : '').toString().trim(),
+          year
+        };
+      });
+  }
+
+  // Find the first row that looks like a header (has "frame", "reg", "model", etc.)
+  function findHeaderRowIndex(data) {
+    for (let i = 0; i < Math.min(data.length, 5); i++) {
+      const row = data[i];
+      const joined = row.map(c => (c||'').toString().toLowerCase()).join(' ');
+      if (joined.includes('frame') || joined.includes('reg') || joined.includes('model') || joined.includes('chassis')) {
+        return i;
+      }
+    }
+    return 0; // fallback
+  }
+
+  // Extract all rows from an Excel workbook — reads all year sheets, skips non-data sheets
+  function extractRowsFromWorkbook(wb) {
+    const YEAR_RE = /^\d{4}$/;
+    const dataSheets = wb.SheetNames.filter(n => YEAR_RE.test(n.trim()));
+    // If no year-named sheets, fall back to all non-empty sheets
+    const sheetsToRead = dataSheets.length ? dataSheets : wb.SheetNames;
+    const allRows = [];
+    let sheetsRead = 0;
+    for (const name of sheetsToRead) {
+      const ws = wb.Sheets[name];
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true });
+      if (data.length < 2) continue;
+      const headerIdx = findHeaderRowIndex(data);
+      const hMap = mapHeaders(data[headerIdx]);
+      // Must have at least frame or reg column to be a valid sheet
+      if (hMap.regNo === undefined && hMap.frameNo === undefined) continue;
+      const rows = buildRows(data.slice(headerIdx + 1), hMap);
+      allRows.push(...rows);
+      sheetsRead++;
+    }
+    return { rows: allRows, sheetsRead };
+  }
+
+  function handleVehicleImport(event) {
     const file = event.target.files[0];
     if (!file) return;
+    showDropFilename(file.name);
+    processImportFile(file);
+    event.target.value = '';
+  }
+
+  async function processImportFile(file) {
     const resultEl = document.getElementById('import-result');
     resultEl.style.color = 'var(--grey)';
     resultEl.textContent = 'Reading file…';
     try {
       let rows = [];
-      const isXLSX = /\.(xlsx|xls)$/i.test(file.name);
+      let sheetsRead = 1;
+      const isXLSX = /\.(xlsx|xlsm|xls)$/i.test(file.name);
 
       if (isXLSX) {
-        // ── Excel path (SheetJS) ──────────────────────────────────────────────
         const buf = await file.arrayBuffer();
-        const wb = XLSX.read(buf, { type: 'array' });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-        if (data.length < 2) { resultEl.style.color='var(--red)'; resultEl.textContent='File appears empty.'; return; }
-        const hMap = mapHeaders(data[0]);
-        rows = buildRows(data.slice(1), hMap);
+        const wb = XLSX.read(buf, { type: 'array', cellDates: false });
+        const extracted = extractRowsFromWorkbook(wb);
+        rows = extracted.rows;
+        sheetsRead = extracted.sheetsRead;
       } else {
-        // ── CSV path ─────────────────────────────────────────────────────────
+        // CSV path
         const text = await file.text();
         const lines = text.split(/\r?\n/).filter(l => l.trim());
         if (lines.length < 2) { resultEl.style.color='var(--red)'; resultEl.textContent='File appears empty.'; return; }
@@ -1142,7 +1372,7 @@
 
       if (!rows.length) {
         resultEl.style.color='var(--red)';
-        resultEl.textContent='No valid rows found — make sure the Registration No column is filled.';
+        resultEl.textContent='No valid rows found — check that the file has FRAME NO or REG NO columns.';
         return;
       }
 
@@ -1153,9 +1383,11 @@
       const data = await res.json();
       if (res.ok) {
         resultEl.style.color='var(--green)';
-        const skippedNote = data.skipped ? ` (${data.skipped} rows skipped — no reg plate or frame number)` : '';
-        resultEl.textContent = `Done — ${data.added} added, ${data.updated} updated. Total in database: ${data.total}.${skippedNote}`;
+        const sheetNote = sheetsRead > 1 ? ` (from ${sheetsRead} year sheets)` : '';
+        const skippedNote = data.skipped ? ` · ${data.skipped} skipped` : '';
+        resultEl.textContent = `✓ Done${sheetNote} — ${data.added} added, ${data.updated} updated. Total: ${data.total} vehicles.${skippedNote}`;
         showToast(`Import complete: ${data.added} added, ${data.updated} updated.`, 'success');
+        loadImportStatus();
       } else {
         resultEl.style.color='var(--red)';
         resultEl.textContent = data.error || 'Import failed.';
@@ -1164,7 +1396,102 @@
       resultEl.style.color='var(--red)';
       resultEl.textContent = 'Error reading file: ' + e.message;
     }
-    event.target.value = '';
+  }
+
+  // ── WARRANTY INBOX ────────────────────────────────────────────────────────
+  let warrantyFilter = 'open';
+  let allWarranties  = [];
+
+  async function loadWarrantyQueue(filter) {
+    warrantyFilter = filter || 'open';
+    // Highlight active filter button
+    document.querySelectorAll('.wf-btn').forEach(b => {
+      b.style.opacity = b.id === 'wf-' + (warrantyFilter === 'all' ? 'all' : warrantyFilter) ? '1' : '0.45';
+    });
+    const el = document.getElementById('warranty-list');
+    el.innerHTML = '<div class="empty-state"><p>Loading…</p></div>';
+    try {
+      const res = await fetch('/api/admin/warranties');
+      allWarranties = await res.json();
+      // Update sidebar badge with open count
+      const openCount = allWarranties.filter(w => w.status === 'open').length;
+      const badge = document.getElementById('warranty-badge');
+      if (openCount > 0) { badge.textContent = openCount; badge.style.display = 'inline'; }
+      else { badge.style.display = 'none'; }
+      renderWarrantyList();
+    } catch(e) {
+      el.innerHTML = '<div class="empty-state"><p>Failed to load warranty claims.</p></div>';
+    }
+  }
+
+  function renderWarrantyList() {
+    const el   = document.getElementById('warranty-list');
+    const list = warrantyFilter === 'all'
+      ? allWarranties
+      : allWarranties.filter(w => w.status === warrantyFilter);
+
+    if (!list.length) {
+      el.innerHTML = `<div class="empty-state"><p>No ${warrantyFilter === 'all' ? '' : warrantyFilter + ' '}warranty claims.</p></div>`;
+      return;
+    }
+
+    const PRIORITY_COLOR = { urgent: 'var(--red)', high: 'var(--orange)', normal: 'var(--blue)' };
+    const STATUS_COLOR   = { open: 'var(--orange)', approved: 'var(--green)', rejected: 'var(--red)', closed: 'var(--grey)' };
+
+    el.innerHTML = list.map(w => {
+      const date     = new Date(w.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+      const priColor = PRIORITY_COLOR[w.priority] || 'var(--grey)';
+      const stColor  = STATUS_COLOR[w.status]     || 'var(--grey)';
+      const photoBar = w.photos && w.photos.length
+        ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
+            ${w.photos.map(src => `<span onclick="viewPhoto('${src}')" style="cursor:pointer;"><img src="${src}" style="width:56px;height:56px;object-fit:cover;border-radius:5px;border:1px solid rgba(255,255,255,0.1);"></span>`).join('')}
+           </div>` : '';
+      const adminNotesField = w.status === 'open'
+        ? `<textarea id="anotes-${w.id}" placeholder="Internal notes (optional)…" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--white);font-family:inherit;font-size:12px;padding:8px 10px;resize:vertical;min-height:56px;margin-top:10px;">${w.adminNotes||''}</textarea>` : '';
+      const actionBtns = w.status === 'open'
+        ? `<div style="display:flex;gap:8px;margin-top:10px;">
+            <button onclick="setWarrantyStatus(${w.id},'approved')" style="flex:1;padding:8px;border-radius:6px;border:1px solid rgba(0,200,150,0.4);background:rgba(0,200,150,0.1);color:var(--green);cursor:pointer;font-family:inherit;font-weight:700;font-size:12px;">✓ Approve</button>
+            <button onclick="setWarrantyStatus(${w.id},'rejected')" style="flex:1;padding:8px;border-radius:6px;border:1px solid rgba(229,0,82,0.4);background:rgba(229,0,82,0.1);color:var(--red);cursor:pointer;font-family:inherit;font-weight:700;font-size:12px;">✕ Reject</button>
+           </div>`
+        : `<div style="margin-top:8px;font-size:12px;color:var(--grey);">
+            ${w.adminNotes ? `<em>${w.adminNotes}</em><br>` : ''}
+            <button onclick="setWarrantyStatus(${w.id},'open')" style="margin-top:6px;padding:5px 12px;border-radius:5px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:var(--grey);cursor:pointer;font-family:inherit;font-size:11px;">↩ Reopen</button>
+           </div>`;
+      return `
+        <div style="border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:16px 18px;margin-bottom:12px;background:rgba(255,255,255,0.02);">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+            <div>
+              <div style="font-size:16px;font-weight:700;color:var(--white);">${w.regNo}</div>
+              <div style="font-size:12px;color:var(--grey);margin-top:2px;">${w.loggedBy || 'Motowarehouse'} &nbsp;·&nbsp; ${date}</div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+              <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;padding:3px 10px;border-radius:4px;text-transform:uppercase;border:1px solid ${priColor};color:${priColor};background:${priColor}22;">${w.priority||'normal'}</span>
+              <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;padding:3px 10px;border-radius:4px;text-transform:uppercase;border:1px solid ${stColor};color:${stColor};background:${stColor}22;">${w.status}</span>
+            </div>
+          </div>
+          <div style="margin-top:10px;font-size:13px;line-height:1.5;color:rgba(255,255,255,0.85);">${w.symptom}</div>
+          ${w.frameNo ? `<div style="font-size:11px;color:var(--grey);margin-top:4px;">Frame: ${w.frameNo}${w.km ? ' &nbsp;·&nbsp; ' + Number(w.km).toLocaleString() + ' km' : ''}</div>` : ''}
+          ${w.notes   ? `<div style="font-size:12px;color:var(--grey);margin-top:6px;font-style:italic;">${w.notes}</div>` : ''}
+          ${photoBar}
+          ${adminNotesField}
+          ${actionBtns}
+        </div>`;
+    }).join('');
+  }
+
+  async function setWarrantyStatus(id, status) {
+    const notes = document.getElementById('anotes-' + id);
+    const adminNotes = notes ? notes.value.trim() : undefined;
+    try {
+      const res = await fetch(`/api/admin/warranties/${id}/status`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, adminNotes })
+      });
+      if (res.ok) {
+        showToast(`Warranty claim ${status}.`, 'success');
+        loadWarrantyQueue(warrantyFilter);
+      }
+    } catch(e) { showToast('Error updating warranty.', 'error'); }
   }
 
   // ── PARTNERS ──────────────────────────────────────────────────────────────
@@ -1180,10 +1507,13 @@
             <div style="font-weight:700;font-size:14px;">${p.workshopName}</div>
             <div style="font-size:12px;color:var(--grey);margin-top:2px;">@${p.username}${p.phone?' · '+p.phone:''}</div>
           </div>
-          <div style="display:flex;align-items:center;gap:10px;">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
             <span style="font-size:12px;padding:3px 10px;border-radius:12px;font-weight:600;
               background:${p.active?'rgba(0,200,150,0.12)':'rgba(229,0,82,0.1)'};
               color:${p.active?'var(--green)':'var(--red)'};">${p.active?'Active':'Disabled'}</span>
+            <button class="btn-reschedule" style="padding:5px 12px;font-size:12px;" onclick="openResetPassword(${p.id},'${p.workshopName.replace(/'/g,"\\'")}')">
+              🔑 Reset Password
+            </button>
             <button class="btn-cancel-booking" style="padding:5px 12px;font-size:12px;" onclick="togglePartner(${p.id})">
               ${p.active?'Disable':'Enable'}
             </button>
@@ -1225,6 +1555,37 @@
       const res = await fetch(`/api/admin/partners/${id}/toggle`, { method:'POST' });
       if (res.ok) loadPartners();
     } catch(e) { showToast('Error.','error'); }
+  }
+
+  let resetPwPartnerId = null;
+  function openResetPassword(id, name) {
+    resetPwPartnerId = id;
+    document.getElementById('reset-pw-name').textContent = name;
+    document.getElementById('reset-pw-input').value = '';
+    const msg = document.getElementById('reset-pw-msg');
+    msg.style.display = 'none';
+    document.getElementById('reset-pw-modal').classList.remove('hidden');
+  }
+
+  async function submitResetPassword() {
+    const newPassword = document.getElementById('reset-pw-input').value.trim();
+    const msg = document.getElementById('reset-pw-msg');
+    if (!newPassword || newPassword.length < 6) {
+      msg.style.color = 'var(--red)'; msg.textContent = 'Password must be at least 6 characters.'; msg.style.display = 'block'; return;
+    }
+    try {
+      const res = await fetch(`/api/admin/partners/${resetPwPartnerId}/reset-password`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        msg.style.color = 'var(--green)'; msg.textContent = '✓ Password updated successfully.'; msg.style.display = 'block';
+        setTimeout(() => document.getElementById('reset-pw-modal').classList.add('hidden'), 1500);
+      } else {
+        msg.style.color = 'var(--red)'; msg.textContent = data.error || 'Failed.'; msg.style.display = 'block';
+      }
+    } catch(e) { msg.style.color='var(--red)'; msg.textContent='Connection error.'; msg.style.display='block'; }
   }
 
   // ── ALL BOOKINGS / PENDING / ACCEPTED ─────────────────────────────────
@@ -1910,6 +2271,14 @@
       if (res.ok) showToast(data.message, 'success', 8000);
       else showToast(data.error || 'Unknown error', 'error', 10000);
     } catch { showToast('Network error', 'error', 8000); }
+  }
+
+  // ── PHOTO VIEWER ──────────────────────────────────────────────────────
+  function viewPhoto(src) {
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.write(`<!DOCTYPE html><html><head><title>Photo</title></head><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;"><img src="${src}" style="max-width:100%;max-height:100vh;object-fit:contain;"></body></html>`);
+    w.document.close();
   }
 
   checkAuth();

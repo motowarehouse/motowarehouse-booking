@@ -278,53 +278,41 @@
     .yn-option.selected-no  { border-color: rgba(229,0,82,0.5); background: rgba(229,0,82,0.08); color: var(--red); }
 
     /* ── SERVICE CHECKLIST TABLE ── */
-    .checklist-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 16px;
-      font-size: 13px;
+    /* ── CHIP CHECKLIST ── */
+    .checklist-groups { display: flex; flex-direction: column; gap: 20px; }
+    .cg-title {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--blue); opacity: 0.75;
+      margin-bottom: 8px; padding-bottom: 5px;
+      border-bottom: 1px solid rgba(0,155,180,0.15);
     }
-    .checklist-table th {
-      background: var(--dark3);
-      color: var(--blue);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 8px 12px;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
+    .cg-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .check-chip {
+      display: inline-flex; flex-direction: column; align-items: flex-start;
+      padding: 10px 14px; border-radius: 8px;
+      border: 1.5px solid rgba(0,155,180,0.22);
+      background: rgba(255,255,255,0.03);
+      cursor: pointer; transition: all 0.13s;
+      font-family: inherit; user-select: none;
+      min-width: 110px; text-align: left;
     }
-    .checklist-table td {
-      padding: 8px 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-      vertical-align: middle;
+    .check-chip:active { transform: scale(0.96); }
+    .check-chip .cc-name { font-size: 13px; font-weight: 700; letter-spacing: 0.03em; color: var(--white); line-height: 1.2; }
+    .check-chip .cc-sub  { font-size: 10px; color: var(--grey); margin-top: 2px; }
+    .check-chip .cc-badge {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+      margin-top: 7px; padding: 2px 7px; border-radius: 4px;
+      display: none;
     }
-    .checklist-table tr:last-child td { border-bottom: none; }
-    .checklist-table tr:hover td { background: rgba(0,155,180,0.04); }
-    .check-num { font-size: 11px; color: var(--grey); width: 28px; font-weight: 500; }
-    .check-name-en { font-weight: 600; color: var(--white); }
-    .check-name-el { color: var(--grey); font-size: 12px; margin-top: 2px; }
-
-    /* State buttons */
-    .state-btns { display: flex; gap: 6px; justify-content: flex-end; }
-    .state-btn {
-      padding: 5px 12px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      border: 1.5px solid transparent;
-      font-family: inherit;
-      transition: all 0.12s;
-      white-space: nowrap;
-    }
-    .state-btn-ok     { background: rgba(0,200,150,0.1); color: var(--green); border-color: rgba(0,200,150,0.3); }
-    .state-btn-ok.active  { background: var(--green); color: var(--dark); }
-    .state-btn-rep    { background: rgba(229,0,82,0.08); color: var(--red); border-color: rgba(229,0,82,0.25); }
-    .state-btn-rep.active { background: var(--red); color: var(--white); }
-    .state-btn-na     { background: rgba(255,255,255,0.04); color: var(--grey); border-color: rgba(255,255,255,0.1); }
-    .state-btn-na.active  { background: rgba(255,255,255,0.12); color: var(--white); }
+    /* OK state */
+    .check-chip.s-ok { border-color: var(--green); background: rgba(0,200,150,0.1); }
+    .check-chip.s-ok .cc-badge { display: inline-block; background: rgba(0,200,150,0.2); color: var(--green); }
+    /* Replaced state */
+    .check-chip.s-rep { border-color: var(--orange); background: rgba(229,144,0,0.1); }
+    .check-chip.s-rep .cc-badge { display: inline-block; background: rgba(229,144,0,0.2); color: var(--orange); }
+    /* N/A state */
+    .check-chip.s-na { border-color: rgba(138,155,160,0.15); background: transparent; opacity: 0.4; }
+    .check-chip.s-na .cc-badge { display: inline-block; background: rgba(138,155,160,0.15); color: var(--grey); }
 
     /* ── SUCCESS SCREEN ── */
     .success-screen { text-align: center; padding: 16px 0; }
@@ -390,6 +378,39 @@
           <span data-gr="Είσοδος" data-en="Sign In"></span>
         </button>
       </div>
+
+      <!-- CHANGE PASSWORD (only visible on login screen) -->
+      <div style="margin-top:20px;">
+        <button onclick="toggleChangePassword()" style="background:none;border:none;color:var(--grey);font-family:inherit;font-size:12px;font-weight:600;letter-spacing:0.07em;cursor:pointer;text-decoration:underline;padding:0;">
+          🔑 <span data-gr="Αλλαγή Κωδικού" data-en="Change Password"></span>
+        </button>
+        <div id="cp-panel" style="display:none;margin-top:14px;background:rgba(0,155,180,0.05);border:1px solid rgba(0,155,180,0.15);border-radius:10px;padding:20px;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--blue);margin-bottom:14px;">
+            <span data-gr="Αλλαγή Κωδικού" data-en="Change Password"></span>
+          </div>
+          <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--grey);margin-bottom:5px;">
+            <span data-gr="Όνομα Χρήστη" data-en="Username"></span>
+          </label>
+          <input type="text" id="cp-username" class="input-field" style="margin-bottom:10px;" placeholder="username">
+          <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--grey);margin-bottom:5px;">
+            <span data-gr="Τρέχων Κωδικός" data-en="Current Password"></span>
+          </label>
+          <input type="password" id="cp-current" class="input-field" style="margin-bottom:10px;" placeholder="Current password">
+          <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--grey);margin-bottom:5px;">
+            <span data-gr="Νέος Κωδικός" data-en="New Password"></span>
+          </label>
+          <input type="password" id="cp-new" class="input-field" style="margin-bottom:10px;" placeholder="New password (min 6)">
+          <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--grey);margin-bottom:5px;">
+            <span data-gr="Επιβεβαίωση" data-en="Confirm New Password"></span>
+          </label>
+          <input type="password" id="cp-confirm" class="input-field" style="margin-bottom:12px;" placeholder="Repeat new password">
+          <div id="cp-msg" style="display:none;font-size:13px;margin-bottom:10px;"></div>
+          <button onclick="changePassword()" style="background:var(--blue);border:none;border-radius:6px;color:white;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;letter-spacing:0.06em;padding:10px 24px;width:100%;">
+            <span data-gr="Αποθήκευση Νέου Κωδικού" data-en="Save New Password"></span>
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -441,98 +462,82 @@
       <!-- ─── SERVICE TAB ─── -->
       <div class="tab-pane active" id="tab-service">
         <div class="card">
-          <div class="card-title"><span data-gr="Καταχώρηση Εργασίας" data-en="Log Service Entry"></span></div>
+          <div class="card-title" style="font-size:16px;"><span data-gr="Καταχώρηση Εργασίας" data-en="Log Service Entry"></span></div>
           <div id="log-msg" class="msg"></div>
 
-          <!-- Date & KM -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div>
-              <label><span data-gr="Ημερομηνία Σέρβις" data-en="Date of Service"></span></label>
-              <input type="date" id="log-date">
-            </div>
-            <div>
-              <label><span data-gr="Χιλιόμετρα *" data-en="Current KM *"></span></label>
-              <input type="number" id="log-km" placeholder="π.χ. 12500" min="1">
-            </div>
-          </div>
-
-          <hr class="form-divider">
-
-          <!-- Yes/No Questions -->
+          <!-- Section 1: Basic Info -->
           <div style="margin-bottom:20px;">
-            <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue);margin-bottom:16px;">
-              <span data-gr="Ελέγξτε τα παρακάτω" data-en="Quick Checks"></span>
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;color:var(--blue);opacity:0.8;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(0,155,180,0.2);">
+              <span data-gr="Βασικές Πληροφορίες" data-en="Basic Information"></span>
             </div>
-
-            <div class="yn-group">
-              <div class="yn-label">
-                <span data-gr="Ανεφοδιάστηκε το λάδι σε κατάλληλο επίπεδο;" data-en="Was oil topped up to the correct level?"></span>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div>
+                <label style="font-size:13px;"><span data-gr="Ημερομηνία Σέρβις" data-en="Date of Service"></span></label>
+                <input type="date" id="log-date" style="font-size:14px;">
               </div>
-              <div class="yn-options">
-                <button class="yn-option" data-q="oil" data-v="yes" onclick="selectYN(this)">
-                  <span data-gr="ΝΑΙ" data-en="YES"></span>
-                </button>
-                <button class="yn-option" data-q="oil" data-v="no" onclick="selectYN(this)">
-                  <span data-gr="ΟΧΙ" data-en="NO"></span>
-                </button>
-              </div>
-            </div>
-
-            <div class="yn-group">
-              <div class="yn-label">
-                <span data-gr="Παρατηρήθηκε ασυνήθιστος θόρυβος από τον κινητήρα;" data-en="Was any abnormal engine noise noticed?"></span>
-              </div>
-              <div class="yn-options">
-                <button class="yn-option" data-q="noise" data-v="yes" onclick="selectYN(this)">
-                  <span data-gr="ΝΑΙ" data-en="YES"></span>
-                </button>
-                <button class="yn-option" data-q="noise" data-v="no" onclick="selectYN(this)">
-                  <span data-gr="ΟΧΙ" data-en="NO"></span>
-                </button>
-              </div>
-            </div>
-
-            <div class="yn-group" style="margin-bottom:0;">
-              <div class="yn-label">
-                <span data-gr="Έγινε αλλαγή λαδιού;" data-en="Was an oil change carried out?"></span>
-              </div>
-              <div class="yn-options">
-                <button class="yn-option" data-q="oilchange" data-v="yes" onclick="selectYN(this)">
-                  <span data-gr="ΝΑΙ" data-en="YES"></span>
-                </button>
-                <button class="yn-option" data-q="oilchange" data-v="no" onclick="selectYN(this)">
-                  <span data-gr="ΟΧΙ" data-en="NO"></span>
-                </button>
+              <div>
+                <label style="font-size:13px;"><span data-gr="Χιλιόμετρα *" data-en="Current KM *"></span></label>
+                <input type="number" id="log-km" placeholder="π.χ. 12500" min="1" style="font-size:14px;">
               </div>
             </div>
           </div>
 
-          <hr class="form-divider">
-
-          <!-- 24-item Checklist -->
-          <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue);margin-bottom:12px;">
-            <span data-gr="Λίστα Ελέγχου Σέρβις" data-en="Service Checklist"></span>
+          <!-- Section 2: Quick Checks -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;color:var(--blue);opacity:0.8;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(0,155,180,0.2);">
+              <span data-gr="Γρήγοροι Έλεγχοι" data-en="Quick Checks"></span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div class="yn-group" style="margin-bottom:0;">
+                <div class="yn-label" style="font-size:14px;">
+                  <span data-gr="Ανεφοδιάστηκε το λάδι σε κατάλληλο επίπεδο;" data-en="Was oil topped up to the correct level?"></span>
+                </div>
+                <div class="yn-options">
+                  <button class="yn-option" data-q="oil" data-v="yes" onclick="selectYN(this)"><span data-gr="ΝΑΙ" data-en="YES"></span></button>
+                  <button class="yn-option" data-q="oil" data-v="no" onclick="selectYN(this)"><span data-gr="ΟΧΙ" data-en="NO"></span></button>
+                </div>
+              </div>
+              <div class="yn-group" style="margin-bottom:0;">
+                <div class="yn-label" style="font-size:14px;">
+                  <span data-gr="Παρατηρήθηκε ασυνήθιστος θόρυβος από τον κινητήρα;" data-en="Was any abnormal engine noise noticed?"></span>
+                </div>
+                <div class="yn-options">
+                  <button class="yn-option" data-q="noise" data-v="yes" onclick="selectYN(this)"><span data-gr="ΝΑΙ" data-en="YES"></span></button>
+                  <button class="yn-option" data-q="noise" data-v="no" onclick="selectYN(this)"><span data-gr="ΟΧΙ" data-en="NO"></span></button>
+                </div>
+              </div>
+              <div class="yn-group" style="margin-bottom:0;">
+                <div class="yn-label" style="font-size:14px;">
+                  <span data-gr="Έγινε αλλαγή λαδιού;" data-en="Was an oil change carried out?"></span>
+                </div>
+                <div class="yn-options">
+                  <button class="yn-option" data-q="oilchange" data-v="yes" onclick="selectYN(this)"><span data-gr="ΝΑΙ" data-en="YES"></span></button>
+                  <button class="yn-option" data-q="oilchange" data-v="no" onclick="selectYN(this)"><span data-gr="ΟΧΙ" data-en="NO"></span></button>
+                </div>
+              </div>
+            </div>
           </div>
-          <table class="checklist-table" id="checklist-table">
-            <thead>
-              <tr>
-                <th style="width:28px;">#</th>
-                <th><span data-gr="Ανταλλακτικό / Εργασία" data-en="Part / Work"></span></th>
-                <th style="text-align:right;"><span data-gr="Κατάσταση" data-en="Status"></span></th>
-              </tr>
-            </thead>
-            <tbody id="checklist-body"></tbody>
-          </table>
 
-          <hr class="form-divider">
-
-          <!-- Notes -->
-          <div>
-            <label><span data-gr="Σχόλια / Παρατηρήσεις" data-en="Notes / Observations"></span></label>
-            <textarea id="log-notes"></textarea>
+          <!-- Section 3: Service Checklist -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;color:var(--blue);opacity:0.8;margin-bottom:6px;">
+              <span data-gr="Λίστα Εργασιών" data-en="Service Checklist"></span>
+            </div>
+            <div style="font-size:12px;color:var(--grey);margin-bottom:14px;">
+              <span data-gr="Πατήστε για να κυκλώσετε: Εντάξει → Αντικαταστάθηκε → Δ/Ε → Άδειο" data-en="Tap to cycle: OK → Replaced → N/A → Clear"></span>
+            </div>
+            <div class="checklist-groups" id="checklist-container"></div>
           </div>
 
-          <button class="btn btn-primary" onclick="submitLog()">
+          <!-- Section 4: Notes -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;color:var(--blue);opacity:0.8;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(0,155,180,0.2);">
+              <span data-gr="Σχόλια / Παρατηρήσεις" data-en="Notes / Observations"></span>
+            </div>
+            <textarea id="log-notes" style="font-size:14px;" placeholder="Οποιαδήποτε παρατήρηση / Any observations…"></textarea>
+          </div>
+
+          <button class="btn btn-primary" onclick="submitLog()" style="font-size:15px;padding:14px;">
             <span data-gr="Αποθήκευση Εγγραφής" data-en="Save Service Entry"></span>
           </button>
           <button class="btn btn-secondary" onclick="resetToSearch()">
@@ -544,27 +549,29 @@
       <!-- ─── WARRANTY TAB ─── -->
       <div class="tab-pane" id="tab-warranty">
         <div class="card">
-          <div class="card-title" style="color:var(--orange);">
+          <div class="card-title" style="color:var(--orange);font-size:16px;">
             <span data-gr="Δήλωση Εγγύησης" data-en="Warranty Claim"></span>
           </div>
           <div id="warranty-msg" class="msg"></div>
 
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div>
-              <label><span data-gr="Αριθμός Πλαισίου (Frame No.)" data-en="Frame No."></span></label>
-              <input type="text" id="w-frame" placeholder="π.χ. LCETJKBM…">
+          <!-- Section 1: Basic Info -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;color:var(--orange);opacity:0.7;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(229,144,0,0.2);">
+              <span data-gr="Βασικές Πληροφορίες" data-en="Basic Information"></span>
             </div>
-            <div>
-              <label><span data-gr="Χιλιόμετρα" data-en="KM Reading"></span></label>
-              <input type="number" id="w-km" placeholder="π.χ. 3200" min="0">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div>
+                <label style="font-size:13px;"><span data-gr="Αριθμός Πλαισίου (Frame No.)" data-en="Frame No."></span></label>
+                <input type="text" id="w-frame" placeholder="π.χ. LCETJKBM…" style="font-size:14px;">
+              </div>
+              <div>
+                <label style="font-size:13px;"><span data-gr="Χιλιόμετρα" data-en="KM Reading"></span></label>
+                <input type="number" id="w-km" placeholder="π.χ. 3200" min="0" style="font-size:14px;">
+              </div>
             </div>
-            <div>
-              <label><span data-gr="Ημερομηνία Πώλησης" data-en="Sale Date"></span></label>
-              <input type="date" id="w-saledate">
-            </div>
-            <div>
-              <label><span data-gr="Προτεραιότητα" data-en="Priority"></span></label>
-              <select id="w-priority">
+            <div style="margin-top:12px;">
+              <label style="font-size:13px;"><span data-gr="Προτεραιότητα" data-en="Priority"></span></label>
+              <select id="w-priority" style="font-size:14px;">
                 <option value="low"><span data-gr="Χαμηλή" data-en="Low"></span></option>
                 <option value="normal" selected><span data-gr="Κανονική" data-en="Normal"></span></option>
                 <option value="urgent"><span data-gr="Επείγον 🚨" data-en="Urgent 🚨"></span></option>
@@ -572,63 +579,36 @@
             </div>
           </div>
 
-          <div>
-            <label><span data-gr="Περιγραφή Βλάβης / Παραπόνου *" data-en="Fault / Symptom Description *"></span></label>
-            <textarea id="w-symptom" style="min-height:90px;"></textarea>
+          <!-- Section 2: Fault Description -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;color:var(--orange);opacity:0.7;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(229,144,0,0.2);">
+              <span data-gr="Περιγραφή Βλάβης *" data-en="Fault Description *"></span>
+            </div>
+            <textarea id="w-symptom" style="min-height:110px;font-size:15px;" placeholder="Περιγράψτε αναλυτικά τη βλάβη ή το παράπονο / Describe the fault in detail…"></textarea>
           </div>
 
-          <!-- Yes/No flags -->
-          <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px;">
-
-            <div class="yn-group" style="margin-bottom:0;">
-              <div class="yn-label">
-                <span data-gr="Απαιτείται αποσυναρμολόγηση κινητήρα;" data-en="Is engine disassembly required?"></span>
-              </div>
-              <div class="yn-options">
-                <button class="yn-option" data-q="w-engine" data-v="yes" onclick="selectYN(this)">
-                  <span data-gr="ΝΑΙ" data-en="YES"></span>
-                </button>
-                <button class="yn-option" data-q="w-engine" data-v="no" onclick="selectYN(this)">
-                  <span data-gr="ΟΧΙ" data-en="NO"></span>
-                </button>
-              </div>
+          <!-- Section 3: Photos (was Section 4) -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;color:var(--orange);opacity:0.7;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(229,144,0,0.2);">
+              <span data-gr="Φωτογραφίες (έως 6)" data-en="Photos (up to 6)"></span>
             </div>
-
-            <div class="yn-group" style="margin-bottom:0;">
-              <div class="yn-label">
-                <span data-gr="Αναγνωρίστηκε το ελάττωμα από τη CFMOTO;" data-en="Has the defect been agreed by CFMOTO?"></span>
-              </div>
-              <div class="yn-options">
-                <button class="yn-option" data-q="w-defect" data-v="yes" onclick="selectYN(this)">
-                  <span data-gr="ΝΑΙ" data-en="YES"></span>
-                </button>
-                <button class="yn-option" data-q="w-defect" data-v="no" onclick="selectYN(this)">
-                  <span data-gr="ΟΧΙ" data-en="NO"></span>
-                </button>
-              </div>
-            </div>
-
-            <div class="yn-group" style="margin-bottom:0;">
-              <div class="yn-label">
-                <span data-gr="Παρασχέθηκε αντικατάσταση οχήματος;" data-en="Was a courtesy vehicle provided?"></span>
-              </div>
-              <div class="yn-options">
-                <button class="yn-option" data-q="w-courtesy" data-v="yes" onclick="selectYN(this)">
-                  <span data-gr="ΝΑΙ" data-en="YES"></span>
-                </button>
-                <button class="yn-option" data-q="w-courtesy" data-v="no" onclick="selectYN(this)">
-                  <span data-gr="ΟΧΙ" data-en="NO"></span>
-                </button>
-              </div>
-            </div>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:rgba(229,144,0,0.07);border:1.5px dashed rgba(229,144,0,0.35);border-radius:8px;padding:14px 18px;font-size:14px;color:var(--orange);font-weight:600;" onclick="document.getElementById('w-photos-input').click()">
+              📷 <span data-gr="Προσθήκη Φωτογραφιών" data-en="Add Photos"></span>
+              <span style="font-size:12px;color:var(--grey);font-weight:400;margin-left:4px;" data-gr="(JPG, PNG — έως 6)" data-en="(JPG, PNG — up to 6)"></span>
+            </label>
+            <input type="file" id="w-photos-input" accept="image/*" multiple style="display:none;" onchange="handleWarrantyPhotos(this)">
+            <div id="w-photos-preview" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;"></div>
           </div>
 
-          <div>
-            <label><span data-gr="Πρόσθετες Σημειώσεις" data-en="Additional Notes"></span></label>
-            <textarea id="w-notes"></textarea>
+          <!-- Section 5: Notes -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;color:var(--orange);opacity:0.7;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(229,144,0,0.2);">
+              <span data-gr="Πρόσθετες Σημειώσεις" data-en="Additional Notes"></span>
+            </div>
+            <textarea id="w-notes" style="font-size:14px;" placeholder="Οποιαδήποτε επιπλέον πληροφορία / Any additional information…"></textarea>
           </div>
 
-          <button class="btn btn-warranty" onclick="submitWarranty()">
+          <button class="btn btn-warranty" onclick="submitWarranty()" style="font-size:15px;padding:14px;">
             <span data-gr="Υποβολή Δήλωσης Εγγύησης" data-en="Submit Warranty Claim"></span>
           </button>
           <button class="btn btn-secondary" onclick="resetToSearch()">
@@ -752,6 +732,39 @@
     }
   }
 
+  function toggleChangePassword() {
+    const panel = document.getElementById('cp-panel');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  }
+
+  async function changePassword() {
+    const username = document.getElementById('cp-username').value.trim();
+    const current  = document.getElementById('cp-current').value;
+    const newPw    = document.getElementById('cp-new').value;
+    const confirm  = document.getElementById('cp-confirm').value;
+    const msg      = document.getElementById('cp-msg');
+    msg.style.display = 'none';
+    if (!username || !current || !newPw || !confirm) { msg.style.color='var(--red)'; msg.textContent='All fields are required.'; msg.style.display='block'; return; }
+    if (newPw.length < 6) { msg.style.color='var(--red)'; msg.textContent='New password must be at least 6 characters.'; msg.style.display='block'; return; }
+    if (newPw !== confirm) { msg.style.color='var(--red)'; msg.textContent='New passwords do not match.'; msg.style.display='block'; return; }
+    try {
+      const res  = await fetch('/api/partner/change-password', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, currentPassword: current, newPassword: newPw })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        msg.style.color = 'var(--green)'; msg.textContent = '✓ Password changed successfully!'; msg.style.display = 'block';
+        document.getElementById('cp-username').value = '';
+        document.getElementById('cp-current').value = '';
+        document.getElementById('cp-new').value = '';
+        document.getElementById('cp-confirm').value = '';
+      } else {
+        msg.style.color = 'var(--red)'; msg.textContent = data.error || 'Failed to change password.'; msg.style.display = 'block';
+      }
+    } catch(e) { msg.style.color='var(--red)'; msg.textContent='Connection error.'; msg.style.display='block'; }
+  }
+
   async function doLogout() {
     await fetch('/api/partner/logout', { method: 'POST' });
     document.getElementById('section-main').classList.remove('active');
@@ -796,39 +809,55 @@
     btn.classList.add(v === 'yes' ? 'selected-yes' : 'selected-no');
   }
 
-  // ── CHECKLIST ─────────────────────────────────────────────────────────────
-  function buildChecklist() {
-    const tbody = document.getElementById('checklist-body');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-    SERVICE_ITEMS.forEach((item, i) => {
-      const nameHtml = currentLang === 'el'
-        ? `<div class="check-name-en">${item.el}</div><div class="check-name-el">${item.en}</div>`
-        : `<div class="check-name-en">${item.en}</div><div class="check-name-el">${item.el}</div>`;
+  // ── CHECKLIST GROUPS ─────────────────────────────────────────────────────
+  const SERVICE_GROUPS = [
+    { en: 'ENGINE',              el: 'ΚΙΝΗΤΗΡΑΣ',        idx: [0,1,2,3,7,8,9] },
+    { en: 'DRIVE & TRANSMISSION',el: 'ΜΕΤΑΔΟΣΗ',         idx: [4,5,6,12,13,14,15,16,17,18,19] },
+    { en: 'BRAKES',              el: 'ΦΡΕΝΑ',             idx: [10,11] },
+    { en: 'LIGHTS',              el: 'ΦΩΤΑ',              idx: [20,21] },
+    { en: 'TYRES',               el: 'ΕΛΑΣΤΙΚΑ',          idx: [22,23] },
+  ];
 
-      const state = itemStates[i];
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="check-num">${i + 1}</td>
-        <td>${nameHtml}</td>
-        <td>
-          <div class="state-btns">
-            <button class="state-btn state-btn-ok  ${state === 'ok'      ? 'active' : ''}" onclick="setItemState(${i},'ok',      this)" title="${currentLang==='el'?'Εντάξει':'OK'}">✓</button>
-            <button class="state-btn state-btn-rep ${state === 'replace' ? 'active' : ''}" onclick="setItemState(${i},'replace', this)" title="${currentLang==='el'?'Αλλαγή':'Replace'}">↺</button>
-            <button class="state-btn state-btn-na  ${state === 'na'      ? 'active' : ''}" onclick="setItemState(${i},'na',      this)" title="${currentLang==='el'?'Δ/Ε':'N/A'}">—</button>
-          </div>
-        </td>`;
-      tbody.appendChild(tr);
+  const CHIP_CYCLE  = [null, 'ok', 'replace', 'na'];
+  const BADGE_LABEL = {
+    el: { ok: '✓ ΕΝΤΆΞΕΙ', replace: '↺ ΑΝΤΙΚ.', na: '— Δ/Ε' },
+    en: { ok: '✓ OK',      replace: '↺ REPLACED', na: '— N/A' }
+  };
+
+  function buildChecklist() {
+    const container = document.getElementById('checklist-container');
+    if (!container) return;
+    container.innerHTML = '';
+    SERVICE_GROUPS.forEach(group => {
+      const groupDiv = document.createElement('div');
+      const title = currentLang === 'el' ? group.el : group.en;
+      const chips = group.idx.map(i => {
+        const item    = SERVICE_ITEMS[i];
+        const primary = currentLang === 'el' ? item.el : item.en;
+        const sub     = currentLang === 'el' ? item.en : item.el;
+        const state   = itemStates[i];
+        const cls     = state ? 's-' + (state === 'replace' ? 'rep' : state) : '';
+        const badge   = state ? BADGE_LABEL[currentLang][state] : '';
+        return `<button class="check-chip ${cls}" onclick="cycleItemState(${i}, this)">
+          <span class="cc-name">${primary}</span>
+          <span class="cc-sub">${sub}</span>
+          <span class="cc-badge">${badge}</span>
+        </button>`;
+      }).join('');
+      groupDiv.innerHTML = `<div class="cg-title">${title}</div><div class="cg-chips">${chips}</div>`;
+      container.appendChild(groupDiv);
     });
   }
 
-  function setItemState(index, state, btn) {
-    itemStates[index] = state;
-    const row = btn.closest('tr');
-    row.querySelectorAll('.state-btn').forEach(b => {
-      b.classList.remove('active');
-    });
-    btn.classList.add('active');
+  function cycleItemState(index, btn) {
+    const cur     = itemStates[index];
+    const nextIdx = (CHIP_CYCLE.indexOf(cur) + 1) % CHIP_CYCLE.length;
+    const next    = CHIP_CYCLE[nextIdx];
+    itemStates[index] = next;
+    // Update chip in-place (no full rebuild, no scroll jump)
+    btn.className = 'check-chip' + (next ? ' s-' + (next === 'replace' ? 'rep' : next) : '');
+    const badge = btn.querySelector('.cc-badge');
+    badge.textContent = next ? BADGE_LABEL[currentLang][next] : '';
   }
 
   // ── VEHICLE SEARCH ────────────────────────────────────────────────────────
@@ -961,6 +990,44 @@
     return parts.length ? parts.join(' | ') : '';
   }
 
+  // ── PHOTO HANDLING ────────────────────────────────────────────────────────
+  let warrantyPhotos = [];
+
+  async function handleWarrantyPhotos(input) {
+    const files = Array.from(input.files).slice(0, 6);
+    warrantyPhotos = [];
+    const preview = document.getElementById('w-photos-preview');
+    preview.innerHTML = '';
+    for (const file of files) {
+      const dataUrl = await new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.readAsDataURL(file);
+      });
+      warrantyPhotos.push(dataUrl);
+      const img = document.createElement('div');
+      img.style.cssText = 'position:relative;width:90px;height:90px;border-radius:8px;overflow:hidden;border:1.5px solid rgba(229,144,0,0.35);';
+      img.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover;">
+        <button onclick="removePhoto(${warrantyPhotos.length-1})" style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.7);border:none;border-radius:50%;color:white;cursor:pointer;font-size:11px;width:20px;height:20px;line-height:20px;text-align:center;padding:0;">✕</button>`;
+      preview.appendChild(img);
+    }
+    if (files.length === 6) input.value = '';
+  }
+
+  function removePhoto(idx) {
+    warrantyPhotos.splice(idx, 1);
+    // re-render
+    const preview = document.getElementById('w-photos-preview');
+    preview.innerHTML = '';
+    warrantyPhotos.forEach((dataUrl, i) => {
+      const img = document.createElement('div');
+      img.style.cssText = 'position:relative;width:90px;height:90px;border-radius:8px;overflow:hidden;border:1.5px solid rgba(229,144,0,0.35);';
+      img.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover;">
+        <button onclick="removePhoto(${i})" style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.7);border:none;border-radius:50%;color:white;cursor:pointer;font-size:11px;width:20px;height:20px;line-height:20px;text-align:center;padding:0;">✕</button>`;
+      preview.appendChild(img);
+    });
+  }
+
   // ── SUBMIT WARRANTY CLAIM ─────────────────────────────────────────────────
   async function submitWarranty() {
     const symptom = document.getElementById('w-symptom').value.trim();
@@ -977,17 +1044,20 @@
           regNo:            currentPlate,
           frameNo:          document.getElementById('w-frame').value.trim(),
           km:               document.getElementById('w-km').value,
-          saleDate:         document.getElementById('w-saledate').value,
           symptom,
           priority:         document.getElementById('w-priority').value,
           engineDisassembly: ynAnswers['w-engine']   === 'yes',
           defectAgreed:      ynAnswers['w-defect']   === 'yes',
           courtesyVehicle:   ynAnswers['w-courtesy'] === 'yes',
-          notes:            document.getElementById('w-notes').value.trim()
+          notes:            document.getElementById('w-notes').value.trim(),
+          photos:           warrantyPhotos
         })
       });
       const data = await res.json();
       if (res.ok) {
+        warrantyPhotos = [];
+        document.getElementById('w-photos-preview').innerHTML = '';
+        document.getElementById('w-photos-input').value = '';
         document.getElementById('step-log').style.display = 'none';
         document.getElementById('step-success').style.display = 'block';
         const successTitle = document.getElementById('success-title');

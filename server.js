@@ -430,7 +430,12 @@ app.post('/api/admin/vehicles/import', requireAdmin, (req, res) => {
     return res.status(400).json({ error: 'rows array required.' });
   }
   const result = db.importVehicles(rows);
+  db.setSetting('lastVehicleImport', new Date().toISOString());
   res.json({ success: true, ...result });
+});
+
+app.get('/api/admin/vehicles/import-status', requireAdmin, (req, res) => {
+  res.json({ lastImportAt: db.getSetting('lastVehicleImport') });
 });
 
 // ==================== ADMIN - PARTNERS ====================
@@ -462,23 +467,72 @@ app.post('/api/admin/partners/:id/toggle', requireAdmin, (req, res) => {
   res.json({ success: true, partner: { ...partner, passwordHash: undefined } });
 });
 
+// Reset a partner's password (admin only)
+app.post('/api/admin/partners/:id/reset-password', requireAdmin, async (req, res) => {
+  const { newPassword } = req.body;
+  if (!newPassword || newPassword.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters.' });
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  const partner = db.updatePartnerPassword(req.params.id, passwordHash);
+  if (!partner) return res.status(404).json({ error: 'Partner not found.' });
+  res.json({ success: true });
+});
+
+// Partner changes their own password
+// Partner changes own password (no session required — uses username + current password to authenticate)
+app.post('/api/partner/change-password', async (req, res) => {
+  const { username, currentPassword, newPassword } = req.body;
+  if (!username || !currentPassword || !newPassword) return res.status(400).json({ error: 'All fields are required.' });
+  if (newPassword.length < 6) return res.status(400).json({ error: 'New password must be at least 6 characters.' });
+  const partner = db.getPartnerByUsername(username);
+  if (!partner) return res.status(404).json({ error: 'Partner not found.' });
+  const valid = await bcrypt.compare(currentPassword, partner.passwordHash);
+  if (!valid) return res.status(401).json({ error: 'Current password is incorrect.' });
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  db.updatePartnerPassword(partner.id, passwordHash);
+  res.json({ success: true });
+});
+
+// Serve partner portal
+app.get('/partner', (req, res) => {
+  res.sendFile(path.join(__dirname, 'partner', 'index.html'));
+});
+
 // ==================== WARRANTY ====================
 
 // Log a warranty claim (partner or admin)
 app.post('/api/warranty-claim', requireAdminOrPartner, (req, res) => {
-  const { regNo, frameNo, km, saleDate, symptom, priority, engineDisassembly, defectAgreed, courtesyVehicle, notes } = req.body;
+  const { regNo, frameNo, km, symptom, priority, engineDisassembly, defectAgreed, courtesyVehicle, notes, photos } = req.body;
   if (!regNo || !symptom) {
     return res.status(400).json({ error: 'Registration number and symptom are required.' });
   }
   const isAdmin = !!(req.session && req.session.admin);
   const partnerInfo = req.session.partner || null;
   const claim = db.createWarrantyClaim({
-    regNo, frameNo, km, saleDate, symptom, priority,
+    regNo, frameNo, km, symptom, priority,
     engineDisassembly, defectAgreed, courtesyVehicle, notes,
+    photos: Array.isArray(photos) ? photos : [],
     partnerId:    partnerInfo ? partnerInfo.id : null,
     partnerName:  partnerInfo ? partnerInfo.workshopName : 'Motowarehouse',
+    loggedBy:     partnerInfo ? partnerInfo.workshopName : 'Motowarehouse',
     loggedByAdmin: isAdmin
   });
+  // Notify admin by email (fire and forget)
+  emailService.sendWarrantyAlert(claim).catch(e => console.error('[Email] Warranty alert failed:', e));
+  res.json({ success: true, claim });
+});
+
+// Get all warranty claims (admin inbox)
+app.get('/api/admin/warranties', requireAdmin, (req, res) => {
+  res.json(db.getAllWarranties());
+});
+
+// Update warranty claim status
+app.post('/api/admin/warranties/:id/status', requireAdmin, (req, res) => {
+  const { status, adminNotes } = req.body;
+  const valid = ['open', 'approved', 'rejected', 'closed'];
+  if (!valid.includes(status)) return res.status(400).json({ error: 'Invalid status.' });
+  const claim = db.updateWarrantyStatus(req.params.id, status, adminNotes);
+  if (!claim) return res.status(404).json({ error: 'Claim not found.' });
   res.json({ success: true, claim });
 });
 

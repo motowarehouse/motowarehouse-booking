@@ -8,7 +8,7 @@ const DB_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH
 
 function readDB() {
   if (!fs.existsSync(DB_PATH)) {
-    const initial = { bookings: [], blocks: [], hours: null, lastId: 0, vehicles: [], partners: [], serviceHistory: [], warrantyHistory: [] };
+    const initial = { bookings: [], blocks: [], hours: null, lastId: 0, vehicles: [], partners: [], serviceHistory: [], warrantyHistory: [], settings: {} };
     fs.writeFileSync(DB_PATH, JSON.stringify(initial, null, 2));
     return initial;
   }
@@ -20,7 +20,20 @@ function readDB() {
   if (!db.partners) db.partners = [];
   if (!db.serviceHistory) db.serviceHistory = [];
   if (!db.warrantyHistory) db.warrantyHistory = [];
+  if (!db.settings) db.settings = {};
   return db;
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+
+function getSetting(key) {
+  return readDB().settings[key] ?? null;
+}
+
+function setSetting(key, value) {
+  const db = readDB();
+  db.settings[key] = value;
+  writeDB(db);
 }
 
 function writeDB(data) {
@@ -418,6 +431,7 @@ function createWarrantyClaim(data) {
     defectAgreed:     !!data.defectAgreed,
     courtesyVehicle:  !!data.courtesyVehicle,
     notes:            data.notes   || '',
+    photos:           Array.isArray(data.photos) ? data.photos : [],
     loggedBy:         data.loggedBy   || 'Motowarehouse',
     loggedByAdmin:    data.loggedByAdmin || false,
     status:           'open',
@@ -435,14 +449,40 @@ function getWarrantyByPlate(regNo) {
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 }
 
+function getAllWarranties() {
+  return readDB().warrantyHistory
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+function updateWarrantyStatus(id, status, adminNotes) {
+  const db = readDB();
+  const idx = db.warrantyHistory.findIndex(e => e.id === parseInt(id));
+  if (idx === -1) return null;
+  db.warrantyHistory[idx].status = status;
+  db.warrantyHistory[idx].updatedAt = new Date().toISOString();
+  if (adminNotes !== undefined) db.warrantyHistory[idx].adminNotes = adminNotes;
+  writeDB(db);
+  return db.warrantyHistory[idx];
+}
+
+function updatePartnerPassword(id, passwordHash) {
+  const db = readDB();
+  const idx = db.partners.findIndex(p => p.id === parseInt(id));
+  if (idx === -1) return null;
+  db.partners[idx].passwordHash = passwordHash;
+  writeDB(db);
+  return db.partners[idx];
+}
+
 module.exports = {
+  getSetting, setSetting,
   createBooking, getAllBookings, getBookingById,
   updateBookingStatus, rescheduleBooking, updateContactStatus,
   markReminderSent, getAcceptedBookingsDueForReminder, getBookedSlots,
   createBlock, getAllBlocks, deleteBlock,
   getHours, saveHours, DEFAULT_HOURS,
   importVehicles, getVehicleByPlate, getAllVehicles,
-  createPartner, getPartnerByUsername, getAllPartners, togglePartnerActive,
+  createPartner, getPartnerByUsername, getAllPartners, togglePartnerActive, updatePartnerPassword,
   createServiceEntry, updateServiceEntry, deleteServiceEntry, getServiceHistoryByPlate, DEFAULT_SERVICE_ITEMS,
-  createWarrantyClaim, getWarrantyByPlate
+  createWarrantyClaim, getWarrantyByPlate, getAllWarranties, updateWarrantyStatus
 };
