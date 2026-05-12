@@ -369,6 +369,39 @@ function getServiceHistoryByPlate(regNo) {
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 }
 
+const EDIT_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+
+function updateServiceEntry(id, data) {
+  // Returns { success, locked, entry }
+  const db = readDB();
+  const idx = db.serviceHistory.findIndex(e => e.id === parseInt(id));
+  if (idx === -1) return { success: false, notFound: true };
+  const entry = db.serviceHistory[idx];
+  const age = Date.now() - new Date(entry.createdAt).getTime();
+  if (age > EDIT_WINDOW_MS && !data.adminOverride) return { success: false, locked: true };
+  db.serviceHistory[idx] = {
+    ...entry,
+    km:        parseInt(data.km)    || entry.km,
+    items:     Array.isArray(data.items) ? data.items : entry.items,
+    notes:     data.notes !== undefined ? data.notes : entry.notes,
+    updatedAt: new Date().toISOString()
+  };
+  writeDB(db);
+  return { success: true, entry: db.serviceHistory[idx] };
+}
+
+function deleteServiceEntry(id, adminOverride) {
+  const db = readDB();
+  const idx = db.serviceHistory.findIndex(e => e.id === parseInt(id));
+  if (idx === -1) return { success: false, notFound: true };
+  const entry = db.serviceHistory[idx];
+  const age = Date.now() - new Date(entry.createdAt).getTime();
+  if (age > EDIT_WINDOW_MS && !adminOverride) return { success: false, locked: true };
+  db.serviceHistory.splice(idx, 1);
+  writeDB(db);
+  return { success: true };
+}
+
 // ── Warranty History ──────────────────────────────────────────────────────────
 
 function createWarrantyClaim(data) {
@@ -410,6 +443,6 @@ module.exports = {
   getHours, saveHours, DEFAULT_HOURS,
   importVehicles, getVehicleByPlate, getAllVehicles,
   createPartner, getPartnerByUsername, getAllPartners, togglePartnerActive,
-  createServiceEntry, getServiceHistoryByPlate, DEFAULT_SERVICE_ITEMS,
+  createServiceEntry, updateServiceEntry, deleteServiceEntry, getServiceHistoryByPlate, DEFAULT_SERVICE_ITEMS,
   createWarrantyClaim, getWarrantyByPlate
 };

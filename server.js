@@ -12,8 +12,8 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // --- Middleware ---
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'mw-secret-2024',
@@ -374,6 +374,29 @@ app.post('/api/service-entry', requireAdminOrPartner, (req, res) => {
   res.json({ success: true, entry });
 });
 
+// Edit a service entry — allowed within 5 min, admin can override lock
+app.put('/api/service-entry/:id', requireAdminOrPartner, (req, res) => {
+  const { km, items, notes, adminOverride } = req.body;
+  const isAdmin = !!(req.session && req.session.admin);
+  const result = db.updateServiceEntry(req.params.id, {
+    km, items, notes,
+    adminOverride: isAdmin && adminOverride
+  });
+  if (result.notFound) return res.status(404).json({ error: 'Entry not found.' });
+  if (result.locked)   return res.status(403).json({ error: 'Edit window has expired (5 minutes).', locked: true });
+  res.json({ success: true, entry: result.entry });
+});
+
+// Delete a service entry — within 5 min or admin override
+app.delete('/api/service-entry/:id', requireAdminOrPartner, (req, res) => {
+  const isAdmin = !!(req.session && req.session.admin);
+  const adminOverride = isAdmin && req.query.force === 'true';
+  const result = db.deleteServiceEntry(req.params.id, adminOverride);
+  if (result.notFound) return res.status(404).json({ error: 'Entry not found.' });
+  if (result.locked)   return res.status(403).json({ error: 'Edit window has expired.', locked: true });
+  res.json({ success: true });
+});
+
 // ==================== ADMIN - VEHICLES ====================
 
 // Get all vehicles (paginated search)
@@ -445,41 +468,34 @@ app.post('/api/admin/partners/:id/toggle', requireAdmin, (req, res) => {
 app.post('/api/warranty-claim', requireAdminOrPartner, (req, res) => {
   const { regNo, frameNo, km, saleDate, symptom, priority, engineDisassembly, defectAgreed, courtesyVehicle, notes } = req.body;
   if (!regNo || !symptom) {
-    return res.status(400).json({ error: 'Registration number and symptom description are required.' });
+    return res.status(400).json({ error: 'Registration number and symptom are required.' });
   }
-
   const isAdmin = !!(req.session && req.session.admin);
   const partnerInfo = req.session.partner || null;
-
   const claim = db.createWarrantyClaim({
-    regNo, frameNo, km, saleDate, symptom,
-    priority: priority || 'normal',
-    engineDisassembly: !!engineDisassembly,
-    defectAgreed:      !!defectAgreed,
-    courtesyVehicle:   !!courtesyVehicle,
-    notes,
-    loggedBy:      partnerInfo ? partnerInfo.workshopName : 'Motowarehouse',
+    regNo, frameNo, km, saleDate, symptom, priority,
+    engineDisassembly, defectAgreed, courtesyVehicle, notes,
+    partnerId:    partnerInfo ? partnerInfo.id : null,
+    partnerName:  partnerInfo ? partnerInfo.workshopName : 'Motowarehouse',
     loggedByAdmin: isAdmin
   });
-
   res.json({ success: true, claim });
 });
 
-// Get warranty history for a vehicle (partner or admin)
-app.get('/api/warranty/:regNo', requireAdminOrPartner, (req, res) => {
-  const claims = db.getWarrantyByPlate(req.params.regNo);
-  res.json(claims);
+// Get service history by plate (partner + admin)
+app.get('/api/service-history', requireAdminOrPartner, (req, res) => {
+  const { plate } = req.query;
+  if (!plate) return res.status(400).json({ error: 'plate required' });
+  const history = db.getServiceHistoryByPlate(plate);
+  res.json(history);
 });
 
-// Serve partner portal
-app.get('/partner', (req, res) => {
-  res.sendFile(path.join(__dirname, 'partner', 'index.html'));
-});
+// ==================== START ====================
 
-// ==================== Start ====================
+startReminderCron();
+
 app.listen(PORT, () => {
-  console.log('\n\U0001f3cd️  Motowarehouse Service Booking Portal');
-  console.log('   Running at: http://localhost:' + PORT);
-  console.log('   Admin panel: http://localhost:' + PORT + '/admin\n');
-  startReminderCron();
+  console.log(`\n✅ Motowarehouse Service Portal running on http://localhost:${PORT}`);
+  console.log(`   Admin panel: http://localhost:${PORT}/admin`);
+  console.log(`   Partner portal: http://localhost:${PORT}/partner\n`);
 });

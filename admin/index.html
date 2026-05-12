@@ -246,9 +246,10 @@
     .toast.show { transform:translateY(0); opacity:1; }
     .toast.success { border-color:rgba(0,200,150,0.5); }
     .toast.error { border-color:rgba(229,0,82,0.5); }
-    .check-item-admin { background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;cursor:pointer;padding:7px 12px;font-size:13px;transition:all 0.15s;user-select:none; }
-    .check-item-admin:hover { border-color:rgba(0,155,180,0.4); }
-    .check-item-admin.sel { background:rgba(0,155,180,0.15);border-color:rgba(0,155,180,0.5);color:var(--white); }
+    .check-item-admin { background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.08);border-radius:6px;cursor:pointer;padding:7px 12px;font-size:12px;transition:all 0.15s;user-select:none;line-height:1.4; }
+    .check-item-admin:hover { border-color:rgba(0,155,180,0.45);background:rgba(0,155,180,0.07); }
+    .check-item-admin.sel { background:var(--blue);border-color:var(--blue);color:#001A21;font-weight:700; }
+    .check-item-admin.sel::before { content:'✓ '; font-weight:900; }
     @media print { .sidebar,.topbar,.action-row,.logout-btn,.quick-actions { display:none !important; } .booking-detail { display:block !important; } body { background:white; color:black; } }
   </style>
 </head>
@@ -509,24 +510,39 @@
 
 <!-- LOG SERVICE ENTRY MODAL (admin) -->
 <div class="modal-overlay hidden" id="log-entry-modal">
-  <div class="modal" style="max-width:540px;">
-    <h3>Log Service Entry</h3>
+  <div class="modal" style="max-width:580px;max-height:88vh;overflow-y:auto;">
+    <h3 id="log-modal-title">Log Service Entry</h3>
     <div class="modal-sub">Vehicle: <strong id="log-modal-plate"></strong></div>
     <div style="margin-bottom:14px;">
       <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);margin-bottom:6px;">KM Reading *</label>
       <input type="number" class="admin-input" id="log-km" placeholder="e.g. 12500" min="0" style="max-width:200px;">
     </div>
     <div style="margin-bottom:14px;">
-      <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);margin-bottom:8px;">Work Carried Out *</label>
-      <div id="log-checklist" style="display:flex;flex-wrap:wrap;gap:7px;"></div>
+      <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);margin-bottom:10px;">Work Carried Out *</label>
+      <div id="log-checklist"></div>
     </div>
     <div>
       <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);margin-bottom:6px;">Notes / Other Parts</label>
       <textarea class="admin-input" id="log-notes" style="resize:vertical;min-height:70px;" placeholder="Anything not in the list above…"></textarea>
     </div>
+    <div id="log-locked-warning" style="display:none;background:rgba(229,144,0,0.1);border:1px solid rgba(229,144,0,0.3);border-radius:8px;padding:10px 14px;font-size:12px;color:#E59000;margin-top:12px;">
+      ⚠️ Edit window expired. As admin you can still save changes.
+    </div>
     <div class="modal-actions">
-      <button class="btn-secondary" onclick="document.getElementById('log-entry-modal').classList.add('hidden')">Cancel</button>
-      <button class="btn-primary" onclick="submitAdminLogEntry()">Save Entry</button>
+      <button class="btn-secondary" onclick="closeLogModal()">Cancel</button>
+      <button class="btn-primary" id="log-save-btn" onclick="submitAdminLogEntry()">Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT WINDOW BAR (shown after saving, bottom-right) -->
+<div id="edit-window-bar" style="display:none;position:fixed;bottom:70px;right:24px;z-index:9999;background:#002329;border:1px solid rgba(0,155,180,0.35);border-radius:10px;padding:12px 16px;font-size:12px;min-width:230px;box-shadow:0 4px 20px rgba(0,0,0,0.4);">
+  <div style="color:var(--grey);margin-bottom:6px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;">Last Entry — Edit Window</div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span id="edit-countdown" style="font-size:20px;font-weight:900;color:var(--blue);font-variant-numeric:tabular-nums;min-width:42px;">5:00</span>
+    <div style="display:flex;gap:6px;">
+      <button onclick="openEditEntry()" style="background:rgba(0,155,180,0.15);border:1px solid rgba(0,155,180,0.35);color:var(--blue);border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.06em;">EDIT</button>
+      <button onclick="deleteLastEntry()" style="background:rgba(229,0,82,0.1);border:1px solid rgba(229,0,82,0.3);color:var(--red);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">✕</button>
     </div>
   </div>
 </div>
@@ -610,14 +626,20 @@
     const pw = document.getElementById('password-input').value;
     const errEl = document.getElementById('login-error');
     errEl.style.display = 'none';
-    const res = await fetch('/api/admin/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ password: pw }) });
-    const data = await res.json();
-    if (res.ok) {
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('app').style.display = 'block';
-      initApp();
-    } else {
-      errEl.textContent = data.error || 'Login failed.';
+    try {
+      const res = await fetch('/api/admin/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ password: pw }) });
+      let data = {};
+      try { data = await res.json(); } catch(e) { data = {}; }
+      if (res.ok) {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        initApp();
+      } else {
+        errEl.textContent = data.error || 'Login failed.';
+        errEl.style.display = 'block';
+      }
+    } catch(err) {
+      errEl.textContent = 'Cannot connect to server. Is it running?';
       errEl.style.display = 'block';
     }
   }
@@ -816,7 +838,10 @@
                   <span style="font-size:10px;font-weight:700;letter-spacing:0.1em;background:rgba(0,155,180,0.15);color:var(--blue);padding:2px 8px;border-radius:4px;text-transform:uppercase;">Service</span>
                   <div style="font-weight:700;font-size:14px;">${e.date} &nbsp;·&nbsp; <span style="color:var(--blue);">${Number(e.km).toLocaleString()} km</span></div>
                 </div>
-                <div style="font-size:12px;color:var(--grey);">${e.partnerName}</div>
+                ${e.loggedByAdmin
+                  ? `<span style="font-size:11px;font-weight:700;letter-spacing:0.05em;background:rgba(0,155,180,0.12);color:var(--blue);border:1px solid rgba(0,155,180,0.25);padding:2px 10px;border-radius:10px;">🔧 Motowarehouse</span>`
+                  : `<span style="font-size:11px;font-weight:700;letter-spacing:0.05em;background:rgba(229,144,0,0.12);color:#E59000;border:1px solid rgba(229,144,0,0.3);padding:2px 10px;border-radius:10px;">🤝 ${e.partnerName}</span>`
+                }
               </div>
               ${e.items && e.items.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:${e.notes?'8px':'0'};">
                 ${e.items.map(i => `<span style="background:rgba(0,155,180,0.12);color:var(--blue);border-radius:12px;font-size:11px;font-weight:500;padding:3px 10px;">${typeof i === 'object' ? (i.en || i.el || JSON.stringify(i)) : i}</span>`).join('')}
@@ -852,42 +877,158 @@
   // ── LOG ENTRY MODAL (admin) ───────────────────────────────────────────────
   let adminLogPlate = null;
   let adminServiceItems = [];
+  let editingEntryId = null;   // null = new entry, number = editing existing
+  let lastEntryId    = null;   // for the 5-min edit window bar
+  let lastEntryPlate = null;
+  let editBarTimer   = null;
+  let editBarEndTime = null;
+
+  const LOG_CATEGORIES = [
+    { label: 'Engine', items: ['ENGINE OIL','GEAR OIL','SPARK PLUG','SPARK PLUG CAP','CHECK VALVES','AIR FILTER','OIL FILTER'] },
+    { label: 'Drive & Transmission', items: ['CHAIN','DRIVE SPROCKET','REAR SPROCKET','BELT','ROLLERS','SLIDERS','CLUTCH','DRIVE FACE','MOVABLE DRIVE','FTEROTI','VARIATOR'] },
+    { label: 'Brakes', items: ['FRONT BRAKE PADS','REAR BRAKE PADS'] },
+    { label: 'Lights', items: ['FRONT LAMP','REAR LAMP'] },
+    { label: 'Tyres', items: ['FRONT TYRE','REAR TYRE'] }
+  ];
+
+  function buildLogChecklist(preselected = []) {
+    if (!adminServiceItems.length) return;
+    const itemMap = {};
+    adminServiceItems.forEach(item => {
+      const key = (typeof item === 'object' ? item.en : item).toUpperCase();
+      itemMap[key] = typeof item === 'object' ? item : { en: item, el: item };
+    });
+
+    const cl = document.getElementById('log-checklist');
+    cl.innerHTML = LOG_CATEGORIES.map(cat => {
+      const chips = cat.items.map(key => {
+        const item = itemMap[key];
+        if (!item) return '';
+        const label = `${item.en} <span style="color:rgba(255,255,255,0.35);font-size:10px;">/ ${item.el}</span>`;
+        const isSel = preselected.includes(item.en) || preselected.some(p => (typeof p === 'object' ? p.en : p) === item.en);
+        return `<div class="check-item-admin${isSel ? ' sel' : ''}" onclick="toggleChip(this)" data-item="${item.en}">${label}</div>`;
+      }).join('');
+      return `
+        <div style="margin-bottom:14px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue);margin-bottom:7px;padding-bottom:5px;border-bottom:1px solid rgba(0,155,180,0.15);">${cat.label}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">${chips}</div>
+        </div>`;
+    }).join('');
+  }
+
+  function toggleChip(el) {
+    el.classList.toggle('sel');
+  }
 
   async function openLogEntryModal(plate) {
     adminLogPlate = plate;
+    editingEntryId = null;
     if (!adminServiceItems.length) {
       try { const r = await fetch('/api/service-items'); adminServiceItems = await r.json(); } catch(e) {}
     }
+    document.getElementById('log-modal-title').textContent = 'Log Service Entry';
     document.getElementById('log-modal-plate').textContent = plate;
     document.getElementById('log-km').value = '';
     document.getElementById('log-notes').value = '';
-    const cl = document.getElementById('log-checklist');
-    cl.innerHTML = adminServiceItems.map(item => {
-      const label = typeof item === 'object' ? `${item.en} / ${item.el}` : item;
-      const val   = typeof item === 'object' ? item.en : item;
-      return `<div class="check-item-admin" onclick="this.classList.toggle('sel')" data-item="${val}"
-        style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;cursor:pointer;padding:7px 12px;font-size:12px;transition:all 0.15s;user-select:none;line-height:1.35;">
-        ${label}
-      </div>`;
-    }).join('');
+    document.getElementById('log-locked-warning').style.display = 'none';
+    document.getElementById('log-save-btn').textContent = 'Save Entry';
+    buildLogChecklist([]);
     document.getElementById('log-entry-modal').classList.remove('hidden');
   }
 
+  function openEditEntry() {
+    if (!lastEntryId) return;
+    editingEntryId = lastEntryId;
+    const age = Date.now() - editBarEndTime + 5 * 60 * 1000;
+    const isLocked = age > 5 * 60 * 1000;
+    document.getElementById('log-modal-title').textContent = 'Edit Service Entry';
+    document.getElementById('log-modal-plate').textContent = lastEntryPlate;
+    document.getElementById('log-locked-warning').style.display = isLocked ? 'block' : 'none';
+    document.getElementById('log-save-btn').textContent = 'Save Changes';
+    document.getElementById('log-entry-modal').classList.remove('hidden');
+  }
+
+  function closeLogModal() {
+    document.getElementById('log-entry-modal').classList.add('hidden');
+    editingEntryId = null;
+  }
+
+  async function deleteLastEntry() {
+    if (!lastEntryId) return;
+    if (!confirm('Delete this service entry?')) return;
+    try {
+      const age = Date.now() - (editBarEndTime - 5 * 60 * 1000);
+      const force = age > 5 * 60 * 1000;
+      const res = await fetch(`/api/service-entry/${lastEntryId}${force ? '?force=true' : ''}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (res.ok) {
+        clearEditBar();
+        showToast('Entry deleted.', 'success');
+        if (lastEntryPlate) loadVehicleDetail(lastEntryPlate);
+      } else {
+        showToast(data.error || 'Could not delete.', 'error');
+      }
+    } catch(e) { showToast('Connection error.', 'error'); }
+  }
+
+  function clearEditBar() {
+    clearInterval(editBarTimer);
+    document.getElementById('edit-window-bar').style.display = 'none';
+    lastEntryId = null; lastEntryPlate = null; editBarEndTime = null;
+  }
+
+  function startEditBar(entryId, plate) {
+    lastEntryId    = entryId;
+    lastEntryPlate = plate;
+    editBarEndTime = Date.now() + 5 * 60 * 1000;
+    document.getElementById('edit-window-bar').style.display = 'block';
+    clearInterval(editBarTimer);
+    editBarTimer = setInterval(() => {
+      const remaining = editBarEndTime - Date.now();
+      if (remaining <= 0) {
+        document.getElementById('edit-countdown').textContent = '0:00';
+        document.getElementById('edit-countdown').style.color = 'var(--red)';
+        // Keep bar visible so admin can still edit/delete with override
+        return;
+      }
+      const m = Math.floor(remaining / 60000);
+      const s = Math.floor((remaining % 60000) / 1000);
+      document.getElementById('edit-countdown').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+      document.getElementById('edit-countdown').style.color = remaining < 60000 ? 'var(--red)' : 'var(--blue)';
+    }, 500);
+  }
+
   async function submitAdminLogEntry() {
-    const km = document.getElementById('log-km').value.trim();
+    const km    = document.getElementById('log-km').value.trim();
     const notes = document.getElementById('log-notes').value.trim();
     const items = [...document.querySelectorAll('.check-item-admin.sel')].map(el => el.dataset.item);
     if (!km || isNaN(km) || parseInt(km) <= 0) { showToast('Enter a valid KM reading.', 'error'); return; }
     if (!items.length && !notes) { showToast('Select at least one item or add notes.', 'error'); return; }
+
     try {
-      const res = await fetch('/api/service-entry', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ regNo: adminLogPlate, km: parseInt(km), items, notes })
-      });
-      const data = await res.json();
+      let res, data;
+      if (editingEntryId) {
+        // Edit existing
+        res  = await fetch(`/api/service-entry/${editingEntryId}`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ km: parseInt(km), items, notes, adminOverride: true })
+        });
+        data = await res.json();
+      } else {
+        // New entry
+        res  = await fetch('/api/service-entry', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ regNo: adminLogPlate, km: parseInt(km), items, notes })
+        });
+        data = await res.json();
+      }
+
       if (res.ok) {
         document.getElementById('log-entry-modal').classList.add('hidden');
-        showToast('Service entry saved.', 'success');
+        const wasEditing = !!editingEntryId;
+        editingEntryId = null;
+        showToast(wasEditing ? 'Entry updated.' : 'Service entry saved.', 'success');
+        if (!wasEditing && data.entry) startEditBar(data.entry.id, adminLogPlate);
         loadVehicleDetail(adminLogPlate);
       } else {
         showToast(data.error || 'Failed to save.', 'error');
