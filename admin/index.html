@@ -182,12 +182,24 @@
     .blocks-list { display:flex; flex-direction:column; gap:10px; }
 
     /* ── HELP / MANUAL ── */
-    .help-section { margin-bottom:28px; }
-    .help-section-title { font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--blue); margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid rgba(0,155,180,0.15); }
-    .help-block { margin-bottom:14px; }
-    .help-q { font-size:14px; font-weight:700; color:var(--white); margin-bottom:5px; }
-    .help-block p { font-size:13px; color:var(--grey); line-height:1.65; }
-    .help-block p strong { color:var(--white); font-weight:600; }
+    .help-lang-bar { display:flex; gap:8px; margin-bottom:28px; }
+    .help-lang-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:var(--grey); cursor:pointer; font-family:'SupremeLL',Arial,sans-serif; font-size:12px; font-weight:700; letter-spacing:0.1em; padding:7px 18px; text-transform:uppercase; transition:all 0.15s; }
+    .help-lang-btn.active { background:var(--blue); border-color:var(--blue); color:#fff; }
+    .help-card { background:var(--dark3); border:1px solid rgba(0,155,180,0.15); border-radius:10px; margin-bottom:16px; overflow:hidden; }
+    .help-card-header { background:rgba(0,155,180,0.10); border-bottom:1px solid rgba(0,155,180,0.15); padding:16px 22px; display:flex; align-items:center; gap:12px; }
+    .help-card-icon { width:36px; height:36px; background:rgba(0,155,180,0.15); border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .help-card-icon svg { width:18px; height:18px; stroke:var(--blue); fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .help-card-title { font-size:16px; font-weight:700; color:var(--white); }
+    .help-card-body { padding:0 22px; }
+    .help-block { padding:18px 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+    .help-block:last-child { border-bottom:none; }
+    .help-q { font-size:15px; font-weight:700; color:var(--white); margin-bottom:10px; }
+    .help-block p { font-size:14px; color:var(--grey); line-height:1.75; }
+    .help-block p strong { color:var(--teal); font-weight:600; }
+    .help-steps { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+    .help-steps li { display:flex; gap:12px; align-items:flex-start; font-size:14px; color:var(--grey); line-height:1.6; }
+    .help-step-num { background:var(--blue); border-radius:50%; color:#fff; font-size:11px; font-weight:900; width:22px; height:22px; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+    .help-tip { background:rgba(0,239,209,0.06); border:1px solid rgba(0,239,209,0.15); border-radius:6px; padding:10px 14px; margin-top:12px; font-size:13px; color:var(--teal); line-height:1.6; }
     .block-item { background:rgba(167,139,250,0.06); border:1px solid rgba(167,139,250,0.15); border-radius:6px; padding:14px 16px; }
     .block-item-header { display:flex; align-items:center; gap:14px; margin-bottom:0; }
     .block-item-date { font-size:14px; font-weight:700; color:var(--purple); min-width:100px; }
@@ -524,89 +536,157 @@
 
         <!-- ── ADMIN USER MANUAL ── -->
         <div id="help-view" style="display:none;">
-          <div class="panel-card" style="max-width:820px;">
-            <h3 style="font-size:18px;font-weight:900;color:var(--white);margin-bottom:4px;text-transform:none;letter-spacing:0;">Admin User Manual</h3>
-            <p style="font-size:13px;color:var(--grey);margin-bottom:28px;">Everything you need to manage the Motowarehouse Service Booking Portal.</p>
+          <div style="max-width:860px;">
 
-            <!-- Section -->
-            <div class="help-section">
-              <div class="help-section-title">Bookings</div>
-              <div class="help-block">
-                <div class="help-q">How do I accept or cancel a booking?</div>
-                <p>Go to <strong>All Bookings</strong> or <strong>Pending</strong>. Each booking card has a green <strong>✓</strong> button (accept) and a red <strong>✕</strong> button (cancel) on the right. Click the card to expand it and see full details before deciding. When you accept, the customer receives a confirmation email automatically.</p>
-              </div>
-              <div class="help-block">
-                <div class="help-q">How do I reschedule a booking?</div>
-                <p>Expand the booking card by clicking it, then use the <strong>Reschedule</strong> button inside. Pick a new date and time — the customer will receive a reschedule notification email.</p>
-              </div>
-              <div class="help-block">
-                <div class="help-q">What does "Needs Call" mean?</div>
-                <p>Some bookings come in without a confirmed time — usually walk-ins or enquiries. These appear in the <strong>Needs Call</strong> queue (orange badge in the sidebar). Call the customer to confirm a date and time, then manually accept or add them as a block.</p>
+            <!-- Header -->
+            <div style="margin-bottom:28px;">
+              <div style="font-size:26px;font-weight:900;color:var(--white);margin-bottom:6px;" id="help-main-title">Admin User Manual</div>
+              <div style="font-size:15px;color:var(--grey);margin-bottom:20px;" id="help-main-sub">Complete guide to managing the Motowarehouse Service Booking Portal.</div>
+              <div class="help-lang-bar">
+                <button class="help-lang-btn active" onclick="setHelpLang('en')">EN</button>
+                <button class="help-lang-btn" onclick="setHelpLang('el')">GR</button>
               </div>
             </div>
 
-            <!-- Section -->
-            <div class="help-section">
-              <div class="help-section-title">Block Time</div>
-              <div class="help-block">
-                <div class="help-q">How do I block a time slot?</div>
-                <p>Go to <strong>Block Time</strong> in the sidebar. Select a date — the <strong>From</strong> and <strong>To</strong> dropdowns will automatically show only valid time slots for that day based on your opening hours. Fill in a reason (optional) and click <strong>Block This Time</strong>. Blocked slots will not be available for online bookings.</p>
+            <!-- BOOKINGS -->
+            <div class="help-card">
+              <div class="help-card-header">
+                <div class="help-card-icon"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div>
+                <div class="help-card-title" data-en="Bookings" data-gr="Κρατήσεις">Bookings</div>
               </div>
-              <div class="help-block">
-                <div class="help-q">How do I remove a block?</div>
-                <p>Scroll down to <strong>Active Blocks</strong> on the same page. Click the <strong>✕ Remove</strong> button on any block to delete it — those time slots become available again immediately.</p>
-              </div>
-            </div>
-
-            <!-- Section -->
-            <div class="help-section">
-              <div class="help-section-title">Opening Hours</div>
-              <div class="help-block">
-                <div class="help-q">How do I change opening hours?</div>
-                <p>Go to <strong>Opening Hours</strong>. Toggle each day on or off, and set the opening and closing times. Changes take effect immediately for the customer booking form. Wednesday is morning-only by default.</p>
-              </div>
-            </div>
-
-            <!-- Section -->
-            <div class="help-section">
-              <div class="help-section-title">Vehicles</div>
-              <div class="help-block">
-                <div class="help-q">How do I search for a vehicle?</div>
-                <p>Go to <strong>Vehicles</strong> and type the registration plate number into the search box. The full vehicle record will appear, including model, frame number, engine number, and complete service history.</p>
-              </div>
-              <div class="help-block">
-                <div class="help-q">How do I import the weekly vehicle list?</div>
-                <p>Every Monday, export the latest <strong>MOTO MOVEMENT</strong> Excel file (.xlsm) from your system. In the Vehicles tab, drag and drop the file onto the import zone — or click it to browse. The portal reads all year sheets automatically and updates the vehicle database. The 7-day countdown badge shows when the next import is due.</p>
+              <div class="help-card-body">
+                <div class="help-block">
+                  <div class="help-q" data-en="How do I accept or cancel a booking?" data-gr="Πώς αποδέχομαι ή ακυρώνω μια κράτηση;">How do I accept or cancel a booking?</div>
+                  <ul class="help-steps">
+                    <li><span class="help-step-num">1</span><span data-en="Go to <strong>All Bookings</strong> or <strong>Pending</strong> in the sidebar." data-gr="Πηγαίνετε στο <strong>Όλες οι Κρατήσεις</strong> ή <strong>Εκκρεμείς</strong> από το μενού.">Go to <strong>All Bookings</strong> or <strong>Pending</strong> in the sidebar.</span></li>
+                    <li><span class="help-step-num">2</span><span data-en="Click a booking card to expand it and see full details." data-gr="Κάντε κλικ σε μια κάρτα κράτησης για να δείτε τις λεπτομέρειες.">Click a booking card to expand it and see full details.</span></li>
+                    <li><span class="help-step-num">3</span><span data-en="Use the green <strong>✓</strong> button to accept, or red <strong>✕</strong> to cancel. The customer receives an email automatically." data-gr="Χρησιμοποιήστε το πράσινο <strong>✓</strong> για αποδοχή ή το κόκκινο <strong>✕</strong> για ακύρωση. Ο πελάτης λαμβάνει email αυτόματα.">Use the green <strong>✓</strong> button to accept, or red <strong>✕</strong> to cancel. The customer receives an email automatically.</span></li>
+                  </ul>
+                </div>
+                <div class="help-block">
+                  <div class="help-q" data-en="How do I reschedule a booking?" data-gr="Πώς αλλάζω ημερομηνία κράτησης;">How do I reschedule a booking?</div>
+                  <ul class="help-steps">
+                    <li><span class="help-step-num">1</span><span data-en="Click the booking card to expand it." data-gr="Κάντε κλικ στην κάρτα κράτησης για να την ανοίξετε.">Click the booking card to expand it.</span></li>
+                    <li><span class="help-step-num">2</span><span data-en="Click the <strong>Reschedule</strong> button and pick a new date and time." data-gr="Πατήστε <strong>Επαναπρογραμματισμός</strong> και επιλέξτε νέα ημερομηνία και ώρα.">Click the <strong>Reschedule</strong> button and pick a new date and time.</span></li>
+                    <li><span class="help-step-num">3</span><span data-en="The customer receives a reschedule notification email automatically." data-gr="Ο πελάτης λαμβάνει email ειδοποίηση αυτόματα.">The customer receives a reschedule notification email automatically.</span></li>
+                  </ul>
+                </div>
+                <div class="help-block">
+                  <div class="help-q" data-en='What does "Needs Call" mean?' data-gr='Τι σημαίνει "Χρειάζεται Κλήση";'>What does "Needs Call" mean?</div>
+                  <p data-en='Bookings that came in without a confirmed time slot appear here (orange badge in the sidebar). Call the customer to confirm a date and time, then accept the booking or add it as a manual block.' data-gr='Κρατήσεις χωρίς επιβεβαιωμένη ώρα εμφανίζονται εδώ (πορτοκαλί σήμα στο μενού). Τηλεφωνήστε στον πελάτη για επιβεβαίωση και στη συνέχεια αποδεχτείτε ή αποκλείστε τη ώρα χειροκίνητα.'>Bookings that came in without a confirmed time slot appear here (orange badge in the sidebar). Call the customer to confirm a date and time, then accept the booking or add it as a manual block.</p>
+                </div>
               </div>
             </div>
 
-            <!-- Section -->
-            <div class="help-section">
-              <div class="help-section-title">Partners</div>
-              <div class="help-block">
-                <div class="help-q">How do I create a partner account?</div>
-                <p>Go to <strong>Partners</strong> and fill in the workshop name, username, and password. Click <strong>Create Account</strong>. Share the username and password with the workshop — they log in at the partner portal URL. You can also delete partner accounts from the same page.</p>
+            <!-- BLOCK TIME -->
+            <div class="help-card">
+              <div class="help-card-header">
+                <div class="help-card-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+                <div class="help-card-title" data-en="Block Time" data-gr="Αποκλεισμός Ώρας">Block Time</div>
               </div>
-              <div class="help-block">
-                <div class="help-q">How do I reset a partner's password?</div>
-                <p>If a partner forgets their password, go to <strong>Partners</strong>, find the account, delete it, and create a new one with the same workshop name but a new password.</p>
+              <div class="help-card-body">
+                <div class="help-block">
+                  <div class="help-q" data-en="How do I block a time slot?" data-gr="Πώς αποκλείω μια ώρα;">How do I block a time slot?</div>
+                  <ul class="help-steps">
+                    <li><span class="help-step-num">1</span><span data-en="Go to <strong>Block Time</strong> in the sidebar." data-gr="Πηγαίνετε στο <strong>Αποκλεισμός Ώρας</strong> από το μενού.">Go to <strong>Block Time</strong> in the sidebar.</span></li>
+                    <li><span class="help-step-num">2</span><span data-en="Select a date — the From and To dropdowns will show only valid slots for that day." data-gr="Επιλέξτε ημερομηνία — τα πεδία Από και Έως θα εμφανίσουν μόνο έγκυρες ώρες για αυτή την ημέρα.">Select a date — the From and To dropdowns will show only valid slots for that day.</span></li>
+                    <li><span class="help-step-num">3</span><span data-en="Fill in a reason (optional) and click <strong>Block This Time</strong>." data-gr="Συμπληρώστε λόγο (προαιρετικό) και πατήστε <strong>Αποκλεισμός</strong>.">Fill in a reason (optional) and click <strong>Block This Time</strong>.</span></li>
+                  </ul>
+                  <div class="help-tip" data-en="Blocked slots are immediately unavailable for online bookings." data-gr="Οι αποκλεισμένες ώρες δεν είναι διαθέσιμες για online κρατήσεις αμέσως.">Blocked slots are immediately unavailable for online bookings.</div>
+                </div>
+                <div class="help-block">
+                  <div class="help-q" data-en="How do I remove a block?" data-gr="Πώς αφαιρώ έναν αποκλεισμό;">How do I remove a block?</div>
+                  <p data-en='Scroll down to <strong>Active Blocks</strong> on the same page. Click the <strong>✕ Remove</strong> button on any block — those time slots become available again immediately.' data-gr='Μετακινηθείτε κάτω στους <strong>Ενεργούς Αποκλεισμούς</strong>. Πατήστε <strong>✕ Αφαίρεση</strong> — οι ώρες γίνονται αμέσως διαθέσιμες ξανά.'>Scroll down to <strong>Active Blocks</strong> on the same page. Click the <strong>✕ Remove</strong> button on any block — those time slots become available again immediately.</p>
+                </div>
               </div>
             </div>
 
-            <!-- Section -->
-            <div class="help-section">
-              <div class="help-section-title">Warranty Inbox</div>
-              <div class="help-block">
-                <div class="help-q">How do I review warranty claims?</div>
-                <p>Go to <strong>Warranty</strong> in the sidebar — the orange badge shows how many open claims are waiting. Each claim shows the registration plate, workshop, priority level, fault description, and any photos. Click a photo thumbnail to view it full screen.</p>
+            <!-- OPENING HOURS -->
+            <div class="help-card">
+              <div class="help-card-header">
+                <div class="help-card-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg></div>
+                <div class="help-card-title" data-en="Opening Hours" data-gr="Ωράριο Λειτουργίας">Opening Hours</div>
               </div>
-              <div class="help-block">
-                <div class="help-q">How do I approve or reject a warranty claim?</div>
-                <p>Expand the claim, add optional internal notes in the text box, then click <strong>Approve</strong> or <strong>Reject</strong>. The claim moves to the appropriate filter tab (Approved / Rejected).</p>
+              <div class="help-card-body">
+                <div class="help-block">
+                  <div class="help-q" data-en="How do I change opening hours?" data-gr="Πώς αλλάζω το ωράριο;">How do I change opening hours?</div>
+                  <ul class="help-steps">
+                    <li><span class="help-step-num">1</span><span data-en="Go to <strong>Opening Hours</strong> in the sidebar." data-gr="Πηγαίνετε στο <strong>Ωράριο Λειτουργίας</strong> από το μενού.">Go to <strong>Opening Hours</strong> in the sidebar.</span></li>
+                    <li><span class="help-step-num">2</span><span data-en="Toggle each day on or off and set the opening and closing times." data-gr="Ενεργοποιήστε/απενεργοποιήστε κάθε μέρα και ορίστε ώρα άνοιξης και κλεισίματος.">Toggle each day on or off and set the opening and closing times.</span></li>
+                    <li><span class="help-step-num">3</span><span data-en="Click <strong>Save Hours</strong>. Changes take effect immediately on the customer booking form." data-gr="Πατήστε <strong>Αποθήκευση</strong>. Οι αλλαγές ισχύουν αμέσως στη φόρμα κρατήσεων.">Click <strong>Save Hours</strong>. Changes take effect immediately on the customer booking form.</span></li>
+                  </ul>
+                </div>
               </div>
-              <div class="help-block">
-                <div class="help-q">Will I be notified of new warranty claims?</div>
-                <p>Yes — an email is sent to <strong>info@motowarehouse.com.cy</strong> as soon as a partner submits a claim, including the registration plate, workshop name, priority level, and fault description.</p>
+            </div>
+
+            <!-- VEHICLES -->
+            <div class="help-card">
+              <div class="help-card-header">
+                <div class="help-card-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2a10 10 0 0 1 0 20A10 10 0 0 1 12 2"/></svg></div>
+                <div class="help-card-title" data-en="Vehicles" data-gr="Οχήματα">Vehicles</div>
+              </div>
+              <div class="help-card-body">
+                <div class="help-block">
+                  <div class="help-q" data-en="How do I search for a vehicle?" data-gr="Πώς αναζητώ ένα όχημα;">How do I search for a vehicle?</div>
+                  <p data-en="Go to <strong>Vehicles</strong> and type the registration plate number. The full vehicle record appears — model, frame number, engine number, and complete service history with all partner entries." data-gr="Πηγαίνετε στα <strong>Οχήματα</strong> και πληκτρολογήστε τον αριθμό πινακίδας. Εμφανίζεται ολόκληρο το ιστορικό — μοντέλο, αριθμός πλαισίου, κινητήρας και πλήρες ιστορικό σέρβις.">Go to <strong>Vehicles</strong> and type the registration plate number. The full vehicle record appears — model, frame number, engine number, and complete service history with all partner entries.</p>
+                </div>
+                <div class="help-block">
+                  <div class="help-q" data-en="How do I import the weekly vehicle list?" data-gr="Πώς εισάγω την εβδομαδιαία λίστα οχημάτων;">How do I import the weekly vehicle list?</div>
+                  <ul class="help-steps">
+                    <li><span class="help-step-num">1</span><span data-en="Every Monday, export the updated <strong>MOTO MOVEMENT</strong> Excel file (.xlsm)." data-gr="Κάθε Δευτέρα, εξάγετε το ενημερωμένο αρχείο <strong>MOTO MOVEMENT</strong> Excel (.xlsm).">Every Monday, export the updated <strong>MOTO MOVEMENT</strong> Excel file (.xlsm).</span></li>
+                    <li><span class="help-step-num">2</span><span data-en="In the Vehicles tab, drag and drop the file onto the import zone — or click it to browse." data-gr="Στην καρτέλα Οχήματα, σύρτε και αφήστε το αρχείο στη ζώνη εισαγωγής — ή κάντε κλικ για αναζήτηση.">In the Vehicles tab, drag and drop the file onto the import zone — or click it to browse.</span></li>
+                    <li><span class="help-step-num">3</span><span data-en="The portal reads all year sheets automatically and updates the vehicle database." data-gr="Το σύστημα διαβάζει αυτόματα όλα τα φύλλα ετών και ενημερώνει τη βάση δεδομένων οχημάτων.">The portal reads all year sheets automatically and updates the vehicle database.</span></li>
+                  </ul>
+                  <div class="help-tip" data-en="The 7-day countdown badge in the Vehicles tab shows when the next import is due." data-gr="Η αντίστροφη μέτρηση 7 ημερών στην καρτέλα Οχήματα δείχνει πότε πρέπει να γίνει η επόμενη εισαγωγή.">The 7-day countdown badge in the Vehicles tab shows when the next import is due.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PARTNERS -->
+            <div class="help-card">
+              <div class="help-card-header">
+                <div class="help-card-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                <div class="help-card-title" data-en="Partners" data-gr="Συνεργεία">Partners</div>
+              </div>
+              <div class="help-card-body">
+                <div class="help-block">
+                  <div class="help-q" data-en="How do I create a partner account?" data-gr="Πώς δημιουργώ λογαριασμό συνεργείου;">How do I create a partner account?</div>
+                  <ul class="help-steps">
+                    <li><span class="help-step-num">1</span><span data-en="Go to <strong>Partners</strong> in the sidebar." data-gr="Πηγαίνετε στα <strong>Συνεργεία</strong> από το μενού.">Go to <strong>Partners</strong> in the sidebar.</span></li>
+                    <li><span class="help-step-num">2</span><span data-en="Fill in the workshop name, username, and a password." data-gr="Συμπληρώστε το όνομα συνεργείου, όνομα χρήστη και κωδικό.">Fill in the workshop name, username, and a password.</span></li>
+                    <li><span class="help-step-num">3</span><span data-en="Click <strong>Create Account</strong> and share the credentials with the workshop." data-gr="Πατήστε <strong>Δημιουργία Λογαριασμού</strong> και μοιραστείτε τα στοιχεία με το συνεργείο.">Click <strong>Create Account</strong> and share the credentials with the workshop.</span></li>
+                  </ul>
+                </div>
+                <div class="help-block">
+                  <div class="help-q" data-en="How do I reset a partner's password?" data-gr="Πώς επαναφέρω τον κωδικό ενός συνεργείου;">How do I reset a partner's password?</div>
+                  <p data-en="Go to <strong>Partners</strong>, find the account and delete it, then create a new one with the same workshop name and a new password." data-gr="Πηγαίνετε στα <strong>Συνεργεία</strong>, βρείτε τον λογαριασμό, διαγράψτε τον και δημιουργήστε νέο με το ίδιο όνομα συνεργείου και νέο κωδικό.">Go to <strong>Partners</strong>, find the account and delete it, then create a new one with the same workshop name and a new password.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- WARRANTY -->
+            <div class="help-card">
+              <div class="help-card-header">
+                <div class="help-card-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+                <div class="help-card-title" data-en="Warranty Inbox" data-gr="Εισερχόμενα Εγγύησης">Warranty Inbox</div>
+              </div>
+              <div class="help-card-body">
+                <div class="help-block">
+                  <div class="help-q" data-en="How do I review warranty claims?" data-gr="Πώς ελέγχω τις δηλώσεις εγγύησης;">How do I review warranty claims?</div>
+                  <p data-en="Go to <strong>Warranty</strong> in the sidebar. The orange badge shows pending claims. Each card shows the plate, workshop, priority, fault description, and any photos. Click any photo to view it full screen." data-gr="Πηγαίνετε στο <strong>Εγγύηση</strong> από το μενού. Το πορτοκαλί σήμα δείχνει εκκρεμείς δηλώσεις. Κάθε κάρτα δείχνει πινακίδα, συνεργείο, προτεραιότητα, βλάβη και φωτογραφίες. Κάντε κλικ σε φωτογραφία για προβολή πλήρους οθόνης.">Go to <strong>Warranty</strong> in the sidebar. The orange badge shows pending claims. Each card shows the plate, workshop, priority, fault description, and any photos. Click any photo to view it full screen.</p>
+                </div>
+                <div class="help-block">
+                  <div class="help-q" data-en="How do I approve or reject a claim?" data-gr="Πώς εγκρίνω ή απορρίπτω μια δήλωση;">How do I approve or reject a claim?</div>
+                  <ul class="help-steps">
+                    <li><span class="help-step-num">1</span><span data-en="Open the claim card and read the fault description and photos." data-gr="Ανοίξτε την κάρτα δήλωσης και διαβάστε την περιγραφή βλάβης και φωτογραφίες.">Open the claim card and read the fault description and photos.</span></li>
+                    <li><span class="help-step-num">2</span><span data-en="Add internal notes if needed (only visible to you)." data-gr="Προσθέστε εσωτερικές σημειώσεις αν χρειάζεται (ορατές μόνο σε εσάς).">Add internal notes if needed (only visible to you).</span></li>
+                    <li><span class="help-step-num">3</span><span data-en="Click <strong>Approve</strong> or <strong>Reject</strong>. The claim moves to the appropriate tab." data-gr="Πατήστε <strong>Έγκριση</strong> ή <strong>Απόρριψη</strong>. Η δήλωση μεταφέρεται στην αντίστοιχη καρτέλα.">Click <strong>Approve</strong> or <strong>Reject</strong>. The claim moves to the appropriate tab.</span></li>
+                  </ul>
+                </div>
+                <div class="help-block">
+                  <div class="help-q" data-en="Will I be notified of new claims?" data-gr="Θα ειδοποιηθώ για νέες δηλώσεις;">Will I be notified of new claims?</div>
+                  <p data-en="Yes — an email is sent to <strong>motowarehouse.bookings@gmail.com</strong> immediately when a partner submits a claim, with the plate, workshop, priority, and fault description." data-gr="Ναι — αποστέλλεται email στο <strong>motowarehouse.bookings@gmail.com</strong> αμέσως μόλις ένα συνεργείο υποβάλει δήλωση, με πινακίδα, συνεργείο, προτεραιότητα και βλάβη.">Yes — an email is sent to <strong>motowarehouse.bookings@gmail.com</strong> immediately when a partner submits a claim, with the plate, workshop, priority, and fault description.</p>
+                </div>
               </div>
             </div>
 
@@ -2441,6 +2521,17 @@
       if (res.ok) showToast(data.message, 'success', 8000);
       else showToast(data.error || 'Unknown error', 'error', 10000);
     } catch { showToast('Network error', 'error', 8000); }
+  }
+
+  // ── HELP LANGUAGE TOGGLE ──────────────────────────────────────────────
+  function setHelpLang(lang) {
+    document.querySelectorAll('.help-lang-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.help-lang-btn').forEach(b => {
+      if ((lang === 'en' && b.textContent === 'EN') || (lang === 'el' && b.textContent === 'GR')) b.classList.add('active');
+    });
+    document.querySelectorAll('#help-view [data-en]').forEach(el => {
+      el.innerHTML = lang === 'el' ? el.dataset.gr : el.dataset.en;
+    });
   }
 
   // ── PHOTO VIEWER ──────────────────────────────────────────────────────
