@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Service Booking – Motowarehouse</title>
+  <link rel="icon" type="image/png" href="/assets/MWH_Logo_New.png">
+  <style>
+    @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Light.ttf'); font-weight:300; }
+    @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Regular.ttf'); font-weight:400; }
+    @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Medium.ttf'); font-weight:500; }
+    @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Bold.ttf'); font-weight:700; }
+    @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Black.ttf'); font-weight:900; }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #009BB4;
+      --blue-dark: #007a8f;
+      --teal-light: #00EFD1;
+      --dark: #0a1a1f;
+      --dark2: #0f2429;
+      --dark3: #1a3540;
+      --grey: #8a9ba0;
+      --white: #ffffff;
+      --red: #E50052;
+      --success: #00c896;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'SupremeLL', Arial, sans-serif;
+      background: var(--dark);
+      color: var(--white);
+      min-height: 100vh;
+      font-weight: 300;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--dark2);
+      border-bottom: 1px solid rgba(0,155,180,0.2);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 68px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-mark {
+      height: 48px;
+      width: auto;
+      display: block;
+      flex-shrink: 0;
+      border-radius: 6px;
+      object-fit: contain;
+    }
+
+    .logo-mark-fallback {
+      width: 44px;
+      height: 44px;
+      background: var(--blue);
+      border-radius: 6px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: white;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
+
+    .logo-text-wrap {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+
+    .logo-name {
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--white);
+    }
+
+    .logo-tagline {
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      color: var(--blue);
+      text-transform: uppercase;
+    }
+
+    .logo-divider {
+      width: 1px;
+      height: 28px;
+      background: rgba(0,155,180,0.3);
+    }
+
+    .brand-badges {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .brand-badge {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--grey);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4px;
+      padding: 3px 8px;
+      text-transform: uppercase;
+    }
+
+    .header-contact {
+      font-size: 13px;
+      color: var(--grey);
+    }
+    .header-contact a { color: var(--blue); text-decoration: none; font-weight: 500; }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, var(--dark2) 0%, var(--dark3) 100%);
+      border-bottom: 1px solid rgba(0,155,180,0.12);
+      padding: 52px 24px 44px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -80px; left: 50%;
+      transform: translateX(-50%);
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(0,155,180,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 14px;
+    }
+
+    .hero h1 {
+      font-size: clamp(26px, 5vw, 46px);
+      font-weight: 900;
+      letter-spacing: -0.01em;
+      line-height: 1.1;
+      margin-bottom: 14px;
+    }
+
+    .hero h1 span { color: var(--blue); }
+
+    .hero-sub {
+      font-size: 15px;
+      font-weight: 300;
+      color: var(--grey);
+      max-width: 500px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* ── LAYOUT ── */
+    .section {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .step-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 6px;
+    }
+
+    .step-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    /* ── SERVICE CARDS ── */
+    .service-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 580px) { .service-cards { grid-template-columns: 1fr; } }
+
+    .service-card {
+      background: var(--dark2);
+      border: 2px solid rgba(0,155,180,0.15);
+      border-radius: 8px;
+      padding: 20px 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .service-card:hover { border-color: rgba(0,155,180,0.5); background: rgba(0,155,180,0.04); }
+    .service-card.selected { border-color: var(--blue); background: rgba(0,155,180,0.1); }
+    .service-card.selected::after {
+      content: '✓';
+      position: absolute;
+      top: 10px; right: 12px;
+      font-size: 14px;
+      color: var(--blue);
+      font-weight: 700;
+    }
+
+    .service-icon { font-size: 24px; margin-bottom: 10px; display: block; }
+    .service-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .service-time { font-size: 12px; color: var(--blue); font-weight: 500; margin-bottom: 8px; }
+    .service-desc { font-size: 12px; color: var(--grey); line-height: 1.5; }
+
+    .sym-note {
+      display: none;
+      background: rgba(0,155,180,0.08);
+      border: 1px solid rgba(0,155,180,0.3);
+      border-radius: 6px;
+      color: var(--grey);
+      font-size: 13px;
+      line-height: 1.5;
+      margin-top: 10px;
+      padding: 12px 16px;
+    }
+
+    .sym-note strong { color: var(--blue); }
+    .sym-note.show { display: block; }
+
+    /* ── FORM ── */
+    .form-card {
+      background: var(--dark2);
+      border: 1px solid rgba(0,155,180,0.15);
+      border-radius: 12px;
+      padding: 28px;
+    }
+
+    @media (max-width: 500px) { .form-card { padding: 18px; } }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 560px) { .form-grid { grid-template-columns: 1fr; } }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--grey);
+    }
+
+    label .req { color: var(--blue); margin-left: 2px; }
+
+    input, select, textarea {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      color: var(--white);
+      font-family: 'SupremeLL', Arial, sans-serif;
+      font-size: 15px;
+      font-weight: 400;
+      padding: 11px 14px;
+      transition: border-color 0.25s, background 0.25s, box-shadow 0.25s, transform 0.2s;
+      outline: none;
+      width: 100%;
+    }
+
+    input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.2); }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--blue);
+      background: rgba(0,155,180,0.06);
+      box-shadow: 0 0 0 3px rgba(0,155,180,0.12);
+      transform: translateY(-1px);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+
+    select { color: var(--white); }
+    select option { background: #0f2429; color: var(--white); }
+    select option:disabled { color: rgba(255,255,255,0.35); }
+
+    /* ── CUSTOM MODEL DROPDOWN ── */
+    .custom-select-wrap {
+      position: relative;
+      z-index: 10;
+    }
+    .custom-select-wrap.is-open {
+      z-index: 9999;
+    }
+
+    .custom-select-trigger {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      color: var(--white);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: 'SupremeLL', Arial, sans-serif;
+      font-size: 15px;
+      padding: 11px 14px;
+      transition: border-color 0.2s;
+      user-select: none;
+    }
+
+    .custom-select-trigger:hover, .custom-select-trigger.open {
+      border-color: var(--blue);
+      background: rgba(0,155,180,0.06);
+    }
+
+    .custom-select-trigger .placeholder { color: rgba(255,255,255,0.2); }
+
+    .custom-select-trigger .arrow {
+      font-size: 10px;
+      color: var(--blue);
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+
+    .custom-select-trigger.open .arrow { transform: rotate(180deg); }
+
+    .custom-select-panel {
+      position: fixed;
+      background: #0d2830;
+      border: 1px solid rgba(0,155,180,0.35);
+      border-radius: 8px;
+      z-index: 99999;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(-6px) scaleY(0.97);
+      transform-origin: top center;
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      visibility: hidden;
+    }
+
+    .custom-select-panel.open {
+      opacity: 1;
+      transform: translateY(0) scaleY(1);
+      pointer-events: auto;
+      visibility: visible;
+    }
+
+    .cs-brand-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid rgba(0,155,180,0.2);
+    }
+
+    .cs-brand-tab {
+      cursor: pointer;
+      padding: 12px 8px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--grey);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .cs-brand-tab:first-child { border-right: 1px solid rgba(0,155,180,0.15); }
+    .cs-brand-tab:hover { color: var(--white); background: rgba(255,255,255,0.03); }
+    .cs-brand-tab.active-cfmoto { color: var(--blue); border-bottom-color: var(--blue); background: rgba(0,155,180,0.07); }
+    .cs-brand-tab.active-sym { color: var(--teal-light); border-bottom-color: var(--teal-light); background: rgba(0,239,209,0.05); }
+
+    .cs-models-pane {
+      display: none;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+
+    .cs-models-pane.active { display: block; }
+
+    .cs-category {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+      padding: 8px 14px 4px;
+      position: sticky;
+      top: 0;
+      background: #0d2830;
+    }
+
+    .cs-option {
+      cursor: pointer;
+      font-size: 14px;
+      padding: 8px 14px 8px 20px;
+      transition: background 0.12s;
+      color: var(--white);
+    }
+
+    .cs-option:hover { background: rgba(0,155,180,0.15); }
+    .cs-option.selected { background: rgba(0,155,180,0.2); color: var(--blue); }
+
+    .cs-divider {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      margin: 4px 0;
+    }
+
+    /* ── SLOTS ── */
+    .slot-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .slot-btn {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 6px;
+      color: var(--white);
+      cursor: pointer;
+      font-family: 'SupremeLL', Arial, sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 7px 14px;
+      transition: all 0.15s;
+    }
+
+    .slot-btn:hover:not(:disabled) { border-color: var(--blue); color: var(--blue); }
+    .slot-btn.active { background: var(--blue); border-color: var(--blue); color: white; }
+    .slots-msg { font-size: 13px; color: var(--grey); padding: 10px 0; }
+
+    .date-hint { font-size: 11px; color: var(--grey); margin-top: 4px; }
+
+    /* ── PHONE PICKER ── */
+    .phone-wrap { display:flex; gap:0; }
+    .phone-wrap select {
+      width: auto;
+      min-width: 110px;
+      border-radius: 6px 0 0 6px;
+      border-right: none;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .phone-wrap input {
+      border-radius: 0 6px 6px 0;
+      flex: 1;
+    }
+    .phone-wrap select:focus { z-index:1; }
+
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+      opacity: 0.7;
+      cursor: pointer;
+    }
+
+    /* ── DIVIDER ── */
+    .form-divider { grid-column: 1/-1; border: none; border-top: 1px solid rgba(255,255,255,0.07); margin: 4px 0; }
+
+    /* ── SUBMIT ── */
+    .submit-row { grid-column: 1/-1; margin-top: 6px; }
+
+    .btn-submit {
+      background: var(--blue);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      font-family: 'SupremeLL', Arial, sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      padding: 16px 32px;
+      text-transform: uppercase;
+      transition: background 0.2s, transform 0.1s;
+      width: 100%;
+    }
+
+    .btn-submit:hover { background: var(--blue-dark); }
+    .btn-submit:active { transform: scale(0.98); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── ALERTS ── */
+    .alert { border-radius: 6px; font-size: 14px; padding: 12px 16px; margin-top: 4px; grid-column: 1/-1; display: none; }
+    .alert.show { display: block; }
+    .alert.error { background: rgba(229,0,82,0.1); border: 1px solid rgba(229,0,82,0.35); color: #ff6b9d; }
+    .alert.success { background: rgba(0,200,150,0.1); border: 1px solid rgba(0,200,150,0.35); color: var(--success); }
+
+    /* ── SUCCESS SCREEN ── */
+    .success-screen { display: none; text-align: center; padding: 60px 20px; }
+    .success-screen.show { display: block; }
+
+    .success-icon {
+      width: 72px; height: 72px;
+      background: rgba(0,200,150,0.1);
+      border: 2px solid var(--success);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px;
+      margin: 0 auto 24px;
+    }
+
+    .success-ref {
+      display: inline-block;
+      background: rgba(0,155,180,0.1);
+      border: 1px solid rgba(0,155,180,0.4);
+      border-radius: 6px;
+      color: var(--blue);
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 10px 24px;
+      margin: 16px 0 24px;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid rgba(0,155,180,0.1);
+      margin-top: 40px;
+      padding: 32px 24px;
+      text-align: center;
+    }
+
+    .footer-grid { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; margin-bottom: 20px; }
+    .footer-item { font-size: 13px; color: var(--grey); }
+    .footer-item strong { display: block; color: var(--white); font-weight: 500; margin-bottom: 2px; }
+    .footer-copy { font-size: 12px; color: rgba(255,255,255,0.2); }
+
+    /* ── MISC ── */
+    .accent-bar { height: 3px; background: linear-gradient(90deg, var(--blue) 0%, var(--teal-light) 100%); }
+
+    .spinner {
+      display: inline-block;
+      width: 15px; height: 15px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @keyframes yearPop {
+      0%   { border-color: var(--blue); box-shadow: 0 0 0 0   rgba(0,155,180,0.45); transform: translateY(-1px); }
+      50%  { border-color: var(--teal-light); box-shadow: 0 0 0 6px rgba(0,155,180,0); transform: translateY(-2px); }
+      100% { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,155,180,0.12); transform: translateY(-1px); }
+    }
+    select.year-selected {
+      animation: yearPop 0.35s ease forwards;
+      border-color: var(--blue);
+      background: rgba(0,155,180,0.08);
+    }
+
+    input#plate.plate-invalid {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(229,0,82,0.12);
+    }
+    input#plate.plate-valid {
+      border-color: var(--success);
+      box-shadow: 0 0 0 3px rgba(0,200,150,0.12);
+    }
+
+    .vehicle-section {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: max-height 0.5s cubic-bezier(0.4,0,0.2,1),
+                  opacity   0.4s ease 0.06s,
+                  transform 0.4s ease 0.06s;
+    }
+    .vehicle-section.revealed {
+      max-height: 400px;
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    @media (max-width: 560px) { .vehicle-section { grid-template-columns: 1fr; } }
+
+    .field-reveal {
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .field-reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-left {
+      opacity: 0;
+      transform: translateX(-32px);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+    .reveal-left.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .stagger-children > * {
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .stagger-children.visible > *:nth-child(1) { opacity:1; transform:translateY(0); transition-delay:0s; }
+    .stagger-children.visible > *:nth-child(2) { opacity:1; transform:translateY(0); transition-delay:0.1s; }
+    .stagger-children.visible > *:nth-child(3) { opacity:1; transform:translateY(0); transition-delay:0.2s; }
+    .stagger-children.visible > *:nth-child(4) { opacity:1; transform:translateY(0); transition-delay:0.3s; }
+    .stagger-children.visible > *:nth-child(5) { opacity:1; transform:translateY(0); transition-delay:0.4s; }
+
+    .step-tracker {
+      position: fixed;
+      left: 24px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      z-index: 50;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .step-tracker.visible { opacity: 1; }
+
+    .tracker-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .tracker-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid rgba(0,155,180,0.35);
+      background: transparent;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .tracker-dot::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      background: rgba(0,155,180,0.12);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .tracker-item.active .tracker-dot {
+      background: var(--blue);
+      border-color: var(--blue);
+      box-shadow: 0 0 12px rgba(0,155,180,0.55);
+    }
+
+    .tracker-item.active .tracker-dot::after { opacity: 1; }
+
+    .tracker-item.done .tracker-dot {
+      background: rgba(0,155,180,0.4);
+      border-color: rgba(0,155,180,0.4);
+    }
+
+    .tracker-label {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--grey);
+      margin-top: 4px;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateX(-6px);
+      transition: all 0.25s ease;
+      pointer-events: none;
+    }
+
+    .tracker-item.active .tracker-label {
+      color: var(--blue);
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .tracker-line {
+      width: 1px;
+      height: 36px;
+      background: linear-gradient(180deg, rgba(0,155,180,0.3) 0%, rgba(0,155,180,0.1) 100%);
+      margin: 2px 0;
+      transition: background 0.3s;
+    }
+
+    .tracker-item.done ~ .tracker-line,
+    .tracker-item.done + .tracker-line {
+      background: rgba(0,155,180,0.5);
+    }
+
+    @media (max-width: 1100px) { .step-tracker { display: none; } }
+
+    .bg-shapes {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .bg-shape {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0;
+      animation: shapeFloat linear infinite;
+      transition: opacity 1s;
+    }
+
+    .bg-shape.show { opacity: 1; }
+
+    @keyframes shapeFloat {
+      0%   { transform: translateY(0px) rotate(0deg); }
+      50%  { transform: translateY(-30px) rotate(180deg); }
+      100% { transform: translateY(0px) rotate(360deg); }
+    }
+
+    .scroll-progress {
+      position: fixed;
+      top: 3px;
+      left: 0;
+      height: 3px;
+      background: var(--teal-light);
+      width: 0%;
+      z-index: 200;
+      transition: width 0.1s linear;
+      box-shadow: 0 0 8px rgba(0,239,209,0.6);
+    }
+  </style>
+</head>
+<body>
+
+<div class="scroll-progress" id="scroll-progress"></div>
+<div class="accent-bar"></div>
+
+<div class="step-tracker" id="step-tracker">
+  <div class="tracker-item" id="tracker-1" onclick="scrollToStep(1)">
+    <div class="tracker-dot"></div>
+    <div class="tracker-label">Service</div>
+  </div>
+  <div class="tracker-line"></div>
+  <div class="tracker-item" id="tracker-2" onclick="scrollToStep(2)">
+    <div class="tracker-dot"></div>
+    <div class="tracker-label">Date &amp; Time</div>
+  </div>
+  <div class="tracker-line"></div>
+  <div class="tracker-item" id="tracker-3" onclick="scrollToStep(3)">
+    <div class="tracker-dot"></div>
+    <div class="tracker-label">Details</div>
+  </div>
+</div>
+
+<div class="bg-shapes" id="bg-shapes"></div>
+
+<header>
+  <div class="logo-wrap">
+    <img class="logo-mark" src="/assets/MWH_Logo_New.png" alt="Motowarehouse" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+    <div class="logo-mark-fallback">MW</div>
+    <div class="logo-text-wrap">
+      <div class="logo-name">Motowarehouse</div>
+      <div class="logo-tagline">Official Importer · Cyprus</div>
+    </div>
+    <div class="logo-divider"></div>
+    <div class="brand-badges">
+      <span class="brand-badge">CFMOTO</span>
+      <span class="brand-badge">SYM</span>
+    </div>
+  </div>
+  <div class="header-contact">
+    <a href="tel:22328788">22 328 788</a>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-label reveal" style="transition-delay:0.05s">Motowarehouse – Official Service Centre</div>
+  <h1 class="reveal" style="transition-delay:0.15s">Book Your<br><span>Service Appointment</span></h1>
+  <p class="hero-sub reveal" style="transition-delay:0.25s">CFMOTO &amp; SYM servicing in Nicosia. We'll confirm your appointment shortly after you submit.</p>
+</div>
+
+<div class="section" id="booking-section">
+
+  <div class="step-label reveal-left" id="step1-anchor">Step 1</div>
+  <div class="step-title reveal-left" style="transition-delay:0.07s">Select Service Type</div>
+
+  <div class="service-cards stagger-children" id="service-cards-wrap">
+    <div class="service-card" data-value="oil-change" onclick="selectService(this)">
+      <span class="service-icon">🛢️</span>
+      <div class="service-name">Oil Change</div>
+      <div class="service-time">~30 minutes</div>
+      <div class="service-desc">Engine oil and oil filter replacement.</div>
+    </div>
+    <div class="service-card" data-value="small-service" onclick="selectService(this)">
+      <span class="service-icon">🔧</span>
+      <div class="service-name">Small Service</div>
+      <div class="service-time">~1 hour</div>
+      <div class="service-desc">Oil change, filters, fluid checks, and basic inspection.</div>
+    </div>
+    <div class="service-card" data-value="big-service" onclick="selectService(this)">
+      <span class="service-icon">⚙️</span>
+      <div class="service-name">Big Service</div>
+      <div class="service-time">~2.5 hours</div>
+      <div class="service-desc">Full service including plugs, brake inspection, chain, and all consumables.</div>
+    </div>
+  </div>
+
+  <div class="sym-note" id="sym-note">
+    <strong>Note for SYM 125cc owners:</strong> If you only need an oil change, there's no need to book an appointment — it takes just a few minutes. Simply come in during opening hours and we'll take care of you immediately.
+  </div>
+
+  <div class="step-label reveal-left" id="step2-anchor" style="margin-top:36px;">Step 2</div>
+  <div class="step-title reveal-left" style="transition-delay:0.07s">Choose Date &amp; Time</div>
+
+  <div class="form-card reveal" style="margin-bottom:24px;transition-delay:0.1s">
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="date">Date <span class="req">*</span></label>
+        <input type="date" id="date" onchange="loadSlots()">
+        <div class="date-hint">Mon–Fri 8:30–17:30 &nbsp;·&nbsp; Wed morning only &nbsp;·&nbsp; Sat 9:00–13:00</div>
+      </div>
+      <div class="form-group">
+        <label>Available Time Slots <span class="req">*</span></label>
+        <div class="slot-grid" id="slot-grid">
+          <div class="slots-msg">Select a date first.</div>
+        </div>
+        <input type="hidden" id="time">
+      </div>
+    </div>
+  </div>
+
+  <div class="step-label reveal-left" id="step3-anchor">Step 3</div>
+  <div class="step-title reveal-left" style="transition-delay:0.07s">Your Details</div>
+
+  <div class="form-card reveal" style="transition-delay:0.1s">
+    <div class="form-grid">
+
+      <div class="form-group field-reveal">
+        <label for="name">Full Name <span class="req">*</span></label>
+        <input type="text" id="name" placeholder="e.g. Andreas Papadopoulos" autocomplete="name">
+      </div>
+
+      <div class="form-group field-reveal" style="transition-delay:0.07s">
+        <label for="phone-number">Phone Number <span class="req">*</span></label>
+        <div class="phone-wrap">
+          <select id="phone-country" onchange="updatePhoneMax()">
+            <option value="+357" data-max="8">🇨🇾 +357</option>
+            <option value="+30"  data-max="10">🇬🇷 +30</option>
+            <option value="+44"  data-max="10">🇬🇧 +44</option>
+            <option value="+49"  data-max="11">🇩🇪 +49</option>
+            <option value="+33"  data-max="9">🇫🇷 +33</option>
+            <option value="+39"  data-max="10">🇮🇹 +39</option>
+            <option value="+34"  data-max="9">🇪🇸 +34</option>
+            <option value="+31"  data-max="9">🇳🇱 +31</option>
+            <option value="+32"  data-max="9">🇧🇪 +32</option>
+            <option value="+41"  data-max="9">🇨🇭 +41</option>
+            <option value="+43"  data-max="10">🇦🇹 +43</option>
+            <option value="+46"  data-max="9">🇸🇪 +46</option>
+            <option value="+47"  data-max="8">🇳🇴 +47</option>
+            <option value="+45"  data-max="8">🇩🇰 +45</option>
+            <option value="+358" data-max="9">🇫🇮 +358</option>
+            <option value="+7"   data-max="10">🇷🇺 +7</option>
+            <option value="+380" data-max="9">🇺🇦 +380</option>
+            <option value="+40"  data-max="9">🇷🇴 +40</option>
+            <option value="+359" data-max="8">🇧🇬 +359</option>
+            <option value="+48"  data-max="9">🇵🇱 +48</option>
+            <option value="+420" data-max="9">🇨🇿 +420</option>
+            <option value="+36"  data-max="9">🇭🇺 +36</option>
+            <option value="+972" data-max="9">🇮🇱 +972</option>
+            <option value="+961" data-max="8">🇱🇧 +961</option>
+            <option value="+971" data-max="9">🇦🇪 +971</option>
+            <option value="+966" data-max="9">🇸🇦 +966</option>
+            <option value="+1"   data-max="10">🇺🇸 +1</option>
+            <option value="+61"  data-max="9">🇦🇺 +61</option>
+          </select>
+          <input type="tel" id="phone-number" placeholder="99 123 456" autocomplete="tel" maxlength="11">
+        </div>
+      </div>
+
+      <div class="form-group full field-reveal" style="transition-delay:0.14s">
+        <label for="email">Email Address <span class="req">*</span></label>
+        <input type="email" id="email" placeholder="e.g. andreas@email.com" autocomplete="email">
+      </div>
+
+      <hr class="form-divider">
+
+      <div class="form-group full field-reveal" style="transition-delay:0.21s">
+        <label>Vehicle Model <span class="req">*</span></label>
+        <div class="custom-select-wrap">
+          <div class="custom-select-trigger" id="model-trigger" onclick="toggleModelDropdown()">
+            <span id="model-display" class="placeholder">Select brand and model…</span>
+            <span class="arrow">▼</span>
+          </div>
+          <div class="custom-select-panel" id="model-panel">
+            <div class="cs-brand-tabs">
+              <div class="cs-brand-tab" id="tab-cfmoto" onclick="switchBrandTab('cfmoto')">⬡ CFMOTO</div>
+              <div class="cs-brand-tab" id="tab-sym" onclick="switchBrandTab('sym')">◈ SYM</div>
+            </div>
+            <div class="cs-models-pane" id="pane-cfmoto">
+              <div class="cs-category">Motorcycles</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">125NK</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">DUAL 250</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">300NK</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">300SR</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">450NK</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">450SR</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">450MT</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">450CL-C</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">450CL-C BOBBER</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">675NK</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">675SR-R</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">700CL-X Sport</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">700MT</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">800NK</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">800MT Explore Edition</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">800MT-X</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">1000MT-X</div>
+              <div class="cs-category">ATVs</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">CFORCE 110</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">CFORCE 450L</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">CFORCE 520L</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">CFORCE 625 Touring</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">CFORCE 850 Touring</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">CFORCE 1000 Touring</div>
+              <div class="cs-category">Side-by-Side / UTV</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">UFORCE 600</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">U6 EV</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">U10 PRO</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">U10 PRO HIGHLAND</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">U10 XL PRO</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">ZFORCE 800 Sport</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">ZFORCE 950 Sport</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">ZFORCE 950 Sport-4</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">Z10</div>
+              <div class="cs-option" data-brand="cfmoto" onclick="selectModel(this)">Z10-4</div>
+            </div>
+            <div class="cs-models-pane" id="pane-sym">
+              <div class="cs-category">Scooters &amp; Motorcycles</div>
+              <div class="cs-option" data-brand="sym" onclick="selectModel(this)">MIO 50</div>
+              <div class="cs-option" data-brand="sym" onclick="selectModel(this)">SR 125 CBS</div>
+              <div class="cs-option" data-brand="sym" onclick="selectModel(this)">SR 125 ABS</div>
+              <div class="cs-option" data-brand="sym" onclick="selectModel(this)">JET 14 EVO 125</div>
+              <div class="cs-option" data-brand="sym" onclick="selectModel(this)">CARGO 125</div>
+              <div class="cs-option" data-brand="sym" onclick="selectModel(this)">ADX 125</div>
+              <div class="cs-option" data-brand="sym" onclick="selectModel(this)">JET X 125</div>
+              <div class="cs-option" data-brand="sym" onclick="selectModel(this)">VF125</div>
+              <div class="cs-option" data-brand="sym" onclick="selectModel(this)">VF185</div>
+              <div class="cs-option" data-brand="sym" onclick="selectModel(this)">SYMPHONY 200</div>
+              <div class="cs-option" data-brand="sym" onclick="selectModel(this)">ADX 300</div>
+              <div class="cs-option" data-brand="sym" onclick="selectModel(this)">JOYRIDE 300 TCS</div>
+              <div class="cs-option" data-brand="sym" onclick="selectModel(this)">ADXTG 400</div>
+              <div class="cs-option" data-brand="sym" onclick="selectModel(this)">MAXSYM TL 508</div>
+              <div class="cs-option" data-brand="sym" onclick="selectModel(this)">TTLBT</div>
+            </div>
+          </div>
+        </div>
+        <input type="hidden" id="model">
+        <input type="hidden" id="brand">
+      </div>
+
+      <div class="vehicle-section" id="vehicle-section">
+        <div class="form-group field-reveal">
+          <label for="year">Year of Model <span class="req">*</span></label>
+          <select id="year" onchange="animateYear(this)">
+            <option value="">Select year…</option>
+          </select>
+        </div>
+
+        <div class="form-group field-reveal" style="transition-delay:0.08s">
+          <label for="plate">License Plate <span class="req">*</span></label>
+          <input type="text" id="plate" placeholder="e.g. PXX833"
+                 maxlength="6"
+                 style="text-transform:uppercase;letter-spacing:0.1em;"
+                 oninput="formatPlate(this)">
+          <div id="plate-hint" style="font-size:11px;color:var(--grey);margin-top:3px;display:none;">
+            Format: 3 letters + 3 numbers (e.g. PXX833)
+          </div>
+        </div>
+
+        <div class="form-group full field-reveal" style="transition-delay:0.16s">
+          <label for="km">Current Kilometres <span class="req">*</span></label>
+          <input type="number" id="km" placeholder="e.g. 12500" min="0">
+        </div>
+      </div>
+
+      <div class="form-group full field-reveal" style="transition-delay:0.28s">
+        <label for="notes">Additional Notes <span style="font-weight:300;text-transform:none;letter-spacing:0;font-size:10px;margin-left:4px;">(optional)</span></label>
+        <textarea id="notes" placeholder="Any issues you'd like us to check, or anything else we should know…"></textarea>
+      </div>
+
+      <hr class="form-divider">
+
+      <div class="alert error" id="form-error"></div>
+
+      <div class="submit-row">
+        <button class="btn-submit" id="submit-btn" onclick="submitBooking()">
+          Request Appointment
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="success-screen" id="success-screen">
+    <div class="success-icon">✓</div>
+    <h2 style="font-size:28px;font-weight:900;margin-bottom:8px;">Booking Received</h2>
+    <p style="color:var(--grey);margin-bottom:4px;">Your reference number is:</p>
+    <div class="success-ref" id="success-ref">MW00001</div>
+    <p style="color:var(--grey);max-width:440px;margin:0 auto 32px;line-height:1.6;font-size:14px;">
+      We will review your appointment and confirm by email shortly.<br>
+      If you have any questions, call us on <strong style="color:var(--white);">22 328 788</strong>.
+    </p>
+    <button class="btn-submit" style="max-width:280px;margin:0 auto;display:block;" onclick="location.reload()">
+      Book Another Appointment
+    </button>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-grid">
+    <div class="footer-item"><strong>Address</strong>40 Athinon Str., Strovolos, Nicosia</div>
+    <div class="footer-item"><strong>Phone</strong>22 328 788</div>
+    <div class="footer-item"><strong>Hours</strong>Mon/Tue/Thu/Fri 8:30–17:30 · Wed 8:30–13:00 · Sat 9:00–13:00</div>
+    <div class="footer-item"><strong>Email</strong>support@motowarehouse.com.cy</div>
+  </div>
+  <div class="footer-copy">© 2024 Motowarehouse Ltd · Official Importer of CFMOTO &amp; SYM in Cyprus</div>
+</footer>
+
+<script>
+  function updatePhoneMax() {
+    const sel = document.getElementById('phone-country');
+    const opt = sel.options[sel.selectedIndex];
+    const max = opt.dataset.max || '12';
+    document.getElementById('phone-number').maxLength = parseInt(max);
+  }
+
+  function getFullPhone() {
+    const code = document.getElementById('phone-country').value;
+    const num  = document.getElementById('phone-number').value.replace(/\D/g, '');
+    return num ? code + num : '';
+  }
+
+  let selectedService = null;
+  let selectedTime = null;
+  let selectedModel = null;
+  let selectedBrand = null;
+
+  const dateInput = document.getElementById('date');
+  const today = new Date();
+  const maxDate = new Date(today); maxDate.setDate(today.getDate() + 60);
+  dateInput.min = today.toISOString().split('T')[0];
+  dateInput.max = maxDate.toISOString().split('T')[0];
+
+  const yearSel = document.getElementById('year');
+  const curYear = new Date().getFullYear();
+  for (let y = curYear; y >= 2010; y--) {
+    const o = document.createElement('option');
+    o.value = y; o.textContent = y;
+    yearSel.appendChild(o);
+  }
+
+  function selectService(el) {
+    document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedService = el.dataset.value;
+    checkSymNote();
+  }
+
+  const SYM_125 = ['SR 125 CBS','SR 125 ABS','JET 14 EVO 125','CARGO 125','ADX 125','JET X 125','VF125','MIO 50'];
+
+  function checkSymNote() {
+    const isSym125 = selectedBrand === 'sym' && SYM_125.includes(selectedModel);
+    const isOilChange = selectedService === 'oil-change';
+    const note = document.getElementById('sym-note');
+    note.classList.toggle('show', isSym125 && isOilChange);
+  }
+
+  let activeBrandTab = null;
+
+  const _modelPanel = document.getElementById('model-panel');
+  document.body.appendChild(_modelPanel);
+
+  function positionDropdownPanel() {
+    const trigger = document.getElementById('model-trigger');
+    const panel   = document.getElementById('model-panel');
+    const rect    = trigger.getBoundingClientRect();
+    panel.style.top   = (rect.bottom + 6) + 'px';
+    panel.style.left  = rect.left + 'px';
+    panel.style.width = rect.width + 'px';
+  }
+
+  function toggleModelDropdown() {
+    const trigger = document.getElementById('model-trigger');
+    const panel   = document.getElementById('model-panel');
+    const wrap    = document.querySelector('.custom-select-wrap');
+    const isOpen  = trigger.classList.toggle('open');
+    panel.classList.toggle('open', isOpen);
+    wrap.classList.toggle('is-open', isOpen);
+    if (isOpen) {
+      positionDropdownPanel();
+      if (!activeBrandTab) switchBrandTab('cfmoto');
+    }
+  }
+
+  window.addEventListener('scroll', () => {
+    if (document.getElementById('model-panel').classList.contains('open')) {
+      positionDropdownPanel();
+    }
+  }, { passive: true });
+
+  window.addEventListener('resize', () => {
+    if (document.getElementById('model-panel').classList.contains('open')) {
+      positionDropdownPanel();
+    }
+  });
+
+  function switchBrandTab(brand) {
+    activeBrandTab = brand;
+    document.getElementById('tab-cfmoto').className = 'cs-brand-tab' + (brand === 'cfmoto' ? ' active-cfmoto' : '');
+    document.getElementById('tab-sym').className = 'cs-brand-tab' + (brand === 'sym' ? ' active-sym' : '');
+    document.getElementById('pane-cfmoto').classList.toggle('active', brand === 'cfmoto');
+    document.getElementById('pane-sym').classList.toggle('active', brand === 'sym');
+  }
+
+  function selectModel(el) {
+    selectedModel = el.textContent.trim();
+    selectedBrand = el.dataset.brand;
+    document.getElementById('model').value = selectedModel;
+    document.getElementById('brand').value = selectedBrand;
+
+    const display = document.getElementById('model-display');
+    display.textContent = selectedModel;
+    display.classList.remove('placeholder');
+
+    document.querySelectorAll('.cs-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+
+    document.getElementById('model-trigger').classList.remove('open');
+    document.getElementById('model-panel').classList.remove('open');
+
+    checkSymNote();
+    revealVehicleSection();
+  }
+
+  document.addEventListener('click', function(e) {
+    const wrap  = document.querySelector('.custom-select-wrap');
+    const panel = document.getElementById('model-panel');
+    if (!wrap.contains(e.target) && !panel.contains(e.target)) {
+      document.getElementById('model-trigger').classList.remove('open');
+      panel.classList.remove('open');
+      wrap.classList.remove('is-open');
+    }
+  });
+
+  async function loadSlots() {
+    const date = dateInput.value;
+    if (!date) return;
+    const grid = document.getElementById('slot-grid');
+    grid.innerHTML = '<div class="slots-msg">Loading…</div>';
+    selectedTime = null;
+    document.getElementById('time').value = '';
+
+    try {
+      const res = await fetch(`/api/slots?date=${date}`);
+      const data = await res.json();
+      if (data.closed) {
+        grid.innerHTML = '<div class="slots-msg">We are closed on Sundays.</div>';
+        return;
+      }
+      if (!data.slots || data.slots.length === 0) {
+        grid.innerHTML = '<div class="slots-msg">No available slots for this date. Please try another day.</div>';
+        return;
+      }
+      grid.innerHTML = '';
+      data.slots.forEach(slot => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'slot-btn';
+        btn.textContent = slot;
+        btn.onclick = () => selectSlot(btn, slot);
+        grid.appendChild(btn);
+      });
+    } catch {
+      grid.innerHTML = '<div class="slots-msg" style="color:var(--red);">Could not load slots. Please try again.</div>';
+    }
+  }
+
+  function selectSlot(btn, time) {
+    document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedTime = time;
+    document.getElementById('time').value = time;
+  }
+
+  async function submitBooking() {
+    hideError();
+    const btn = document.getElementById('submit-btn');
+
+    const name  = document.getElementById('name').value.trim();
+    const phone = getFullPhone();
+    const email = document.getElementById('email').value.trim();
+    const model = document.getElementById('model').value;
+    const year  = document.getElementById('year').value;
+    const plate = document.getElementById('plate').value.trim().toUpperCase();
+    const km    = document.getElementById('km').value.trim();
+    const notes = document.getElementById('notes').value.trim();
+    const date  = dateInput.value;
+
+    if (!selectedService) return showError('Please select a service type.');
+    if (!date)            return showError('Please select a date.');
+    if (!selectedTime)    return showError('Please select a time slot.');
+    if (!name)            return showError('Please enter your full name.');
+    if (!phone)           return showError('Please enter your phone number.');
+    if (phone.replace(/\D/g,'').length < 7) return showError('Please enter a valid phone number.');
+    if (!email)           return showError('Please enter your email address.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError('Please enter a valid email address (e.g. name@email.com).');
+    if (!model)           return showError('Please select your vehicle model.');
+    if (!year)            return showError('Please select the model year.');
+    if (!plate)           return showError('Please enter your license plate number.');
+    if (!km || isNaN(km) || Number(km) < 0) return showError('Please enter the current kilometres on your vehicle.');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Sending…';
+
+    try {
+      const res = await fetch('/api/book', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone, email, serviceType: selectedService, date, time: selectedTime, model, year, plate, km, notes })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showError(data.error || 'Something went wrong. Please try again.');
+        btn.disabled = false;
+        btn.innerHTML = 'Request Appointment';
+        return;
+      }
+
+      document.getElementById('booking-section').querySelectorAll('.step-label, .step-title, .service-cards, .sym-note, .form-card').forEach(el => el.style.display = 'none');
+      document.getElementById('success-ref').textContent = data.ref;
+      document.getElementById('success-screen').classList.add('show');
+
+    } catch {
+      showError('Network error. Please check your connection and try again.');
+      btn.disabled = false;
+      btn.innerHTML = 'Request Appointment';
+    }
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('form-error');
+    el.textContent = msg;
+    el.classList.add('show');
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function hideError() {
+    document.getElementById('form-error').classList.remove('show');
+  }
+
+  function animateYear(sel) {
+    sel.classList.remove('year-selected');
+    void sel.offsetWidth;
+    if (sel.value) sel.classList.add('year-selected');
+  }
+
+  function formatPlate(input) {
+    let raw = input.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    let result = '';
+    for (let i = 0; i < raw.length && i < 6; i++) {
+      const ch = raw[i];
+      if (i < 3) {
+        if (/[A-Z]/.test(ch)) result += ch;
+      } else {
+        if (/[0-9]/.test(ch)) result += ch;
+      }
+    }
+    input.value = result;
+    const hint = document.getElementById('plate-hint');
+    const valid = /^[A-Z]{3}[0-9]{3}$/.test(result);
+    input.classList.toggle('plate-valid',   result.length === 6 &&  valid);
+    input.classList.toggle('plate-invalid', result.length > 0  && !valid);
+    hint.style.display = (result.length > 0 && !valid) ? 'block' : 'none';
+  }
+
+  const progressBar = document.getElementById('scroll-progress');
+  function updateProgress() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    progressBar.style.width = pct + '%';
+  }
+
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.reveal, .reveal-left, .stagger-children').forEach(el => {
+    revealObserver.observe(el);
+  });
+
+  const formCardObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const fields = entry.target.querySelectorAll('.field-reveal:not(#vehicle-section .field-reveal)');
+        fields.forEach((el, i) => {
+          setTimeout(() => el.classList.add('visible'), 60 + i * 80);
+        });
+        formCardObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08 });
+
+  document.querySelectorAll('.form-card').forEach(card => formCardObserver.observe(card));
+
+  setTimeout(() => {
+    document.querySelectorAll('.hero .reveal').forEach(el => el.classList.add('visible'));
+  }, 80);
+
+  const tracker = document.getElementById('step-tracker');
+  const stepAnchors = [
+    document.getElementById('step1-anchor'),
+    document.getElementById('step2-anchor'),
+    document.getElementById('step3-anchor'),
+  ];
+  const trackerItems = [
+    document.getElementById('tracker-1'),
+    document.getElementById('tracker-2'),
+    document.getElementById('tracker-3'),
+  ];
+
+  function scrollToStep(n) {
+    const anchor = stepAnchors[n - 1];
+    if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function updateTracker() {
+    const scrollY = window.scrollY + window.innerHeight * 0.4;
+    const heroBottom = document.querySelector('.hero').getBoundingClientRect().bottom + window.scrollY;
+    if (window.scrollY > heroBottom - 100) {
+      tracker.classList.add('visible');
+    } else {
+      tracker.classList.remove('visible');
+    }
+    let activeStep = -1;
+    stepAnchors.forEach((anchor, i) => {
+      if (anchor) {
+        const top = anchor.getBoundingClientRect().top + window.scrollY;
+        if (scrollY >= top) activeStep = i;
+      }
+    });
+    trackerItems.forEach((item, i) => {
+      item.classList.remove('active', 'done');
+      if (i === activeStep) item.classList.add('active');
+      else if (i < activeStep) item.classList.add('done');
+    });
+  }
+
+  const MOTO_SVGS = {
+    gear: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M43,2 L57,2 L60,18 C64,19 68,21 71,24 L87,18 L96,30 L84,42 C86,46 87,50 87,54 L103,57 L103,71 L87,74 C86,78 84,82 81,85 L87,101 L75,110 L63,98 C59,100 55,101 51,101 L48,117 L34,117 L31,101 C27,100 23,98 20,95 L4,101 L-5,89 L7,77 C5,73 4,69 4,65 L-12,62 L-12,48 L4,45 C5,41 7,37 10,34 L4,18 L16,9 L28,21 C32,19 36,18 40,17 Z M50,35 A15,15 0 1,0 50,65 A15,15 0 1,0 50,35Z" fill="none" stroke="currentColor" stroke-width="3"/></svg>`,
+    wheel: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="50" cy="50" r="8" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="50" cy="50" r="32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 6"/><line x1="50" y1="4" x2="50" y2="42" stroke="currentColor" stroke-width="1.5"/><line x1="50" y1="58" x2="50" y2="96" stroke="currentColor" stroke-width="1.5"/><line x1="4" y1="50" x2="42" y2="50" stroke="currentColor" stroke-width="1.5"/><line x1="58" y1="50" x2="96" y2="50" stroke="currentColor" stroke-width="1.5"/><line x1="18" y1="18" x2="44" y2="44" stroke="currentColor" stroke-width="1.5"/><line x1="56" y1="56" x2="82" y2="82" stroke="currentColor" stroke-width="1.5"/><line x1="82" y1="18" x2="56" y2="44" stroke="currentColor" stroke-width="1.5"/><line x1="44" y1="56" x2="18" y2="82" stroke="currentColor" stroke-width="1.5"/></svg>`,
+    wrench: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M72,8 C58,8 47,19 47,33 C47,37 48,40 50,43 L12,81 C9,84 9,89 12,92 C15,95 20,95 23,92 L61,54 C64,56 68,57 72,57 C86,57 97,46 97,32 C97,28 96,24 94,21 L80,35 L70,35 L65,25 L79,11 C77,9 75,8 72,8 Z" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round"/></svg>`,
+    chain: `<svg viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="8" width="28" height="24" rx="12" fill="none" stroke="currentColor" stroke-width="3"/><rect x="22" y="12" width="20" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><rect x="34" y="8" width="28" height="24" rx="12" fill="none" stroke="currentColor" stroke-width="3"/><rect x="54" y="12" width="20" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><rect x="66" y="8" width="28" height="24" rx="12" fill="none" stroke="currentColor" stroke-width="3"/><rect x="86" y="12" width="20" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><rect x="98" y="8" width="20" height="24" rx="10" fill="none" stroke="currentColor" stroke-width="3"/></svg>`,
+    piston: `<svg viewBox="0 0 60 110" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="2" width="44" height="50" rx="6" fill="none" stroke="currentColor" stroke-width="3"/><rect x="2" y="18" width="4" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="54" y="18" width="4" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="16" y="52" width="28" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2.5"/><rect x="22" y="62" width="16" height="44" rx="4" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="8" y1="30" x2="52" y2="30" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 4"/></svg>`,
+  };
+
+  function createShapes() {
+    const container = document.getElementById('bg-shapes');
+    const placements = [
+      { type:'wheel',  size:160, top:'8%',   side:'left',  offset:'-55px', color:'rgba(0,155,180,0.07)',  dur:22, delay:0 },
+      { type:'gear',   size:130, top:'30%',  side:'right', offset:'-45px', color:'rgba(0,239,209,0.065)', dur:28, delay:5 },
+      { type:'wrench', size:110, top:'52%',  side:'left',  offset:'-36px', color:'rgba(0,155,180,0.06)',  dur:18, delay:2 },
+      { type:'chain',  size:160, top:'68%',  side:'right', offset:'-60px', color:'rgba(0,239,209,0.055)', dur:32, delay:8 },
+      { type:'piston', size: 90, top:'82%',  side:'left',  offset:'-28px', color:'rgba(0,155,180,0.065)', dur:20, delay:4 },
+      { type:'gear',   size: 80, top:'92%',  side:'right', offset:'-25px', color:'rgba(0,239,209,0.05)',  dur:24, delay:11},
+    ];
+    placements.forEach(p => {
+      const wrap = document.createElement('div');
+      wrap.className = 'bg-shape';
+      wrap.style.cssText = `width:${p.size}px;height:${p.size}px;top:${p.top};${p.side}:${p.offset};color:${p.color};animation-duration:${p.dur}s;animation-delay:-${p.delay}s;display:flex;align-items:center;justify-content:center;`;
+      wrap.innerHTML = MOTO_SVGS[p.type];
+      container.appendChild(wrap);
+      setTimeout(() => wrap.classList.add('show'), 600);
+    });
+  }
+
+  createShapes();
+
+  function revealVehicleSection() {
+    const sec = document.getElementById('vehicle-section');
+    if (!sec.classList.contains('revealed')) {
+      sec.classList.add('revealed');
+      sec.querySelectorAll('.field-reveal').forEach((el, i) => {
+        setTimeout(() => el.classList.add('visible'), 80 + i * 80);
+      });
+    }
+  }
+
+  window.addEventListener('scroll', () => {
+    updateProgress();
+    updateTracker();
+  }, { passive: true });
+
+  updateProgress();
+  updateTracker();
+</script>
+
+</body>
+</html>

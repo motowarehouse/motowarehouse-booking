@@ -1,0 +1,260 @@
+require('dotenv').config();
+const express = require('express');
+const session = require('express-session');
+const bcrypt = require('bcryptjs');
+const path = require('path');
+const db = require('./db');
+const emailService = require('./emailService');
+const smsService = require('./smsService');
+const { startReminderCron } = require('./reminderCron');
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+// --- Middleware ---
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'mw-secret-2024',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 8 * 60 * 60 * 1000 } // 8 hours
+}));
+
+// --- Auth middleware ---
+function requireAdmin(req, res, next) {
+  if (req.session && req.session.admin) return next();
+  res.status(401).json({ error: 'Unauthorised' });
+}
+
+function requirePartner(req, res, next) {
+  if (req.session && req.session.partner) return next();
+  res.status(401).json({ error: 'Unauthorised' });
+}
+
+function requireAdminOrPartner(req, res, next) {
+  if ((req.session && req.session.admin) || (req.session && req.session.partner)) return next();
+  res.status(401).json({ error: 'Unauthorised' });
+}
+
+// ==================== PUBLIC API ====================
+
+app.get('/api/slots', (req, res) => {
+  const { date } = req.query;
+  if (!date) return res.status(400).json({ error: 'date required' });
+  const d = new Date(date + 'T12:00:00');
+  const day = d.getDay();
+  const hours = db.getHours();
+  const dayConfig = hours[day];
+  if (!dayConfig || dayConfig.closed) return res.json({ slots: [], closed: true });
+  const slots = [];
+  for (const [start, end] of dayConfig.ranges) {
+    let [sh, sm] = start.split(':').map(Number);
+    const [eh, em] = end.split(':').map(Number);
+    while (sh * 60 + sm < eh * 60 + em) {
+      slots.push(`${String(sh).padStart(2,'0')}:${String(sm).padStart(2,'0')}`);
+      sm += 30;
+      if (sm >= 60) { sh++; sm -= 60; }
+    }
+  }
+  const booked = db.getBookedSlots(date);
+  const available = slots.filter(s => !booked.includes(s));
+  res.json({ slots: available, booked });
+});
+
+app.post('/api/book', async (req, res) => {
+  const { name, phone, email, serviceType, date, time, model, year, plate, km, notes } = req.body;
+  if (!name || !phone || !email || !serviceType || !date || !time || !model || !year || !plate || !km) {
+    return res.status(400).json({ error: 'All required fields must be filled.' });
+  }
+  const validServices = ['oil-change', 'small-service', 'big-service'];
+  if (!validServices.includes(serviceType)) return res.status(400).json({ error: 'Invalid service type.' });
+  const booked = db.getBookedSlots(date);
+  if (booked.includes(time)) return res.status(409).json({ error: 'This time slot is no longer available. Please choose another.' });
+  try {
+    const booking = db.createBooking({ name, phone, email, serviceType, date, time, model, year, plate, km, notes });
+    emailService.sendNewBookingAlert(booking).catch(e => console.error('[Email alert error]', e.message));
+    res.json({ success: true, ref: booking.ref, message: 'Booking received. We will confirm your appointment shortly.' });
+  } catch (err) {
+    console.error('[Booking error]', err);
+    res.status(500).json({ error: 'Something went wrong. Please try again.' });
+  }
+});
+
+// ==================== ADMIN API ====================
+
+app.post('/api/admin/login', async (req, res) => {
+  const { password } = req.body;
+  const adminHash = process.env.ADMIN_PASSWORD_HASH;
+  if (!adminHash) return res.status(401).json({ error: 'Admin password not configured.' });
+  const valid = await bcrypt.compare(password, adminHash);
+  if (!valid) return res.status(401).json({ error: 'Incorrect password.' });
+  req.session.admin = true;
+  res.json({ success: true });
+});
+
+app.post('/api/admin/logout', (req, res) => { req.session.destroy(); res.json({ success: true }); });
+app.get('/api/admin/me', requireAdmin, (req, res) => { res.json({ admin: true }); });
+app.get('/api/admin/bookings', requireAdmin, (req, res) => {
+  const bookings = db.getAllBookings().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  res.json(bookings);
+});
+
+app.post('/api/admin/bookings/:id/accept', requireAdmin, async (req, res) => {
+  const booking = db.updateBookingStatus(req.params.id, 'accepted');
+  if (!booking) return res.status(404).json({ error: 'Booking not found' });
+  let emailError = null;
+  try { await emailService.sendConfirmationToCustomer(booking); } catch (e) { emailError = e.message; }
+  try { await smsService.sendConfirmationSMS(booking); } catch (e) { console.error('[SMS] Confirmation FAILED:', e.message); }
+  res.json({ success: true, booking, emailError });
+});
+
+app.post('/api/admin/bookings/:id/reschedule', requireAdmin, async (req, res) => {
+  const { date, time } = req.body;
+  if (!date || !time) return res.status(400).json({ error: 'date and time required' });
+  const booking = db.rescheduleBooking(req.params.id, date, time);
+  if (!booking) return res.status(404).json({ error: 'Booking not found' });
+  try { await emailService.sendRescheduleToCustomer(booking); } catch (e) { console.error('[Email] Reschedule FAILED:', e.message); }
+  try { await smsService.sendRescheduleSMS(booking); } catch (e) { console.error('[SMS] Reschedule FAILED:', e.message); }
+  res.json({ success: true, booking });
+});
+
+app.post('/api/admin/bookings/:id/contact-status', requireAdmin, (req, res) => {
+  const { status } = req.body;
+  const valid = ['needs-contact', 'contacted', 'closed'];
+  if (!valid.includes(status)) return res.status(400).json({ error: 'Invalid status' });
+  const booking = db.updateContactStatus(req.params.id, status);
+  if (!booking) return res.status(404).json({ error: 'Booking not found' });
+  res.json({ success: true, booking });
+});
+
+app.post('/api/admin/bookings/:id/cancel', requireAdmin, async (req, res) => {
+  const booking = db.updateBookingStatus(req.params.id, 'cancelled');
+  if (!booking) return res.status(404).json({ error: 'Booking not found' });
+  try { await emailService.sendCancellationToCustomer(booking); } catch (e) { console.error('[Email] Cancellation FAILED:', e.message); }
+  try { await smsService.sendCancellationSMS(booking); } catch (e) { console.error('[SMS] Cancellation FAILED:', e.message); }
+  res.json({ success: true, booking });
+});
+
+app.get('/api/admin/blocks', requireAdmin, (req, res) => {
+  res.json(db.getAllBlocks().sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)));
+});
+app.post('/api/admin/blocks', requireAdmin, (req, res) => {
+  const { date, startTime, endTime, reason, customerName, customerPhone, vehicleModel, notes } = req.body;
+  if (!date || !startTime || !endTime) return res.status(400).json({ error: 'date, startTime, and endTime are required.' });
+  const [sh, sm] = startTime.split(':').map(Number);
+  const [eh, em] = endTime.split(':').map(Number);
+  if (sh * 60 + sm >= eh * 60 + em) return res.status(400).json({ error: 'End time must be after start time.' });
+  const block = db.createBlock({ date, startTime, endTime, reason, customerName, customerPhone, vehicleModel, notes });
+  res.json({ success: true, block });
+});
+app.delete('/api/admin/blocks/:id', requireAdmin, (req, res) => {
+  const ok = db.deleteBlock(req.params.id);
+  if (!ok) return res.status(404).json({ error: 'Block not found.' });
+  res.json({ success: true });
+});
+
+app.get('/api/admin/hours', requireAdmin, (req, res) => { res.json(db.getHours()); });
+app.post('/api/admin/hours', requireAdmin, (req, res) => {
+  const { hours } = req.body;
+  if (!hours) return res.status(400).json({ error: 'hours object required.' });
+  db.saveHours(hours);
+  res.json({ success: true });
+});
+
+app.post('/api/admin/test-email', requireAdmin, async (req, res) => {
+  const to = process.env.ADMIN_EMAIL;
+  try {
+    await emailService.sendNewBookingAlert({ ref: 'TEST-001', name: 'Test User', phone: '99000000', email: to, serviceType: 'oil-change', date: new Date().toISOString().split('T')[0], time: '09:00', model: 'CFMOTO 450NK', year: '2024', plate: 'ABC123', km: '1000', notes: 'This is a test email.' });
+    res.json({ success: true, message: `Test email sent to ${to}` });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.get('/admin', (req, res) => { res.sendFile(path.join(__dirname, 'admin', 'index.html')); });
+
+// ==================== PARTNER API ====================
+
+app.post('/api/partner/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) return res.status(400).json({ error: 'Username and password required.' });
+  const partner = db.getPartnerByUsername(username);
+  if (!partner || !partner.active) return res.status(401).json({ error: 'Invalid credentials.' });
+  const valid = await bcrypt.compare(password, partner.passwordHash);
+  if (!valid) return res.status(401).json({ error: 'Invalid credentials.' });
+  req.session.partner = { id: partner.id, username: partner.username, workshopName: partner.workshopName };
+  res.json({ success: true, workshopName: partner.workshopName });
+});
+
+app.post('/api/partner/logout', (req, res) => { req.session.destroy(); res.json({ success: true }); });
+app.get('/api/partner/me', requirePartner, (req, res) => { res.json({ partner: req.session.partner }); });
+
+app.get('/api/vehicle', requireAdminOrPartner, (req, res) => {
+  const { plate } = req.query;
+  if (!plate) return res.status(400).json({ error: 'plate required' });
+  const vehicle = db.getVehicleByPlate(plate);
+  if (!vehicle) return res.status(404).json({ error: 'Vehicle not found in our records.' });
+  res.json(vehicle);
+});
+
+app.get('/api/service-items', requireAdminOrPartner, (req, res) => { res.json(db.DEFAULT_SERVICE_ITEMS); });
+
+app.post('/api/service-entry', requireAdminOrPartner, (req, res) => {
+  const { regNo, km, items, notes, date } = req.body;
+  if (!regNo || !km || !items || items.length === 0) return res.status(400).json({ error: 'Plate, KM, and at least one service item are required.' });
+  if (!db.getVehicleByPlate(regNo)) return res.status(404).json({ error: 'Vehicle not found in our records.' });
+  const isAdmin = !!(req.session && req.session.admin);
+  const partnerInfo = req.session.partner || null;
+  const entry = db.createServiceEntry({ regNo, km, items, notes, date, partnerId: partnerInfo ? partnerInfo.id : null, partnerName: partnerInfo ? partnerInfo.workshopName : 'Motowarehouse', loggedByAdmin: isAdmin });
+  res.json({ success: true, entry });
+});
+
+app.get('/api/admin/vehicles', requireAdmin, (req, res) => {
+  const { q } = req.query;
+  let vehicles = db.getAllVehicles();
+  if (q) {
+    const search = q.toUpperCase().trim();
+    vehicles = vehicles.filter(v => v.regNo.includes(search) || v.model.toUpperCase().includes(search) || v.frameNo.toUpperCase().includes(search));
+  }
+  res.json(vehicles.slice(0, 50));
+});
+
+app.get('/api/admin/vehicles/:plate', requireAdmin, (req, res) => {
+  const vehicle = db.getVehicleByPlate(req.params.plate);
+  if (!vehicle) return res.status(404).json({ error: 'Vehicle not found.' });
+  const history = db.getServiceHistoryByPlate(req.params.plate);
+  res.json({ vehicle, history });
+});
+
+app.post('/api/admin/vehicles/import', requireAdmin, (req, res) => {
+  const { rows } = req.body;
+  if (!Array.isArray(rows) || rows.length === 0) return res.status(400).json({ error: 'rows array required.' });
+  const result = db.importVehicles(rows);
+  res.json({ success: true, ...result });
+});
+
+app.get('/api/admin/partners', requireAdmin, (req, res) => {
+  res.json(db.getAllPartners().map(p => ({ ...p, passwordHash: undefined })));
+});
+
+app.post('/api/admin/partners', requireAdmin, async (req, res) => {
+  const { username, password, workshopName, phone } = req.body;
+  if (!username || !password || !workshopName) return res.status(400).json({ error: 'username, password, and workshopName are required.' });
+  if (db.getPartnerByUsername(username)) return res.status(409).json({ error: 'Username already exists.' });
+  const passwordHash = await bcrypt.hash(password, 10);
+  const partner = db.createPartner({ username, passwordHash, workshopName, phone });
+  res.json({ success: true, partner: { ...partner, passwordHash: undefined } });
+});
+
+app.post('/api/admin/partners/:id/toggle', requireAdmin, (req, res) => {
+  const partner = db.togglePartnerActive(req.params.id);
+  if (!partner) return res.status(404).json({ error: 'Partner not found.' });
+  res.json({ success: true, partner: { ...partner, passwordHash: undefined } });
+});
+
+app.get('/partner', (req, res) => { res.sendFile(path.join(__dirname, 'partner', 'index.html')); });
+
+app.listen(PORT, () => {
+  console.log(`\n🏍️  Motowarehouse Service Booking Portal running at http://localhost:${PORT}\n`);
+  startReminderCron();
+});

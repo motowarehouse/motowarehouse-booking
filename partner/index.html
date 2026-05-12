@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Partner Portal – Motowarehouse</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#0a0f14; --surface:#111820; --card:#16202a;
+      --border:rgba(255,255,255,0.08); --blue:#00b4d8;
+      --green:#2ecc71; --red:#e74c3c; --grey:#7a8a99; --text:#e8f0f7;
+    }
+    body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:24px 16px 48px; }
+    .logo { margin-bottom:16px; }
+    .page-title { font-size:22px; font-weight:700; margin-bottom:32px; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:28px 24px; width:100%; max-width:480px; margin-bottom:16px; }
+    .card-title { font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--blue); margin-bottom:20px; }
+    label { display:block; font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--grey); margin-bottom:6px; }
+    input[type="text"], input[type="password"], input[type="number"], textarea {
+      width:100%; background:var(--surface); border:1px solid var(--border); border-radius:8px;
+      color:var(--text); font-size:15px; padding:11px 14px; outline:none;
+      transition:border-color .15s; margin-bottom:16px;
+    }
+    input:focus, textarea:focus { border-color:var(--blue); }
+    textarea { resize:vertical; min-height:80px; }
+    .btn { width:100%; padding:13px; border:none; border-radius:8px; font-size:13px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; transition:opacity .15s; }
+    .btn:hover { opacity:.85; } .btn:disabled { opacity:.4; cursor:not-allowed; }
+    .btn-primary   { background:var(--blue); color:#000; }
+    .btn-secondary { background:transparent; color:var(--grey); border:1px solid var(--border); margin-top:10px; }
+    .msg { font-size:13px; padding:10px 14px; border-radius:8px; margin-bottom:16px; display:none; }
+    .msg.error   { background:rgba(231,76,60,.15); color:#ff6b6b; border:1px solid rgba(231,76,60,.3); display:block; }
+    .msg.success { background:rgba(46,204,113,.12); color:var(--green); border:1px solid rgba(46,204,113,.3); display:block; }
+    .vehicle-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:20px; }
+    .vehicle-card .reg   { font-size:20px; font-weight:800; letter-spacing:.06em; color:var(--blue); margin-bottom:4px; }
+    .vehicle-card .model { font-size:15px; font-weight:600; margin-bottom:8px; }
+    .vehicle-meta { display:flex; gap:10px; flex-wrap:wrap; }
+    .vehicle-meta span { font-size:12px; color:var(--grey); background:rgba(255,255,255,.05); padding:3px 8px; border-radius:4px; }
+    .check-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+    .check-item { padding:10px 12px; background:var(--surface); border:1px solid var(--border); border-radius:8px; cursor:pointer; font-size:13px; display:flex; align-items:center; gap:8px; user-select:none; transition:border-color .15s,background .15s; }
+    .check-item.selected { border-color:var(--blue); background:rgba(0,180,216,.1); color:var(--blue); }
+    .check-box { width:16px; height:16px; border-radius:4px; border:1.5px solid var(--grey); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background .15s,border-color .15s; }
+    .check-item.selected .check-box { background:var(--blue); border-color:var(--blue); }
+    .check-box svg { display:none; }
+    .check-item.selected .check-box svg { display:block; }
+    .success-screen { text-align:center; }
+    .success-icon { width:56px; height:56px; background:rgba(46,204,113,.15); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; }
+    .success-icon svg { width:28px; height:28px; stroke:var(--green); fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+    .success-title { font-size:18px; font-weight:700; margin-bottom:6px; }
+    .success-sub   { font-size:13px; color:var(--grey); margin-bottom:24px; }
+    .workshop-bar { font-size:12px; color:var(--grey); width:100%; max-width:480px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; }
+    .workshop-bar button { background:none; border:none; color:var(--grey); font-size:12px; cursor:pointer; text-decoration:underline; }
+    .workshop-bar button:hover { color:var(--text); }
+    .section        { display:none; }
+    .section.active { display:block; width:100%; max-width:480px; }
+    .plate-input-wrap { position:relative; }
+    .plate-input-wrap input { text-transform:uppercase; font-size:18px; font-weight:700; letter-spacing:.1em; padding-right:90px; margin-bottom:0; }
+    .plate-search-btn { position:absolute; right:10px; top:50%; transform:translateY(-50%); background:var(--blue); border:none; border-radius:6px; padding:6px 14px; color:#000; font-weight:700; font-size:12px; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <div class="logo"><img src="/assets/MWH_Logo_New.png" alt="Motowarehouse" style="width:140px;height:auto;"></div>
+  <div class="page-title">Partner Portal</div>
+
+  <!-- LOGIN -->
+  <div class="section active" id="section-login">
+    <div class="card">
+      <div class="card-title">Workshop Login</div>
+      <div id="login-msg" class="msg"></div>
+      <label>Username</label>
+      <input type="text" id="login-username" placeholder="Your workshop username" autocomplete="username">
+      <label>Password</label>
+      <input type="password" id="login-password" placeholder="Password" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter') doLogin()">
+      <button class="btn btn-primary" onclick="doLogin()">Sign In</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="section" id="section-main">
+    <div class="workshop-bar">
+      <span id="workshop-label"></span>
+      <button onclick="doLogout()">Sign out</button>
+    </div>
+
+    <!-- Step 1: Search -->
+    <div id="step-search">
+      <div class="card">
+        <div class="card-title">Step 1 — Find Vehicle</div>
+        <div id="search-msg" class="msg"></div>
+        <label>Registration Plate</label>
+        <div class="plate-input-wrap">
+          <input type="text" id="plate-input" placeholder="e.g. ABC 123" maxlength="12"
+            oninput="this.value=this.value.toUpperCase()"
+            onkeydown="if(event.key==='Enter') searchVehicle()">
+          <button class="plate-search-btn" onclick="searchVehicle()">Search</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2+3: Log -->
+    <div id="step-log" style="display:none;">
+      <div class="card">
+        <div class="card-title">Vehicle Found</div>
+        <div id="vehicle-result"></div>
+        <div class="card-title" style="margin-top:4px;">Log Service Work</div>
+        <div id="log-msg" class="msg"></div>
+        <label>Current KM Reading *</label>
+        <input type="number" id="log-km" placeholder="e.g. 12500" min="1">
+        <label>Work Performed</label>
+        <div class="check-grid" id="check-grid"></div>
+        <label>Additional Notes</label>
+        <textarea id="log-notes" placeholder="Any other work, observations, or parts not listed above…"></textarea>
+        <button class="btn btn-primary" onclick="submitLog()">Save Service Entry</button>
+        <button class="btn btn-secondary" onclick="resetToSearch()">Search Another Vehicle</button>
+      </div>
+    </div>
+
+    <!-- Success -->
+    <div id="step-success" style="display:none;">
+      <div class="card success-screen">
+        <div class="success-icon">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="success-title">Service Entry Saved</div>
+        <div class="success-sub" id="success-detail"></div>
+        <button class="btn btn-primary" onclick="resetToSearch()">Log Another Vehicle</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let serviceItems = [];
+
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/partner/me');
+        if (res.ok) { const d = await res.json(); showMain(d.partner.workshopName); await loadServiceItems(); }
+      } catch(e) {}
+    }
+
+    async function doLogin() {
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      const msg = document.getElementById('login-msg');
+      if (!username || !password) { showMsg(msg,'Please enter your username and password.','error'); return; }
+      try {
+        const res = await fetch('/api/partner/login',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username,password}) });
+        const data = await res.json();
+        if (res.ok) { showMain(data.workshopName); await loadServiceItems(); }
+        else showMsg(msg, data.error||'Login failed.', 'error');
+      } catch(e) { showMsg(msg,'Connection error. Please try again.','error'); }
+    }
+
+    async function doLogout() {
+      await fetch('/api/partner/logout',{method:'POST'});
+      document.getElementById('section-main').classList.remove('active');
+      document.getElementById('section-login').classList.add('active');
+      document.getElementById('login-username').value='';
+      document.getElementById('login-password').value='';
+      resetToSearch();
+    }
+
+    function showMain(name) {
+      document.getElementById('section-login').classList.remove('active');
+      document.getElementById('section-main').classList.add('active');
+      document.getElementById('workshop-label').textContent = name;
+    }
+
+    async function loadServiceItems() {
+      try { const res = await fetch('/api/service-items'); if (res.ok) { serviceItems = await res.json(); buildChecklist(); } } catch(e) {}
+    }
+
+    function buildChecklist() {
+      const grid = document.getElementById('check-grid');
+      grid.innerHTML = '';
+      serviceItems.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'check-item';
+        div.dataset.item = item;
+        div.innerHTML = `<div class="check-box"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div><span>${item}</span>`;
+        div.onclick = () => div.classList.toggle('selected');
+        grid.appendChild(div);
+      });
+    }
+
+    async function searchVehicle() {
+      const plate = document.getElementById('plate-input').value.trim();
+      const msg = document.getElementById('search-msg');
+      if (!plate) { showMsg(msg,'Please enter a registration plate.','error'); return; }
+      try {
+        const res = await fetch(`/api/vehicle?plate=${encodeURIComponent(plate)}`);
+        const data = await res.json();
+        if (res.ok) { showVehicle(data); }
+        else showMsg(msg, data.error||'Vehicle not found in our records.', 'error');
+      } catch(e) { showMsg(msg,'Connection error. Please try again.','error'); }
+    }
+
+    function showVehicle(v) {
+      document.getElementById('vehicle-result').innerHTML = `
+        <div class="vehicle-card">
+          <div class="reg">${v.regNo}</div>
+          <div class="model">${v.model||'—'}${v.year?' · '+v.year:''}</div>
+          <div class="vehicle-meta">
+            ${v.frameNo?`<span>Frame: ${v.frameNo}</span>`:''}
+            ${v.engineNo?`<span>Engine: ${v.engineNo}</span>`:''}
+          </div>
+        </div>`;
+      document.getElementById('log-km').value='';
+      document.getElementById('log-notes').value='';
+      document.querySelectorAll('.check-item').forEach(el=>el.classList.remove('selected'));
+      clearMsg(document.getElementById('log-msg'));
+      document.getElementById('step-search').style.display='none';
+      document.getElementById('step-log').style.display='block';
+      document.getElementById('step-success').style.display='none';
+    }
+
+    async function submitLog() {
+      const plate = document.getElementById('plate-input').value.trim();
+      const km    = document.getElementById('log-km').value.trim();
+      const notes = document.getElementById('log-notes').value.trim();
+      const msg   = document.getElementById('log-msg');
+      const items = [...document.querySelectorAll('.check-item.selected')].map(el=>el.dataset.item);
+      if (!km||isNaN(km)||parseInt(km)<=0) { showMsg(msg,'Please enter a valid KM reading.','error'); return; }
+      if (!items.length&&!notes) { showMsg(msg,'Please select at least one item or add notes.','error'); return; }
+      try {
+        const res = await fetch('/api/service-entry',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({regNo:plate,km,items,notes})});
+        const data = await res.json();
+        if (res.ok) {
+          document.getElementById('step-log').style.display='none';
+          document.getElementById('step-success').style.display='block';
+          document.getElementById('success-detail').textContent=`${plate} · ${Number(km).toLocaleString()} km`;
+        } else showMsg(msg, data.error||'Failed to save.','error');
+      } catch(e) { showMsg(msg,'Connection error. Please try again.','error'); }
+    }
+
+    function resetToSearch() {
+      document.getElementById('plate-input').value='';
+      clearMsg(document.getElementById('search-msg'));
+      document.getElementById('step-search').style.display='block';
+      document.getElementById('step-log').style.display='none';
+      document.getElementById('step-success').style.display='none';
+    }
+
+    function showMsg(el,text,type) { el.textContent=text; el.className='msg '+type; }
+    function clearMsg(el) { el.textContent=''; el.className='msg'; }
+
+    checkAuth();
+  </script>
+</body>
+</html>

@@ -1,0 +1,355 @@
+const fs = require('fs');
+const path = require('path');
+
+// Use Railway persistent volume if available, otherwise fall back to local (for development)
+const DB_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH
+  ? path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, 'bookings.json')
+  : path.join(__dirname, 'bookings.json');
+
+function readDB() {
+  if (!fs.existsSync(DB_PATH)) {
+    const initial = { bookings: [], blocks: [], hours: null, lastId: 0, vehicles: [], partners: [], serviceHistory: [] };
+    fs.writeFileSync(DB_PATH, JSON.stringify(initial, null, 2));
+    return initial;
+  }
+  const db = JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
+  // Migrate older DBs
+  if (!db.blocks) db.blocks = [];
+  if (!db.hours) db.hours = null;
+  if (!db.vehicles) db.vehicles = [];
+  if (!db.partners) db.partners = [];
+  if (!db.serviceHistory) db.serviceHistory = [];
+  return db;
+}
+
+function writeDB(data) {
+  fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
+}
+
+function generateRef(id) {
+  return 'MW' + String(id).padStart(5, '0');
+}
+
+// ── Bookings ─────────────────────────────────────────────────────────────────
+
+const MECHANIC_COUNT = 2;
+
+function createBooking(data) {
+  const db = readDB();
+
+  // Auto-assign to whichever mechanic is free at this slot
+  const existing = db.bookings.filter(
+    b => b.date === data.date && b.time === data.time &&
+    (b.status === 'pending' || b.status === 'accepted')
+  );
+  const mechanic = existing.some(b => b.mechanic === 1) ? 2 : 1;
+
+  db.lastId += 1;
+  const booking = {
+    id: db.lastId,
+    ref: generateRef(db.lastId),
+    ...data,
+    mechanic,
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+    reminderSent: false
+  };
+  db.bookings.push(booking);
+  writeDB(db);
+  return booking;
+}
+
+function getAllBookings() {
+  return readDB().bookings;
+}
+
+function getBookingById(id) {
+  return readDB().bookings.find(b => b.id === parseInt(id));
+}
+
+function updateBookingStatus(id, status) {
+  const db = readDB();
+  const idx = db.bookings.findIndex(b => b.id === parseInt(id));
+  if (idx === -1) return null;
+  db.bookings[idx].status = status;
+  db.bookings[idx].updatedAt = new Date().toISOString();
+  if (status === 'cancelled') {
+    db.bookings[idx].contactStatus = 'needs-contact';
+  }
+  writeDB(db);
+  return db.bookings[idx];
+}
+
+function rescheduleBooking(id, newDate, newTime) {
+  const db = readDB();
+  const idx = db.bookings.findIndex(b => b.id === parseInt(id));
+  if (idx === -1) return null;
+  db.bookings[idx].date = newDate;
+  db.bookings[idx].time = newTime;
+  db.bookings[idx].status = 'accepted';
+  db.bookings[idx].contactStatus = null;
+  db.bookings[idx].reminderSent = false;
+  db.bookings[idx].updatedAt = new Date().toISOString();
+  writeDB(db);
+  return db.bookings[idx];
+}
+
+function updateContactStatus(id, contactStatus) {
+  const db = readDB();
+  const idx = db.bookings.findIndex(b => b.id === parseInt(id));
+  if (idx === -1) return null;
+  db.bookings[idx].contactStatus = contactStatus;
+  db.bookings[idx].updatedAt = new Date().toISOString();
+  writeDB(db);
+  return db.bookings[idx];
+}
+
+function markReminderSent(id) {
+  const db = readDB();
+  const idx = db.bookings.findIndex(b => b.id === parseInt(id));
+  if (idx !== -1) {
+    db.bookings[idx].reminderSent = true;
+    writeDB(db);
+  }
+}
+
+function getAcceptedBookingsDueForReminder() {
+  const db = readDB();
+  const now = new Date();
+  const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+  const windowStart = new Date(now.getTime() + 90 * 60 * 1000);
+  return db.bookings.filter(b => {
+    if (b.status !== 'accepted' || b.reminderSent) return false;
+    const apptTime = new Date(b.date + 'T' + b.time);
+    return apptTime >= windowStart && apptTime <= twoHoursFromNow;
+  });
+}
+
+// Returns all fully-booked + manually blocked 30-min slots for a given date
+// A slot is only fully booked when all mechanics (MECHANIC_COUNT) are taken
+function getBookedSlots(date) {
+  const db = readDB();
+
+  // Count active bookings per slot
+  const slotCounts = {};
+  db.bookings
+    .filter(b => b.date === date && (b.status === 'pending' || b.status === 'accepted'))
+    .forEach(b => { slotCounts[b.time] = (slotCounts[b.time] || 0) + 1; });
+
+  // Only mark slot as unavailable when all mechanics are booked
+  const bookingSlots = Object.keys(slotCounts).filter(s => slotCounts[s] >= MECHANIC_COUNT);
+
+  // Manual blocks always block the full slot (both mechanics)
+  const blockSlots = [];
+  (db.blocks || [])
+    .filter(bl => bl.date === date)
+    .forEach(bl => {
+      let [sh, sm] = bl.startTime.split(':').map(Number);
+      const [eh, em] = bl.endTime.split(':').map(Number);
+      while (sh * 60 + sm < eh * 60 + em) {
+        blockSlots.push(`${String(sh).padStart(2,'0')}:${String(sm).padStart(2,'0')}`);
+        sm += 30;
+        if (sm >= 60) { sh++; sm -= 60; }
+      }
+    });
+
+  return [...new Set([...bookingSlots, ...blockSlots])];
+}
+
+// ── Manual Blocks ─────────────────────────────────────────────────────────────
+
+function createBlock(data) {
+  const db = readDB();
+  const block = {
+    id: Date.now(),
+    date: data.date,
+    startTime: data.startTime,
+    endTime: data.endTime,
+    reason: data.reason || '',
+    customerName: data.customerName || '',
+    customerPhone: data.customerPhone || '',
+    vehicleModel: data.vehicleModel || '',
+    notes: data.notes || '',
+    createdAt: new Date().toISOString()
+  };
+  db.blocks.push(block);
+  writeDB(db);
+  return block;
+}
+
+function getAllBlocks() {
+  return readDB().blocks || [];
+}
+
+function deleteBlock(id) {
+  const db = readDB();
+  const idx = db.blocks.findIndex(b => b.id === parseInt(id));
+  if (idx === -1) return false;
+  db.blocks.splice(idx, 1);
+  writeDB(db);
+  return true;
+}
+
+// ── Opening Hours ─────────────────────────────────────────────────────────────
+// Stored as an object keyed by day index (0=Sun … 6=Sat)
+// Each day: { closed: bool, ranges: [['HH:MM','HH:MM'], ...] }
+
+const DEFAULT_HOURS = {
+  0: { closed: true,  ranges: [] },                                   // Sunday
+  1: { closed: false, ranges: [['08:30','12:30'],['14:00','17:00']] }, // Monday
+  2: { closed: false, ranges: [['08:30','12:30'],['14:00','17:00']] }, // Tuesday
+  3: { closed: false, ranges: [['08:30','12:30']] },                   // Wednesday
+  4: { closed: false, ranges: [['08:30','12:30'],['14:00','17:00']] }, // Thursday
+  5: { closed: false, ranges: [['08:30','12:30'],['14:00','17:00']] }, // Friday
+  6: { closed: false, ranges: [['09:00','12:30']] }                    // Saturday
+};
+
+function getHours() {
+  const db = readDB();
+  return db.hours || DEFAULT_HOURS;
+}
+
+function saveHours(hours) {
+  const db = readDB();
+  db.hours = hours;
+  writeDB(db);
+}
+
+// ── Vehicles ──────────────────────────────────────────────────────────────────
+
+function importVehicles(rows) {
+  // rows: array of { regNo, frameNo, engineNo, model, manufacturer, description, year }
+  // Upserts by regNo (normalised to uppercase, no spaces)
+  const db = readDB();
+  let added = 0, updated = 0;
+  for (const row of rows) {
+    const regNo = (row.regNo || '').toString().toUpperCase().replace(/\s/g, '');
+    if (!regNo) continue;
+    const idx = db.vehicles.findIndex(v => v.regNo === regNo);
+    const record = {
+      regNo,
+      frameNo:      (row.frameNo || '').toString().trim(),
+      engineNo:     (row.engineNo || '').toString().trim(),
+      model:        (row.model || '').toString().trim(),
+      manufacturer: (row.manufacturer || '').toString().trim(),
+      description:  (row.description || '').toString().trim(),
+      year:         (row.year || '').toString().trim(),
+      updatedAt:    new Date().toISOString()
+    };
+    if (idx === -1) {
+      record.createdAt = new Date().toISOString();
+      db.vehicles.push(record);
+      added++;
+    } else {
+      db.vehicles[idx] = { ...db.vehicles[idx], ...record };
+      updated++;
+    }
+  }
+  writeDB(db);
+  return { added, updated, total: db.vehicles.length };
+}
+
+function getVehicleByPlate(regNo) {
+  const key = (regNo || '').toString().toUpperCase().replace(/\s/g, '');
+  return readDB().vehicles.find(v => v.regNo === key) || null;
+}
+
+function getAllVehicles() {
+  return readDB().vehicles;
+}
+
+// ── Partners ──────────────────────────────────────────────────────────────────
+
+function createPartner(data) {
+  const db = readDB();
+  const partner = {
+    id: Date.now(),
+    username:     data.username.toLowerCase().trim(),
+    passwordHash: data.passwordHash,
+    workshopName: data.workshopName.trim(),
+    phone:        data.phone || '',
+    active:       true,
+    createdAt:    new Date().toISOString()
+  };
+  db.partners.push(partner);
+  writeDB(db);
+  return partner;
+}
+
+function getPartnerByUsername(username) {
+  const key = (username || '').toLowerCase().trim();
+  return readDB().partners.find(p => p.username === key) || null;
+}
+
+function getAllPartners() {
+  return readDB().partners;
+}
+
+function togglePartnerActive(id) {
+  const db = readDB();
+  const idx = db.partners.findIndex(p => p.id === parseInt(id));
+  if (idx === -1) return null;
+  db.partners[idx].active = !db.partners[idx].active;
+  writeDB(db);
+  return db.partners[idx];
+}
+
+// ── Service History ───────────────────────────────────────────────────────────
+
+// Placeholder checklist — will be replaced with Nikolas's official list
+const DEFAULT_SERVICE_ITEMS = [
+  'Oil Change',
+  'Oil Filter',
+  'Air Filter',
+  'Spark Plug(s)',
+  'Front Tyre',
+  'Rear Tyre',
+  'Front Brake Pads',
+  'Rear Brake Pads',
+  'Chain & Sprocket Kit',
+  'Drive Belt',
+  'Coolant Change',
+  'Brake Fluid Change',
+  'Fork Oil',
+  'Battery',
+  'Small Service',
+  'Big Service'
+];
+
+function createServiceEntry(data) {
+  // data: { regNo, km, items[], notes, partnerId, partnerName, loggedByAdmin }
+  const db = readDB();
+  const entry = {
+    id:           Date.now(),
+    regNo:        (data.regNo || '').toString().toUpperCase().replace(/\s/g, ''),
+    date:         data.date || new Date().toISOString().split('T')[0],
+    km:           parseInt(data.km) || 0,
+    items:        Array.isArray(data.items) ? data.items : [],
+    notes:        data.notes || '',
+    partnerId:    data.partnerId || null,
+    partnerName:  data.partnerName || 'Motowarehouse',
+    loggedByAdmin: data.loggedByAdmin || false,
+    createdAt:    new Date().toISOString()
+  };
+  db.serviceHistory.push(entry);
+  writeDB(db);
+  return entry;
+}
+
+function getServiceHistoryByPlate(regNo) {
+  const key = (regNo || '').toString().toUpperCase().replace(/\s/g, '');
+  return readDB().serviceHistory
+    .filter(e => e.regNo === key)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+}
+
+module.exports = {
+  createBooking, getAllBookings, getBookingById,
+  updateBookingStatus, rescheduleBooking, updateContactStatus,
+  markReminderSent, getAcceptedBookingsDueForReminder, getBookedSlots,
+  createBlock, getAllBlocks, deleteBlock,
+  getHours, saveHours, DEFAULT_HOURS,
+  importVehicles, getVehicleByPlate, getAllVehicles,
+  createPartner, getPartnerByUsername, getAllPartners, togglePartnerActive,
+  createServiceEntry, getServiceHistoryByPlate, DEFAULT_SERVICE_ITEMS
+};
