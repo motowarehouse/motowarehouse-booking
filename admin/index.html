@@ -364,15 +364,15 @@
             <div class="block-form-grid" style="margin-bottom:12px;">
               <div class="form-group">
                 <label>Date *</label>
-                <input type="date" class="admin-input" id="block-date">
+                <input type="date" class="admin-input" id="block-date" onchange="populateBlockTimes()">
               </div>
               <div class="form-group">
                 <label>From *</label>
-                <input type="time" class="admin-input" id="block-start" step="1800">
+                <select class="admin-input" id="block-start"><option value="">— select —</option></select>
               </div>
               <div class="form-group">
                 <label>To *</label>
-                <input type="time" class="admin-input" id="block-end" step="1800">
+                <select class="admin-input" id="block-end"><option value="">— select —</option></select>
               </div>
               <div class="form-group">
                 <label>Customer Name</label>
@@ -725,6 +725,7 @@
   function initApp() {
     document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
     document.getElementById('block-date').value = new Date().toISOString().split('T')[0];
+    populateBlockTimes();
     const rd = document.getElementById('reschedule-date');
     const today = new Date().toISOString().split('T')[0];
     const maxD = new Date(); maxD.setDate(maxD.getDate() + 90);
@@ -2152,6 +2153,67 @@
         </div>` : ''}
       </div>
     `).join('');
+  }
+
+  // Opening hours per day: [{ from: 'HH:MM', to: 'HH:MM' }, ...]
+  // 0=Sun,1=Mon,2=Tue,3=Wed,4=Thu,5=Fri,6=Sat
+  const OPENING_HOURS = {
+    0: [],                                                          // Sunday — closed
+    1: [{ from:'08:30', to:'13:00' }, { from:'14:00', to:'17:30' }],
+    2: [{ from:'08:30', to:'13:00' }, { from:'14:00', to:'17:30' }],
+    3: [{ from:'08:30', to:'13:00' }],                             // Wednesday — morning only
+    4: [{ from:'08:30', to:'13:00' }, { from:'14:00', to:'17:30' }],
+    5: [{ from:'08:30', to:'13:00' }, { from:'14:00', to:'17:30' }],
+    6: [{ from:'09:00', to:'13:00' }],                             // Saturday
+  };
+
+  function populateBlockTimes() {
+    const dateVal = document.getElementById('block-date').value;
+    const startSel = document.getElementById('block-start');
+    const endSel   = document.getElementById('block-end');
+    startSel.innerHTML = '<option value="">— select —</option>';
+    endSel.innerHTML   = '<option value="">— select —</option>';
+    if (!dateVal) return;
+    const dow = new Date(dateVal + 'T12:00:00').getDay();
+    const periods = OPENING_HOURS[dow] || [];
+    if (!periods.length) {
+      startSel.innerHTML = '<option value="">Closed this day</option>';
+      endSel.innerHTML   = '<option value="">Closed this day</option>';
+      return;
+    }
+    // Build list of 30-min slots
+    const slots = [];
+    periods.forEach(({ from, to }) => {
+      let [h, m] = from.split(':').map(Number);
+      const [eh, em] = to.split(':').map(Number);
+      while (h * 60 + m <= eh * 60 + em) {
+        slots.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
+        m += 30;
+        if (m >= 60) { h++; m -= 60; }
+      }
+    });
+    // "From" = all slots except last (nothing after the last slot)
+    slots.slice(0, -1).forEach(s => startSel.innerHTML += `<option value="${s}">${s}</option>`);
+    // "To" = all slots except first
+    slots.slice(1).forEach(s => endSel.innerHTML += `<option value="${s}">${s}</option>`);
+    // Auto-select a sensible default
+    startSel.value = slots[0];
+    endSel.value   = slots[1] || slots[0];
+    // Update "to" options to only show times after "from"
+    startSel.addEventListener('change', syncBlockEndTimes, { once: false });
+  }
+
+  function syncBlockEndTimes() {
+    const startVal = document.getElementById('block-start').value;
+    const endSel   = document.getElementById('block-end');
+    const current  = endSel.value;
+    Array.from(endSel.options).forEach(o => {
+      o.disabled = o.value && o.value <= startVal;
+    });
+    if (endSel.value <= startVal) {
+      const first = Array.from(endSel.options).find(o => o.value > startVal);
+      if (first) endSel.value = first.value;
+    }
   }
 
   async function createBlock() {
