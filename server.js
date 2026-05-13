@@ -256,6 +256,25 @@ app.post('/api/admin/bookings/:id/cancel', requireAdmin, async (req, res) => {
   res.json({ success: true, booking });
 });
 
+// Complete a booking and write service history
+app.post('/api/admin/bookings/:id/complete', requireAdmin, (req, res) => {
+  const { regNo, km, items, notes, date } = req.body;
+  if (!km) return res.status(400).json({ error: 'KM reading is required.' });
+
+  const result = db.completeBooking(req.params.id, { regNo, km, items, notes, date });
+  if (!result) return res.status(404).json({ error: 'Booking not found' });
+
+  res.json({ success: true, booking: result.booking, serviceEntry: result.serviceEntry });
+});
+
+// Mark booking as no-show
+app.post('/api/admin/bookings/:id/no-show', requireAdmin, (req, res) => {
+  const booking = db.markNoShow(req.params.id);
+  if (!booking) return res.status(404).json({ error: 'Booking not found' });
+
+  res.json({ success: true, booking });
+});
+
 // Get all blocks
 app.get('/api/admin/blocks', requireAdmin, (req, res) => {
   const blocks = db.getAllBlocks().sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));

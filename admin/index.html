@@ -60,8 +60,9 @@
     .content { padding:24px 28px; }
 
     /* ── STATS ── */
-    .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
-    @media (max-width:900px) { .stats-grid { grid-template-columns:repeat(2,1fr); } }
+    .stats-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:24px; }
+    @media (max-width:1100px) { .stats-grid { grid-template-columns:repeat(3,1fr); } }
+    @media (max-width:700px)  { .stats-grid { grid-template-columns:repeat(2,1fr); } }
     .stat-card { background:var(--dark2); border:1px solid rgba(0,155,180,0.12); border-radius:8px; padding:18px; }
     .stat-label { font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--grey); margin-bottom:6px; }
     .stat-value { font-size:30px; font-weight:900; line-height:1; }
@@ -74,9 +75,11 @@
     .bookings-list { display:flex; flex-direction:column; gap:10px; }
     .booking-card { background:var(--dark2); border:1px solid rgba(0,155,180,0.12); border-radius:8px; overflow:hidden; transition:border-color 0.2s; }
     .booking-card:hover { border-color:rgba(0,155,180,0.3); }
-    .booking-card.pending  { border-left:3px solid var(--orange); }
-    .booking-card.accepted { border-left:3px solid var(--green); }
+    .booking-card.pending   { border-left:3px solid var(--orange); }
+    .booking-card.accepted  { border-left:3px solid var(--green); }
     .booking-card.cancelled { border-left:3px solid var(--red); }
+    .booking-card.completed { border-left:3px solid #00b882; }
+    .booking-card.no-show   { border-left:3px solid #4a5a6a; opacity:0.85; }
     .booking-card.phone    { border-left:3px solid var(--purple); }
     .booking-header { padding:13px 18px; display:flex; align-items:center; gap:12px; cursor:pointer; }
     .booking-ref { font-size:12px; font-weight:700; color:var(--blue); min-width:74px; }
@@ -92,6 +95,10 @@
     .btn-quick-cancel:hover { background:rgba(229,0,82,0.25); }
     .btn-quick-reschedule { background:rgba(0,155,180,0.12); color:var(--blue); border:1px solid rgba(0,155,180,0.3); font-size:12px; }
     .btn-quick-reschedule:hover { background:rgba(0,155,180,0.25); }
+    .btn-quick-complete { background:rgba(0,180,130,0.15); color:#00c896; border:1px solid rgba(0,180,130,0.3); font-size:12px; }
+    .btn-quick-complete:hover { background:rgba(0,180,130,0.3); }
+    .btn-quick-noshow { background:rgba(100,110,130,0.1); color:#7a8fa0; border:1px solid rgba(100,110,130,0.2); font-size:11px; }
+    .btn-quick-noshow:hover { background:rgba(100,110,130,0.2); }
     .booking-service { font-size:11px; padding:3px 9px; border-radius:12px; font-weight:500; white-space:nowrap; }
     .service-small-service { background:rgba(0,200,150,0.12); color:var(--green); }
     .service-full-service  { background:rgba(145,192,29,0.12); color:#91C01D; }
@@ -101,6 +108,8 @@
     .status-pending { background:rgba(245,158,11,0.15); color:var(--orange); }
     .status-accepted { background:rgba(0,200,150,0.15); color:var(--green); }
     .status-cancelled { background:rgba(229,0,82,0.12); color:var(--red); }
+    .status-completed { background:rgba(0,180,130,0.15); color:#00b882; }
+    .status-no-show   { background:rgba(100,110,130,0.15); color:#7a8fa0; }
     .mechanic-badge { font-size:10px; font-weight:700; letter-spacing:0.06em; padding:3px 8px; border-radius:4px; white-space:nowrap; }
     .mechanic-1 { background:rgba(167,139,250,0.15); color:var(--purple); }
     .mechanic-2 { background:rgba(0,239,209,0.12); color:var(--teal); }
@@ -121,6 +130,10 @@
     .btn-cancel-booking { background:none; border:1px solid rgba(229,0,82,0.4); border-radius:6px; color:var(--red); cursor:pointer; font-family:'SupremeLL',Arial,sans-serif; font-size:13px; font-weight:700; letter-spacing:0.06em; padding:9px 18px; text-transform:uppercase; transition:all 0.2s; white-space:nowrap; }
     .btn-cancel-booking:hover { background:rgba(229,0,82,0.1); }
     .btn-cancel-booking:disabled { opacity:0.4; cursor:not-allowed; }
+    .btn-complete { background:rgba(0,180,130,0.2); border:1px solid rgba(0,180,130,0.5); border-radius:6px; color:#00c896; cursor:pointer; font-family:'SupremeLL',Arial,sans-serif; font-size:13px; font-weight:700; letter-spacing:0.06em; padding:9px 18px; text-transform:uppercase; transition:all 0.2s; white-space:nowrap; }
+    .btn-complete:hover { background:rgba(0,180,130,0.32); }
+    .btn-no-show { background:none; border:1px solid rgba(100,110,130,0.35); border-radius:6px; color:#7a8fa0; cursor:pointer; font-family:'SupremeLL',Arial,sans-serif; font-size:13px; font-weight:700; letter-spacing:0.06em; padding:9px 18px; text-transform:uppercase; transition:all 0.2s; white-space:nowrap; }
+    .btn-no-show:hover { background:rgba(100,110,130,0.12); }
 
     /* ── CONTACT STATUS BADGES ── */
     .contact-badge { font-size:11px; font-weight:700; letter-spacing:0.06em; padding:3px 9px; border-radius:4px; }
@@ -158,7 +171,9 @@
     .cal-dot.pending  { background:var(--orange); }
     .cal-dot.accepted { background:var(--green); }
     .cal-dot.phone    { background:var(--purple); }
-    .cal-dot.cancelled { background:var(--red); opacity:0.5; }
+    .cal-dot.cancelled  { background:var(--red); opacity:0.5; }
+    .cal-dot.completed  { background:#00b882; opacity:0.7; }
+    .cal-dot.no-show    { background:#4a5a6a; }
     .cal-count { font-size:10px; color:var(--grey); margin-top:3px; }
     .cal-day-detail { background:var(--dark2); border:1px solid rgba(0,155,180,0.2); border-radius:8px; padding:20px; margin-top:16px; }
     .cal-day-detail h4 { font-size:14px; font-weight:700; color:var(--blue); margin-bottom:14px; }
@@ -364,6 +379,7 @@
         <div class="stats-grid" id="stats-grid">
           <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value pending" id="stat-pending">–</div></div>
           <div class="stat-card"><div class="stat-label">Accepted</div><div class="stat-value accepted" id="stat-accepted">–</div></div>
+          <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="color:#00b882;" id="stat-completed">–</div></div>
           <div class="stat-card"><div class="stat-label">Cancelled</div><div class="stat-value cancelled" id="stat-cancelled">–</div></div>
           <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value total" id="stat-total">–</div></div>
         </div>
@@ -853,6 +869,46 @@
   </div>
 </div>
 
+<!-- COMPLETE BOOKING MODAL -->
+<div class="modal-overlay hidden" id="complete-modal">
+  <div class="modal" style="max-width:600px;max-height:90vh;overflow-y:auto;">
+    <h3 style="color:#00c896;">✔ Mark as Completed</h3>
+    <div class="modal-sub" id="complete-modal-sub">Fill in the service details to log this appointment.</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0 14px;">
+      <div>
+        <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);margin-bottom:6px;">Plate / REG No *</label>
+        <input type="text" class="admin-input" id="complete-reg" placeholder="e.g. ABC123" style="text-transform:uppercase;">
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);margin-bottom:6px;">Service Date</label>
+        <input type="date" class="admin-input" id="complete-date">
+      </div>
+      <div style="grid-column:1/-1;">
+        <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);margin-bottom:6px;">KM Reading at Service *</label>
+        <input type="number" class="admin-input" id="complete-km" placeholder="e.g. 12500" min="0" style="max-width:200px;">
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);margin-bottom:10px;">Work Carried Out</label>
+      <div id="complete-checklist"></div>
+    </div>
+
+    <div style="margin-bottom:4px;">
+      <label style="display:block;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);margin-bottom:6px;">Notes / Other Parts</label>
+      <textarea class="admin-input" id="complete-notes" style="resize:vertical;min-height:70px;" placeholder="Anything not in the list above…"></textarea>
+    </div>
+
+    <div id="complete-msg" style="display:none;font-size:13px;margin:10px 0;padding:10px 14px;border-radius:7px;"></div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeCompleteModal()">Cancel</button>
+      <button class="btn-complete" id="complete-save-btn" onclick="submitComplete()" style="padding:10px 22px;">✔ Save & Complete</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -940,12 +996,14 @@
     const pending      = allBookings.filter(b => b.status === 'pending' && b.contactStatus !== 'needs-call').length;
     const needsCall    = allBookings.filter(b => b.status === 'pending' && b.contactStatus === 'needs-call').length;
     const accepted     = allBookings.filter(b => b.status === 'accepted').length;
+    const completed    = allBookings.filter(b => b.status === 'completed').length;
     const cancelled    = allBookings.filter(b => b.status === 'cancelled').length;
     const needsContact = allBookings.filter(b => b.status === 'cancelled' && b.contactStatus === 'needs-contact').length;
-    document.getElementById('stat-pending').textContent   = pending;
-    document.getElementById('stat-accepted').textContent  = accepted;
-    document.getElementById('stat-cancelled').textContent = cancelled;
-    document.getElementById('stat-total').textContent     = allBookings.length + allBlocks.length;
+    document.getElementById('stat-pending').textContent    = pending;
+    document.getElementById('stat-accepted').textContent   = accepted;
+    document.getElementById('stat-completed').textContent  = completed;
+    document.getElementById('stat-cancelled').textContent  = cancelled;
+    document.getElementById('stat-total').textContent      = allBookings.length + allBlocks.length;
     document.getElementById('badge-all').textContent      = allBookings.length + allBlocks.length;
     document.getElementById('badge-pending').textContent  = pending + needsCall;
     const ncBadge = document.getElementById('badge-needs-contact');
@@ -956,7 +1014,7 @@
   // ── VIEWS ──────────────────────────────────────────────────────────────
   const VIEW_TITLES = {
     all:'All Bookings', pending:'Pending', accepted:'Accepted',
-    cancelled:'Cancelled', today:"Today's Schedule",
+    cancelled:'Closed (Completed / No Show / Cancelled)', today:"Today's Schedule",
     calendar:'Calendar', schedule:'Block Time', hours:'Opening Hours',
     vehicles:'Vehicles', partners:'Partners', warranty:'Warranty Inbox',
     help:'User Manual'
@@ -1794,7 +1852,10 @@
   function toggleCancelled() {
     showCancelled = !showCancelled;
     const btn = document.getElementById('toggle-cancelled-btn');
-    btn.textContent = showCancelled ? 'Hide Cancelled' : `Show Cancelled (${allBookings.filter(b => b.status === 'cancelled').length})`;
+    if (btn) {
+      const closedCount = allBookings.filter(b => b.status === 'cancelled' || b.status === 'completed' || b.status === 'no-show').length;
+      btn.textContent = showCancelled ? 'Hide Closed' : `Show Closed (${closedCount})`;
+    }
     renderBookings();
   }
 
@@ -1824,9 +1885,9 @@
     }
     if (currentView === 'accepted') filtered = allBookings.filter(b => b.status === 'accepted');
 
-    // In "all" view, hide cancelled by default
+    // In "all" view, hide closed statuses (cancelled / completed / no-show) by default
     if (currentView === 'all' && !showCancelled) {
-      filtered = allBookings.filter(b => b.status !== 'cancelled');
+      filtered = allBookings.filter(b => b.status !== 'cancelled' && b.status !== 'completed' && b.status !== 'no-show');
     }
 
     let items = filtered.map(b => ({ ...b, _type:'booking', _sortKey: b.date + 'T' + b.time }));
@@ -1844,12 +1905,12 @@
 
     const list = document.getElementById('bookings-list');
 
-    const cancelledCount = allBookings.filter(b => b.status === 'cancelled').length;
-    const toggleHtml = currentView === 'all' && cancelledCount > 0 ? `
+    const closedCount = allBookings.filter(b => b.status === 'cancelled' || b.status === 'completed' || b.status === 'no-show').length;
+    const toggleHtml = currentView === 'all' && closedCount > 0 ? `
       <div style="text-align:center;padding:16px 0 4px;">
         <button id="toggle-cancelled-btn" onclick="toggleCancelled()"
           style="background:transparent;border:1px solid rgba(255,255,255,0.1);color:var(--grey);font-size:12px;padding:7px 16px;border-radius:6px;cursor:pointer;font-family:inherit;">
-          ${showCancelled ? 'Hide Cancelled' : `Show Cancelled (${cancelledCount})`}
+          ${showCancelled ? 'Hide Closed' : `Show Closed (${closedCount})`}
         </button>
       </div>` : '';
 
@@ -1860,39 +1921,123 @@
     list.innerHTML = items.map(item => item._type === 'block' ? blockCard(item) : bookingCard(item)).join('') + toggleHtml;
   }
 
-  // ── CANCELLED VIEW ────────────────────────────────────────────────────
+  // ── CLOSED VIEW (Cancelled + Completed + No-Show) ────────────────────────────
   function renderCancelledView() {
     const el = document.getElementById('cancelled-view');
+
+    const completed = allBookings.filter(b => b.status === 'completed')
+      .sort((a, b) => new Date(b.completedAt || b.updatedAt) - new Date(a.completedAt || a.updatedAt));
+    const noShow    = allBookings.filter(b => b.status === 'no-show')
+      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
     const cancelled = allBookings.filter(b => b.status === 'cancelled')
       .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
 
-    if (cancelled.length === 0) {
-      el.innerHTML = `<div class="empty-state"><div class="icon" style="color:var(--green);">✓</div><p>No cancelled bookings.</p></div>`;
+    if (!completed.length && !noShow.length && !cancelled.length) {
+      el.innerHTML = `<div class="empty-state"><div class="icon" style="color:var(--green);">✓</div><p>Nothing here yet.</p></div>`;
       return;
     }
 
-    const needsContact = cancelled.filter(b => b.contactStatus === 'needs-contact');
-    const contacted    = cancelled.filter(b => b.contactStatus === 'contacted');
-    const closed       = cancelled.filter(b => b.contactStatus === 'closed' || !b.contactStatus);
-
     let html = '';
 
-    if (needsContact.length > 0) {
-      html += `<div class="section-divider">🔴 Needs to be contacted (${needsContact.length})</div>`;
-      html += `<div class="bookings-list" style="margin-bottom:20px;">${needsContact.map(b => cancelledCard(b)).join('')}</div>`;
+    // ── Completed section ──────────────────────────────────────────────────────
+    if (completed.length > 0) {
+      html += `<div class="section-divider" style="color:#00b882;border-color:rgba(0,180,130,0.25);">✔ Completed (${completed.length})</div>`;
+      html += `<div class="bookings-list" style="margin-bottom:20px;">${completed.map(b => completedCard(b)).join('')}</div>`;
     }
 
-    if (contacted.length > 0) {
-      html += `<div class="section-divider">🔵 Contacted – awaiting action (${contacted.length})</div>`;
-      html += `<div class="bookings-list" style="margin-bottom:20px;">${contacted.map(b => cancelledCard(b)).join('')}</div>`;
+    // ── No-show section ────────────────────────────────────────────────────────
+    if (noShow.length > 0) {
+      html += `<div class="section-divider" style="color:#7a8fa0;border-color:rgba(100,110,130,0.25);">— No Show (${noShow.length})</div>`;
+      html += `<div class="bookings-list" style="margin-bottom:20px;">${noShow.map(b => noShowCard(b)).join('')}</div>`;
     }
 
-    if (closed.length > 0) {
-      html += `<div class="section-divider">Closed / Handled (${closed.length})</div>`;
-      html += `<div class="bookings-list">${closed.map(b => cancelledCard(b)).join('')}</div>`;
+    // ── Cancelled section ──────────────────────────────────────────────────────
+    if (cancelled.length > 0) {
+      const needsContact = cancelled.filter(b => b.contactStatus === 'needs-contact');
+      const contacted    = cancelled.filter(b => b.contactStatus === 'contacted');
+      const closed       = cancelled.filter(b => b.contactStatus === 'closed' || !b.contactStatus);
+
+      if (needsContact.length > 0) {
+        html += `<div class="section-divider">🔴 Needs to be contacted (${needsContact.length})</div>`;
+        html += `<div class="bookings-list" style="margin-bottom:20px;">${needsContact.map(b => cancelledCard(b)).join('')}</div>`;
+      }
+      if (contacted.length > 0) {
+        html += `<div class="section-divider">🔵 Contacted – awaiting action (${contacted.length})</div>`;
+        html += `<div class="bookings-list" style="margin-bottom:20px;">${contacted.map(b => cancelledCard(b)).join('')}</div>`;
+      }
+      if (closed.length > 0) {
+        html += `<div class="section-divider">Cancelled – Closed (${closed.length})</div>`;
+        html += `<div class="bookings-list">${closed.map(b => cancelledCard(b)).join('')}</div>`;
+      }
     }
 
     el.innerHTML = html;
+  }
+
+  // ── COMPLETED CARD ─────────────────────────────────────────────────────────
+  function completedCard(b) {
+    const isExpanded = expandedId === b.id;
+    const regDisplay = b.serviceRegNo || b.plate;
+    return `
+      <div class="booking-card completed" id="card-${b.id}">
+        <div class="booking-header" onclick="toggleExpand(${b.id})">
+          <div class="booking-ref">${b.ref}</div>
+          <div class="booking-name-col">
+            <div class="booking-name">${b.name}</div>
+            <div class="booking-phone-row">${b.phone}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
+            <span class="booking-service service-${b.serviceType}">${SVC[b.serviceType] || b.serviceType}</span>
+            ${b.mechanic ? `<span class="mechanic-badge mechanic-${b.mechanic}">M${b.mechanic}</span>` : ''}
+            <span class="status-badge status-completed">Completed</span>
+          </div>
+          <div class="booking-datetime">${b.date || '—'}<br>${b.time || '—'}</div>
+        </div>
+        <div class="booking-detail ${isExpanded ? 'open' : ''}" id="detail-${b.id}">
+          <div class="detail-grid">
+            <div class="detail-item"><label>Plate</label><span>${regDisplay}</span></div>
+            <div class="detail-item"><label>Model</label><span>${b.model}</span></div>
+            <div class="detail-item"><label>Year</label><span>${b.year}</span></div>
+            <div class="detail-item"><label>KM at Service</label><span>${b.serviceKm ? Number(b.serviceKm).toLocaleString() + ' km' : '—'}</span></div>
+            <div class="detail-item"><label>Completed</label><span>${b.completedAt ? new Date(b.completedAt).toLocaleString('en-GB') : '—'}</span></div>
+          </div>
+          <div style="background:rgba(0,180,130,0.07);border:1px solid rgba(0,180,130,0.2);border-radius:8px;padding:11px 14px;font-size:12px;color:#00b882;margin-top:8px;">
+            ✔ Service logged to vehicle history.
+            <button onclick="loadVehicleDetail('${regDisplay}');setView('vehicles');" style="background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline;padding:0;margin-left:8px;">View History →</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // ── NO-SHOW CARD ───────────────────────────────────────────────────────────
+  function noShowCard(b) {
+    const isExpanded = expandedId === b.id;
+    return `
+      <div class="booking-card no-show" id="card-${b.id}">
+        <div class="booking-header" onclick="toggleExpand(${b.id})">
+          <div class="booking-ref">${b.ref}</div>
+          <div class="booking-name-col">
+            <div class="booking-name">${b.name}</div>
+            <div class="booking-phone-row">${b.phone}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
+            <span class="booking-service service-${b.serviceType}">${SVC[b.serviceType] || b.serviceType}</span>
+            <span class="status-badge status-no-show">No Show</span>
+          </div>
+          <div class="booking-datetime">${b.date || '—'}<br>${b.time || '—'}</div>
+        </div>
+        <div class="booking-detail ${isExpanded ? 'open' : ''}" id="detail-${b.id}">
+          <div class="detail-grid">
+            <div class="detail-item"><label>Plate</label><span>${b.plate}</span></div>
+            <div class="detail-item"><label>Model</label><span>${b.model}</span></div>
+            <div class="detail-item"><label>Year</label><span>${b.year}</span></div>
+            <div class="detail-item"><label>Marked</label><span>${b.updatedAt ? new Date(b.updatedAt).toLocaleString('en-GB') : '—'}</span></div>
+          </div>
+          <div class="action-row">
+            <button class="btn-reschedule" onclick="openRescheduleModal(${b.id}, event)">↺ Reschedule</button>
+          </div>
+        </div>
+      </div>`;
   }
 
   function cancelledCard(b) {
@@ -1974,7 +2119,9 @@
         <button class="btn-quick btn-quick-cancel" title="Cancel" onclick="cancelBooking(${b.id}, event)">✕</button>
       </div>`) : b.status === 'accepted' ? `
       <div class="quick-actions" onclick="event.stopPropagation()">
+        <button class="btn-quick btn-quick-complete" title="Mark Complete" onclick="openCompleteModal(${b.id}, event)">✔</button>
         <button class="btn-quick btn-quick-reschedule" title="Reschedule" onclick="openRescheduleModal(${b.id}, event)">↺</button>
+        <button class="btn-quick btn-quick-noshow" title="No Show" onclick="noShowBooking(${b.id}, event)">—</button>
         <button class="btn-quick btn-quick-cancel" title="Cancel" onclick="cancelBooking(${b.id}, event)">✕</button>
       </div>` : '';
 
@@ -1997,9 +2144,18 @@
       </div>`;
     } else if (b.status === 'accepted') {
       actions = `<div class="action-row">
+        <button class="btn-complete" onclick="openCompleteModal(${b.id}, event)">✔ Mark as Completed</button>
         <button class="btn-reschedule" onclick="openRescheduleModal(${b.id}, event)">↺ Reschedule</button>
-        <button class="btn-cancel-booking" onclick="cancelBooking(${b.id}, event)">✕ Cancel This Booking</button>
+        <button class="btn-no-show" onclick="noShowBooking(${b.id}, event)">— No Show</button>
+        <button class="btn-cancel-booking" onclick="cancelBooking(${b.id}, event)">✕ Cancel</button>
       </div>`;
+    } else if (b.status === 'completed') {
+      actions = `<div style="background:rgba(0,180,130,0.07);border:1px solid rgba(0,180,130,0.2);border-radius:8px;padding:11px 14px;font-size:12px;color:#00b882;">
+        ✔ Completed on ${b.completedAt ? new Date(b.completedAt).toLocaleDateString('en-GB') : b.date}${b.serviceKm ? ' · ' + Number(b.serviceKm).toLocaleString() + ' km' : ''}
+        ${b.serviceRegNo && b.serviceRegNo !== b.plate ? ` · REG: ${b.serviceRegNo}` : ''}
+      </div>`;
+    } else if (b.status === 'no-show') {
+      actions = `<div style="font-size:12px;color:#7a8fa0;">Customer did not show. Marked ${b.updatedAt ? new Date(b.updatedAt).toLocaleDateString('en-GB') : '—'}</div>`;
     } else {
       actions = `<div style="font-size:12px;color:var(--grey);">Cancelled: ${b.updatedAt ? new Date(b.updatedAt).toLocaleString('en-GB') : '—'}</div>`;
     }
@@ -2117,13 +2273,16 @@
           </div>
           <span class="status-badge status-phone">Phone</span>
         </div>` : `
-        <div class="today-slot">
+        <div class="today-slot" style="${item.status==='completed'?'opacity:0.75;':item.status==='no-show'?'opacity:0.55;':''}">
           <div class="today-time">${item.time}</div>
           <div class="today-info">
             <div class="today-name">${item.name}</div>
             <div class="today-vehicle">${item.year} ${item.model} · ${item.plate} · ${SVC[item.serviceType]}</div>
           </div>
-          <div style="font-size:13px;color:var(--grey);">${item.phone}</div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+            <span class="status-badge status-${item.status}">${item.status}</span>
+            <div style="font-size:12px;color:var(--grey);">${item.phone}</div>
+          </div>
         </div>`
       ).join('')}`;
   }
@@ -2258,6 +2417,130 @@
       showToast(labels[status] || 'Updated.', 'success');
       await loadBookings();
     } else { showToast('Error updating status.', 'error'); }
+  }
+
+  // ── COMPLETE BOOKING MODAL ────────────────────────────────────────────
+  let completeBookingId = null;
+
+  async function openCompleteModal(id, e) {
+    e.stopPropagation();
+    completeBookingId = id;
+    const b = allBookings.find(b => b.id === id);
+    if (!b) return;
+
+    document.getElementById('complete-modal-sub').textContent =
+      `${b.name} — ${SVC[b.serviceType] || b.serviceType} — ${b.date} at ${b.time}`;
+    document.getElementById('complete-reg').value  = b.plate || '';
+    document.getElementById('complete-date').value = b.date  || new Date().toISOString().split('T')[0];
+    document.getElementById('complete-km').value   = '';
+    document.getElementById('complete-notes').value = '';
+    document.getElementById('complete-msg').style.display = 'none';
+    document.getElementById('complete-save-btn').disabled = false;
+
+    // Build checklist (reuses adminServiceItems already loaded)
+    if (!adminServiceItems.length) {
+      try { const r = await fetch('/api/service-items'); adminServiceItems = await r.json(); } catch(e) {}
+    }
+    buildCompleteChecklist();
+
+    document.getElementById('complete-modal').classList.remove('hidden');
+  }
+
+  function buildCompleteChecklist() {
+    const itemMap = {};
+    adminServiceItems.forEach(item => {
+      const key = (typeof item === 'object' ? item.en : item).toUpperCase();
+      itemMap[key] = typeof item === 'object' ? item : { en: item, el: item };
+    });
+    const cl = document.getElementById('complete-checklist');
+    cl.innerHTML = LOG_CATEGORIES.map(cat => {
+      const chips = cat.items.map(key => {
+        const item = itemMap[key];
+        if (!item) return '';
+        const label = `${item.en} <span style="color:rgba(255,255,255,0.35);font-size:10px;">/ ${item.el}</span>`;
+        return `<div class="check-item-admin" onclick="toggleChip(this)" data-item="${item.en}">${label}</div>`;
+      }).join('');
+      return `
+        <div style="margin-bottom:14px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue);margin-bottom:7px;padding-bottom:5px;border-bottom:1px solid rgba(0,155,180,0.15);">${cat.label}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">${chips}</div>
+        </div>`;
+    }).join('');
+  }
+
+  function closeCompleteModal() {
+    document.getElementById('complete-modal').classList.add('hidden');
+    completeBookingId = null;
+  }
+
+  async function submitComplete() {
+    const regNo = document.getElementById('complete-reg').value.trim().toUpperCase().replace(/\s/g, '');
+    const km    = parseInt(document.getElementById('complete-km').value);
+    const date  = document.getElementById('complete-date').value;
+    const notes = document.getElementById('complete-notes').value.trim();
+    const items = [...document.querySelectorAll('#complete-checklist .check-item-admin.sel')]
+                    .map(el => el.dataset.item);
+
+    const msgEl = document.getElementById('complete-msg');
+    if (!km || km < 0) {
+      msgEl.style.display = 'block';
+      msgEl.style.background = 'rgba(229,0,82,0.1)';
+      msgEl.style.color = 'var(--red)';
+      msgEl.style.border = '1px solid rgba(229,0,82,0.3)';
+      msgEl.textContent = 'Please enter the KM reading.';
+      return;
+    }
+    if (!regNo) {
+      msgEl.style.display = 'block';
+      msgEl.style.background = 'rgba(229,0,82,0.1)';
+      msgEl.style.color = 'var(--red)';
+      msgEl.style.border = '1px solid rgba(229,0,82,0.3)';
+      msgEl.textContent = 'Please enter the plate / REG number.';
+      return;
+    }
+
+    const btn = document.getElementById('complete-save-btn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+
+    try {
+      const res = await fetch(`/api/admin/bookings/${completeBookingId}/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ regNo, km, date, items, notes })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        closeCompleteModal();
+        showToast('Booking marked as completed. Service entry logged.', 'success');
+        await loadBookings();
+      } else {
+        msgEl.style.display = 'block';
+        msgEl.style.background = 'rgba(229,0,82,0.1)';
+        msgEl.style.color = 'var(--red)';
+        msgEl.style.border = '1px solid rgba(229,0,82,0.3)';
+        msgEl.textContent = data.error || 'Error saving. Please try again.';
+        btn.disabled = false;
+        btn.textContent = '✔ Save & Complete';
+      }
+    } catch(err) {
+      msgEl.style.display = 'block';
+      msgEl.textContent = 'Network error. Please try again.';
+      btn.disabled = false;
+      btn.textContent = '✔ Save & Complete';
+    }
+  }
+
+  async function noShowBooking(id, e) {
+    e.stopPropagation();
+    if (!confirm('Mark this booking as No Show? No service history will be created.')) return;
+    const btn = e.target; btn.disabled = true;
+    try {
+      const res = await fetch(`/api/admin/bookings/${id}/no-show`, { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) { showToast('Marked as No Show.', 'success'); await loadBookings(); }
+      else { showToast('Error: ' + (data.error || 'Unknown'), 'error'); btn.disabled = false; }
+    } catch(err) { showToast('Network error.', 'error'); btn.disabled = false; }
   }
 
   // ── RESCHEDULE MODAL ───────────────────────────────────────────────────

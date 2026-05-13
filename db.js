@@ -466,6 +466,54 @@ function updateWarrantyStatus(id, status, adminNotes) {
   return db.warrantyHistory[idx];
 }
 
+// ── Complete / No-Show ────────────────────────────────────────────────────────
+
+function completeBooking(id, serviceData) {
+  // Marks booking as 'completed' and writes a service history entry in one atomic write.
+  const db = readDB();
+  const idx = db.bookings.findIndex(b => b.id === parseInt(id));
+  if (idx === -1) return null;
+
+  const booking = db.bookings[idx];
+  const regNo = (serviceData.regNo || booking.plate || '').toString().toUpperCase().replace(/\s/g, '');
+
+  // Update booking
+  booking.status       = 'completed';
+  booking.completedAt  = new Date().toISOString();
+  booking.updatedAt    = new Date().toISOString();
+  booking.serviceKm    = parseInt(serviceData.km) || 0;
+  booking.serviceRegNo = regNo; // may differ from original plate if admin corrected it
+
+  // Build service history entry
+  const entry = {
+    id:            Date.now(),
+    regNo:         regNo,
+    date:          serviceData.date || booking.date,
+    km:            parseInt(serviceData.km) || 0,
+    items:         Array.isArray(serviceData.items) ? serviceData.items : [],
+    notes:         serviceData.notes || '',
+    partnerId:     null,
+    partnerName:   'Motowarehouse',
+    loggedByAdmin: true,
+    bookingRef:    booking.ref,
+    createdAt:     new Date().toISOString()
+  };
+
+  db.serviceHistory.push(entry);
+  writeDB(db);
+  return { booking: db.bookings[idx], serviceEntry: entry };
+}
+
+function markNoShow(id) {
+  const db = readDB();
+  const idx = db.bookings.findIndex(b => b.id === parseInt(id));
+  if (idx === -1) return null;
+  db.bookings[idx].status    = 'no-show';
+  db.bookings[idx].updatedAt = new Date().toISOString();
+  writeDB(db);
+  return db.bookings[idx];
+}
+
 function updatePartnerPassword(id, passwordHash) {
   const db = readDB();
   const idx = db.partners.findIndex(p => p.id === parseInt(id));
@@ -485,5 +533,6 @@ module.exports = {
   importVehicles, getVehicleByPlate, getAllVehicles,
   createPartner, getPartnerByUsername, getAllPartners, togglePartnerActive, updatePartnerPassword,
   createServiceEntry, updateServiceEntry, deleteServiceEntry, getServiceHistoryByPlate, DEFAULT_SERVICE_ITEMS,
+  completeBooking, markNoShow,
   createWarrantyClaim, getWarrantyByPlate, getAllWarranties, updateWarrantyStatus
 };
