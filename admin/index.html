@@ -417,6 +417,12 @@
 
         <!-- Bookings list view -->
         <div id="bookings-view">
+          <div id="search-bar-wrap" style="margin-bottom:14px;display:none;">
+            <input type="text" id="booking-search" class="admin-input"
+              placeholder="Search by name, phone, plate, or reference…"
+              oninput="renderBookings()"
+              style="max-width:440px;">
+          </div>
           <div class="bookings-list" id="bookings-list"></div>
         </div>
 
@@ -1078,6 +1084,11 @@
     const ids = ['bookings-view','cancelled-view','today-view','calendar-view','schedule-view','hours-view','vehicles-view','partners-view','warranty-view','help-view','workload-view'];
     ids.forEach(id => document.getElementById(id).style.display = 'none');
     document.getElementById('stats-grid').style.display = 'none';
+    // Show search bar only for booking list views
+    const searchWrap = document.getElementById('search-bar-wrap');
+    const showSearch = ['all','pending','accepted'].includes(currentView);
+    searchWrap.style.display = showSearch ? 'block' : 'none';
+    if (showSearch) { const s = document.getElementById('booking-search'); if(s) s.value = ''; }
 
     if (currentView === 'today') {
       document.getElementById('today-view').style.display = 'block';
@@ -1205,9 +1216,9 @@
         if (jobs.length) {
           html += `<div class="workload-jobs">`;
           jobs.forEach(b => {
-            const svc = b.service_type === 'small_service' ? 'Small Svc'
-                      : b.service_type === 'full_service'  ? 'Full Svc'
-                      : b.service_type === 'oil_change'    ? 'Oil'
+            const svc = b.service_type === 'small-service' ? 'Small Svc'
+                      : b.service_type === 'full-service'  ? 'Full Svc'
+                      : b.service_type === 'other'         ? 'Other'
                       : b.service_type || '—';
             html += `<div class="workload-job">
               <strong>${b.time || '—'} · ${b.plate || '—'}</strong>
@@ -2032,7 +2043,16 @@
   }
 
   function renderBookings() {
-    let filtered = allBookings;
+    // Apply search filter
+    const searchEl = document.getElementById('booking-search');
+    const q = searchEl ? searchEl.value.trim().toUpperCase() : '';
+    let filtered = q ? allBookings.filter(b =>
+      (b.name  || '').toUpperCase().includes(q) ||
+      (b.phone || '').replace(/\D/g,'').includes(q.replace(/\D/g,'')) ||
+      (b.plate || '').toUpperCase().includes(q) ||
+      (b.ref   || '').toUpperCase().includes(q) ||
+      (b.model || '').toUpperCase().includes(q)
+    ) : allBookings;
     if (currentView === 'pending') {
       // In pending view: show "Needs Call" section first, then regular pending
       const needsCall    = allBookings.filter(b => b.status === 'pending' && b.contactStatus === 'needs-call')
@@ -2125,10 +2145,15 @@
 
     // ── Cancelled section ──────────────────────────────────────────────────────
     if (cancelled.length > 0) {
-      const needsContact = cancelled.filter(b => b.contactStatus === 'needs-contact');
-      const contacted    = cancelled.filter(b => b.contactStatus === 'contacted');
-      const closed       = cancelled.filter(b => b.contactStatus === 'closed' || !b.contactStatus);
+      const selfCancelled = cancelled.filter(b => b.contactStatus === 'self-cancelled');
+      const needsContact  = cancelled.filter(b => b.contactStatus === 'needs-contact');
+      const contacted     = cancelled.filter(b => b.contactStatus === 'contacted');
+      const closed        = cancelled.filter(b => b.contactStatus === 'closed' || (!b.contactStatus && b.contactStatus !== 'self-cancelled'));
 
+      if (selfCancelled.length > 0) {
+        html += `<div class="section-divider" style="color:#f06292;border-color:rgba(240,98,146,0.25);">👤 Customer Self-Cancelled (${selfCancelled.length})</div>`;
+        html += `<div class="bookings-list" style="margin-bottom:20px;">${selfCancelled.map(b => cancelledCard(b)).join('')}</div>`;
+      }
       if (needsContact.length > 0) {
         html += `<div class="section-divider">🔴 Needs to be contacted (${needsContact.length})</div>`;
         html += `<div class="bookings-list" style="margin-bottom:20px;">${needsContact.map(b => cancelledCard(b)).join('')}</div>`;
@@ -2215,14 +2240,26 @@
   function cancelledCard(b) {
     const isExpanded = expandedId === b.id;
     const cs = b.contactStatus || 'closed';
-    const csBadge = cs === 'needs-contact'
+    const isSelfCancelled = cs === 'self-cancelled';
+
+    const csBadge = isSelfCancelled
+      ? `<span class="contact-badge" style="background:rgba(240,98,146,0.15);color:#f06292;border-color:rgba(240,98,146,0.3);">👤 Self-Cancelled</span>`
+      : cs === 'needs-contact'
       ? `<span class="contact-badge contact-needs">⚠ Needs Contact</span>`
       : cs === 'contacted'
       ? `<span class="contact-badge contact-contacted">Contacted</span>`
       : `<span class="contact-badge contact-closed">Closed</span>`;
 
     let actions = '';
-    if (cs === 'needs-contact') {
+    if (isSelfCancelled) {
+      actions = `
+        <div style="background:rgba(240,98,146,0.07);border:1px solid rgba(240,98,146,0.2);border-radius:8px;padding:11px 14px;font-size:12px;color:#f06292;margin-top:8px;">
+          👤 Cancelled by the customer via the self-service link. No action required.
+        </div>
+        <div class="action-row" style="margin-top:10px;">
+          <button class="btn-reschedule" onclick="openRescheduleModal(${b.id}, event)">↺ Rebook if they call back</button>
+        </div>`;
+    } else if (cs === 'needs-contact') {
       actions = `
         <div class="action-row">
           <button class="btn-contact-action" onclick="setContactStatus(${b.id}, 'contacted', event)">Mark as Contacted</button>

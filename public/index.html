@@ -1227,6 +1227,9 @@
         <button class="btn-submit" id="submit-btn" onclick="submitBooking()">
           Request Appointment
         </button>
+        <p style="font-size:11px;color:var(--grey);margin-top:12px;line-height:1.5;text-align:center;">
+          By submitting this form you agree that your contact details and vehicle information will be used solely to manage your service appointment. Motowarehouse Ltd will not share your data with third parties.
+        </p>
       </div>
 
     </div>
@@ -1242,10 +1245,34 @@
     <h2 style="font-size:28px;font-weight:900;margin-bottom:8px;">Booking Received</h2>
     <p style="color:var(--grey);margin-bottom:4px;">Your reference number is:</p>
     <div class="success-ref" id="success-ref">MW00001</div>
-    <p style="color:var(--grey);max-width:440px;margin:0 auto 32px;line-height:1.6;font-size:14px;">
-      We will review your appointment and confirm by email shortly.<br>
-      If you have any questions, call us on <strong style="color:var(--white);">22 328 788</strong>.
+
+    <!-- What happens next -->
+    <div style="background:var(--dark2);border:1px solid rgba(0,155,180,0.2);border-radius:10px;padding:20px 24px;max-width:460px;margin:24px auto;text-align:left;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue);margin-bottom:14px;">What happens next</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;gap:12px;align-items:flex-start;font-size:13px;color:var(--grey);line-height:1.5;">
+          <span style="background:var(--blue);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;flex-shrink:0;margin-top:1px;">1</span>
+          <span>We review your request — usually within a few hours during opening hours.</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;font-size:13px;color:var(--grey);line-height:1.5;">
+          <span style="background:var(--blue);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;flex-shrink:0;margin-top:1px;">2</span>
+          <span>You receive a <strong style="color:var(--white);">confirmation email and SMS</strong> with your appointment details.</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;font-size:13px;color:var(--grey);line-height:1.5;">
+          <span style="background:var(--blue);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;flex-shrink:0;margin-top:1px;">3</span>
+          <span>You'll also receive a <strong style="color:var(--white);">reminder</strong> approximately 2 hours before your appointment.</span>
+        </div>
+      </div>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);font-size:12px;color:var(--grey);">
+        If your preferred slot is unavailable, we'll contact you to reschedule.<br>
+        Questions? Call <strong style="color:var(--white);">22 328 788</strong> or email <strong style="color:var(--white);">info@motowarehouse.com.cy</strong>
+      </div>
+    </div>
+
+    <p id="cancel-link-note" style="font-size:12px;color:var(--grey);margin-bottom:28px;display:none;">
+      Need to cancel? <a id="cancel-link" href="#" style="color:var(--blue);">Cancel this booking</a>
     </p>
+
     <button class="btn-submit" style="max-width:280px;margin:0 auto;display:block;" onclick="location.reload()">
       Book Another Appointment
     </button>
@@ -1528,6 +1555,13 @@
       document.getElementById('booking-section').querySelectorAll('.step-label, .step-title, .service-cards, .sym-note, .form-card, #other-desc-panel').forEach(el => el.style.display = 'none');
       document.getElementById('success-screen').classList.add('show');
       countUpRef(data.ref);
+      // Show cancel link for non-"other" bookings (other type has no confirmed slot yet)
+      if (data.ref && selectedService !== 'other') {
+        const cancelNote = document.getElementById('cancel-link-note');
+        const cancelLink = document.getElementById('cancel-link');
+        cancelLink.href = '/cancel?ref=' + encodeURIComponent(data.ref);
+        cancelNote.style.display = 'block';
+      }
 
     } catch {
       showError('Network error. Please check your connection and try again.');

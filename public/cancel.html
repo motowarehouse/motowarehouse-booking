@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cancel Booking – Motowarehouse</title>
+  <link rel="icon" type="image/png" href="/assets/MWH_Logo_New.png">
+  <style>
+    @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Light.ttf'); font-weight:300; }
+    @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Regular.ttf'); font-weight:400; }
+    @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Medium.ttf'); font-weight:500; }
+    @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Bold.ttf'); font-weight:700; }
+    @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Black.ttf'); font-weight:900; }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #009BB4;
+      --blue-dark: #007a8f;
+      --teal-light: #00EFD1;
+      --dark: #0a1a1f;
+      --dark2: #0f2429;
+      --dark3: #1a3540;
+      --grey: #8a9ba0;
+      --white: #ffffff;
+      --red: #E50052;
+      --red-dark: #b8003f;
+      --success: #00c896;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'SupremeLL', Arial, sans-serif;
+      background: var(--dark);
+      color: var(--white);
+      min-height: 100vh;
+      font-weight: 300;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--dark2);
+      border-bottom: 1px solid rgba(0,155,180,0.2);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 68px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .logo img { height: 36px; width: auto; }
+    .logo-text { font-size: 14px; font-weight: 500; color: var(--white); letter-spacing: 0.05em; text-transform: uppercase; }
+    .header-tag { font-size: 11px; color: var(--blue); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500; }
+
+    /* ── MAIN LAYOUT ── */
+    main {
+      max-width: 520px;
+      margin: 60px auto;
+      padding: 0 20px 80px;
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--dark2);
+      border: 1px solid rgba(0,155,180,0.2);
+      border-radius: 12px;
+      padding: 40px 36px;
+    }
+
+    .card-icon {
+      width: 56px; height: 56px;
+      background: rgba(229,0,82,0.12);
+      border: 1px solid rgba(229,0,82,0.3);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 24px;
+    }
+    .card-icon svg { width: 26px; height: 26px; stroke: var(--red); fill: none; }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+    .subtitle {
+      font-size: 14px;
+      color: var(--grey);
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    /* ── FORM ── */
+    .field { margin-bottom: 20px; }
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--grey);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    input {
+      width: 100%;
+      background: var(--dark3);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: var(--white);
+      font-family: 'SupremeLL', Arial, sans-serif;
+      font-size: 15px;
+      font-weight: 400;
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus { border-color: var(--blue); }
+    input[readonly] { opacity: 0.7; cursor: default; }
+
+    /* ── BUTTON ── */
+    .btn-cancel {
+      width: 100%;
+      background: var(--red);
+      color: var(--white);
+      border: none;
+      border-radius: 8px;
+      font-family: 'SupremeLL', Arial, sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 14px;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-cancel:hover { background: var(--red-dark); }
+    .btn-cancel:active { transform: scale(0.99); }
+    .btn-cancel:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── MESSAGES ── */
+    .msg {
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-top: 16px;
+      display: none;
+    }
+    .msg.error { background: rgba(229,0,82,0.12); border: 1px solid rgba(229,0,82,0.3); color: #ff6b8a; }
+    .msg.show { display: block; }
+
+    /* ── SUCCESS STATE ── */
+    #success-state { display: none; }
+    #form-state { display: block; }
+
+    .success-icon {
+      width: 64px; height: 64px;
+      background: rgba(0,200,150,0.12);
+      border: 1px solid rgba(0,200,150,0.3);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px;
+    }
+    .success-icon svg { width: 30px; height: 30px; stroke: var(--success); fill: none; stroke-width: 2.5; }
+
+    #success-state h2 {
+      font-size: 20px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    #success-state p {
+      font-size: 14px;
+      color: var(--grey);
+      text-align: center;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+    #success-state .ref-display {
+      text-align: center;
+      font-size: 13px;
+      color: var(--blue);
+      font-weight: 500;
+      margin-bottom: 28px;
+    }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 24px;
+      font-size: 13px;
+      color: var(--blue);
+      text-decoration: none;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 32px 20px;
+      font-size: 12px;
+      color: var(--grey);
+    }
+    footer a { color: var(--blue); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a class="logo" href="/">
+      <img src="/assets/MWH_Logo_New.png" alt="Motowarehouse">
+      <span class="logo-text">Motowarehouse</span>
+    </a>
+    <span class="header-tag">Service Booking</span>
+  </header>
+
+  <main>
+    <div class="card">
+
+      <!-- FORM STATE -->
+      <div id="form-state">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14H6L5 6"/>
+            <path d="M10 11v6M14 11v6"/>
+            <path d="M9 6V4h6v2"/>
+          </svg>
+        </div>
+
+        <h1>Cancel Your Booking</h1>
+        <p class="subtitle">Enter your booking reference and the phone number you used when booking to confirm your identity. Your reference number was sent to you in your confirmation email.</p>
+
+        <form id="cancel-form" novalidate>
+          <div class="field">
+            <label for="ref-input">Booking Reference</label>
+            <input type="text" id="ref-input" name="ref" placeholder="e.g. MW00042" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="field">
+            <label for="phone-input">Phone Number</label>
+            <input type="tel" id="phone-input" name="phone" placeholder="e.g. 99123456" autocomplete="tel">
+          </div>
+
+          <div id="error-msg" class="msg error"></div>
+
+          <button type="submit" class="btn-cancel" id="submit-btn">Cancel My Booking</button>
+        </form>
+
+        <a class="back-link" href="/">← Back to booking page</a>
+      </div>
+
+      <!-- SUCCESS STATE -->
+      <div id="success-state">
+        <div class="success-icon">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <h2>Booking Cancelled</h2>
+        <p>Your appointment has been successfully cancelled.</p>
+        <p id="success-detail"></p>
+        <p class="ref-display" id="success-ref"></p>
+        <p>If you'd like to rebook at a different time, you can do so below.</p>
+        <a class="back-link" href="/">Book a new appointment →</a>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    Need help? Call us on <a href="tel:22328788">22 328 788</a> &nbsp;·&nbsp; Motowarehouse, 40 Athinon Str., Strovolos, Nicosia
+  </footer>
+
+  <script>
+    // Pre-fill ref from URL query string
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get('ref');
+      if (ref) {
+        const input = document.getElementById('ref-input');
+        input.value = ref.toUpperCase();
+        // Focus the phone field since ref is already filled
+        document.getElementById('phone-input').focus();
+      }
+    })();
+
+    document.getElementById('cancel-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const ref   = document.getElementById('ref-input').value.trim().toUpperCase();
+      const phone = document.getElementById('phone-input').value.trim();
+      const errEl = document.getElementById('error-msg');
+      const btn   = document.getElementById('submit-btn');
+
+      errEl.classList.remove('show');
+      errEl.textContent = '';
+
+      if (!ref) {
+        errEl.textContent = 'Please enter your booking reference.';
+        errEl.classList.add('show');
+        return;
+      }
+      if (!phone) {
+        errEl.textContent = 'Please enter your phone number.';
+        errEl.classList.add('show');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Cancelling…';
+
+      try {
+        const resp = await fetch('/api/booking/cancel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ref, phone })
+        });
+
+        const data = await resp.json();
+
+        if (!resp.ok) {
+          errEl.textContent = data.error || 'Something went wrong. Please call us on 22 328 788.';
+          errEl.classList.add('show');
+          btn.disabled = false;
+          btn.textContent = 'Cancel My Booking';
+          return;
+        }
+
+        // Show success state
+        document.getElementById('form-state').style.display = 'none';
+        const successState = document.getElementById('success-state');
+        successState.style.display = 'block';
+
+        if (data.date && data.time) {
+          document.getElementById('success-detail').textContent =
+            'Your appointment on ' + formatDate(data.date) + ' at ' + data.time + ' has been removed.';
+        }
+        document.getElementById('success-ref').textContent = 'Reference: ' + data.ref;
+
+      } catch (err) {
+        errEl.textContent = 'Network error. Please try again or call us on 22 328 788.';
+        errEl.classList.add('show');
+        btn.disabled = false;
+        btn.textContent = 'Cancel My Booking';
+      }
+    });
+
+    function formatDate(iso) {
+      // iso = "YYYY-MM-DD"
+      const [y, m, d] = iso.split('-');
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return d + ' ' + months[parseInt(m, 10) - 1] + ' ' + y;
+    }
+  </script>
+</body>
+</html>

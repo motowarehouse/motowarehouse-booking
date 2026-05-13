@@ -51,8 +51,49 @@ function sendBrevoEmail({ to, subject, html }) {
   });
 }
 
+// ── Notify admin of a self-cancellation ──────────────────────────────────────
+async function sendSelfCancelAlert(booking) {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!adminEmail) return;
+
+  await sendBrevoEmail({
+    to:      adminEmail,
+    subject: `[SELF-CANCELLED] ${booking.ref} – ${booking.name} – ${booking.date} ${booking.time}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+        <div style="background:#7a0028;padding:24px;text-align:center;">
+          <h1 style="color:white;margin:0;font-size:22px;">❌ Customer Self-Cancelled</h1>
+        </div>
+        <div style="padding:32px;background:#fff;">
+          <p>The customer cancelled their own booking via the cancellation link.</p>
+          <table style="border-collapse:collapse;width:100%;font-size:14px;">
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;width:160px;">Reference</td><td style="padding:10px;">${booking.ref}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Name</td><td style="padding:10px;">${booking.name}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Phone</td><td style="padding:10px;">${booking.phone}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Service</td><td style="padding:10px;">${SERVICE_LABELS[booking.serviceType] || booking.serviceType}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Date &amp; Time</td><td style="padding:10px;">${booking.date} at ${booking.time}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${booking.year} ${booking.model} – ${booking.plate}</td></tr>
+          </table>
+          <p style="margin-top:20px;background:#fff3cd;padding:12px;border-radius:4px;color:#856404;font-size:13px;">
+            <strong>Note:</strong> The slot for this booking is now free. No action required unless you want to follow up.
+          </p>
+          <div style="margin-top:20px;">
+            <a href="${process.env.SITE_URL || 'https://web-production-ad678.up.railway.app'}/admin"
+               style="background:#009BB4;color:white;padding:12px 24px;text-decoration:none;border-radius:4px;display:inline-block;">
+              Open Admin Panel
+            </a>
+          </div>
+        </div>
+      </div>
+    `
+  });
+}
+
 // ── Notify admin of a new booking ────────────────────────────────────────────
 async function sendNewBookingAlert(booking) {
+  // Route self-cancel alerts separately
+  if (booking._selfCancelAlert) return sendSelfCancelAlert(booking);
+
   const adminEmail = process.env.ADMIN_EMAIL;
   if (!adminEmail) return;
 
@@ -123,6 +164,13 @@ async function sendConfirmationToCustomer(booking) {
             Tel: 22 328 788
           </div>
           <p>Please arrive a few minutes before your scheduled time. If you need to reschedule, please call us at <strong>22 328 788</strong>.</p>
+          <div style="background:#fff8f8;border:1px solid #f0d0d0;border-radius:6px;padding:14px 18px;margin:20px 0;font-size:13px;color:#666;">
+            Need to cancel? You can cancel your booking online using your reference number:<br>
+            <a href="${process.env.SITE_URL || 'https://web-production-ad678.up.railway.app'}/cancel?ref=${booking.ref}"
+               style="color:#E50052;word-break:break-all;">
+              Cancel booking ${booking.ref}
+            </a>
+          </div>
           <p>The Motowarehouse Team</p>
         </div>
         <div style="background:#1a1a1a;padding:16px;text-align:center;">
@@ -184,6 +232,9 @@ async function sendReminderToCustomer(booking) {
             <strong>Motowarehouse – 40 Athinon Str., Strovolos, Nicosia</strong><br>
             Tel: 22 328 788
           </div>
+          <p style="margin-top:16px;font-size:13px;color:#888;">
+            Need to cancel? Please call us directly on <strong>22 328 788</strong> or use your original confirmation email's cancel link.
+          </p>
           <p style="margin-top:20px;">The Motowarehouse Team</p>
         </div>
       </div>

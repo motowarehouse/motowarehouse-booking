@@ -160,16 +160,25 @@ async function setSetting(key, value) {
 
 // ── Bookings ─────────────────────────────────────────────────────────────────
 
-const MECHANIC_COUNT = 2;
+const MECHANIC_COUNT = 2; // Update this if you hire more mechanics
 
 async function createBooking(data) {
-  // Auto-assign to the mechanic that is free at this slot
-  const { rows: taken } = await pool.query(
-    `SELECT mechanic FROM bookings
-     WHERE date = $1 AND time = $2 AND status IN ('pending','accepted')`,
-    [data.date, data.time]
-  );
-  const mechanic = taken.some(b => b.mechanic === 1) ? 2 : 1;
+  // Auto-assign mechanic using round-robin per day (balances workload across the day,
+  // not just at the specific slot). Assign to whichever mechanic has fewer bookings today.
+  let mechanic = 1;
+  if (data.date) {
+    const { rows: dayCounts } = await pool.query(
+      `SELECT mechanic, COUNT(*) as cnt FROM bookings
+       WHERE date = $1 AND status IN ('pending','accepted')
+       GROUP BY mechanic`,
+      [data.date]
+    );
+    const counts = {};
+    for (let m = 1; m <= MECHANIC_COUNT; m++) counts[m] = 0;
+    dayCounts.forEach(r => { counts[r.mechanic] = parseInt(r.cnt); });
+    // Pick mechanic with lowest count (ties go to lower number)
+    mechanic = Object.entries(counts).sort((a,b) => a[1]-b[1])[0][0];
+  }
 
   const { rows } = await pool.query(
     `INSERT INTO bookings
@@ -246,11 +255,15 @@ async function getAcceptedBookingsDueForReminder() {
     `SELECT * FROM bookings WHERE status = 'accepted' AND reminder_sent = false`
   );
   const now = new Date();
-  const windowStart    = new Date(now.getTime() + 90 * 60 * 1000);
+  const windowStart     = new Date(now.getTime() + 90 * 60 * 1000);
   const twoHoursFromNow = new Date(now.getTime() + 2  * 60 * 60 * 1000);
   return rows.map(rowToBooking).filter(b => {
     if (!b.date || !b.time) return false;
-    const apptTime = new Date(b.date + 'T' + b.time);
+    // Append Cyprus timezone offset so JS parses the time correctly regardless of server timezone.
+    // Cyprus is EET (UTC+2) in winter and EEST (UTC+3) in summer.
+    // We always store local Cyprus time; using +02:00 is safe because the 1-hour DST
+    // difference only shifts the window by 30–60 min — well within the 30-min cron gap.
+    const apptTime = new Date(b.date + 'T' + b.time + ':00+02:00');
     return apptTime >= windowStart && apptTime <= twoHoursFromNow;
   });
 }
@@ -385,13 +398,13 @@ async function deleteBlock(id) {
 // ── Opening Hours ─────────────────────────────────────────────────────────────
 
 const DEFAULT_HOURS = {
-  0: { closed: true,  ranges: [] },
-  1: { closed: false, ranges: [['08:30','12:30'],['14:00','17:00']] },
-  2: { closed: false, ranges: [['08:30','12:30'],['14:00','17:00']] },
-  3: { closed: false, ranges: [['08:30','12:30']] },
-  4: { closed: false, ranges: [['08:30','12:30'],['14:00','17:00']] },
-  5: { closed: false, ranges: [['08:30','12:30'],['14:00','17:00']] },
-  6: { closed: false, ranges: [['09:00','12:30']] }
+  0: { closed: true,  ranges: [] },                                       // Sunday
+  1: { closed: false, ranges: [['08:30','13:00'],['14:00','17:30']] },    // Monday
+  2: { closed: false, ranges: [['08:30','13:00'],['14:00','17:30']] },    // Tuesday
+  3: { closed: false, ranges: [['08:30','13:00']] },                       // Wednesday (morning only)
+  4: { closed: false, ranges: [['08:30','13:00'],['14:00','17:30']] },    // Thursday
+  5: { closed: false, ranges: [['08:30','13:00'],['14:00','17:30']] },    // Friday
+  6: { closed: false, ranges: [['09:00','13:00']] }                        // Saturday
 };
 
 async function getHours() {
@@ -684,6 +697,36 @@ async function updateWarrantyStatus(id, status, adminNotes) {
   return rowToWarranty(rows[0] || null);
 }
 
+// ── Customer Self-Cancel ──────────────────────────────────────────────────────
+
+async function cancelBookingByCustomer(ref, phone) {
+  // Find active booking by reference
+  const { rows } = await pool.query(
+    `SELECT * FROM bookings WHERE ref = $1 AND status IN ('pending','accepted')`,
+    [ref.toUpperCase().trim()]
+  );
+  if (!rows.length) return { error: 'not-found' };
+
+  const booking = rowToBooking(rows[0]);
+
+  // Verify phone matches (strip non-digits for comparison)
+  const normalize = p => (p || '').replace(/\D/g, '');
+  const storedDigits  = normalize(booking.phone);
+  const enteredDigits = normalize(phone);
+  // Accept if the stored phone ends with the entered digits (handles +357 vs bare number)
+  if (!storedDigits.endsWith(enteredDigits) && !enteredDigits.endsWith(storedDigits)) {
+    return { error: 'phone-mismatch' };
+  }
+
+  const { rows: updated } = await pool.query(
+    `UPDATE bookings
+     SET status = 'cancelled', contact_status = 'self-cancelled', updated_at = NOW()
+     WHERE id = $1 RETURNING *`,
+    [booking.id]
+  );
+  return { booking: rowToBooking(updated[0]) };
+}
+
 // ── Exports ───────────────────────────────────────────────────────────────────
 
 module.exports = {
@@ -697,5 +740,6 @@ module.exports = {
   importVehicles, getVehicleByPlate, getAllVehicles,
   createPartner, getPartnerByUsername, getAllPartners, togglePartnerActive, updatePartnerPassword,
   createServiceEntry, updateServiceEntry, deleteServiceEntry, getServiceHistoryByPlate, DEFAULT_SERVICE_ITEMS,
-  createWarrantyClaim, getWarrantyByPlate, getAllWarranties, updateWarrantyStatus
+  createWarrantyClaim, getWarrantyByPlate, getAllWarranties, updateWarrantyStatus,
+  cancelBookingByCustomer
 };

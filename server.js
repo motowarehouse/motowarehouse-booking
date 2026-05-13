@@ -11,15 +11,46 @@ const { startReminderCron } = require('./reminderCron');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// --- Simple in-memory rate limiter for public booking endpoint ---
+const bookingAttempts = new Map(); // ip → { count, resetAt }
+function bookingRateLimit(req, res, next) {
+  const ip = req.ip || req.connection.remoteAddress || 'unknown';
+  const now = Date.now();
+  const entry = bookingAttempts.get(ip);
+  if (!entry || now > entry.resetAt) {
+    bookingAttempts.set(ip, { count: 1, resetAt: now + 60 * 60 * 1000 }); // 1-hour window
+    return next();
+  }
+  if (entry.count >= 5) { // max 5 booking submissions per IP per hour
+    return res.status(429).json({ error: 'Too many booking attempts. Please try again later or call us on 22 328 788.' });
+  }
+  entry.count++;
+  next();
+}
+// Clean up old entries every hour to prevent memory leak
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of bookingAttempts.entries()) {
+    if (now > entry.resetAt) bookingAttempts.delete(ip);
+  }
+}, 60 * 60 * 1000);
+
 // --- Middleware ---
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+if (!process.env.SESSION_SECRET) {
+  console.warn('\n⚠️  SESSION_SECRET is not set. Using insecure default. Set SESSION_SECRET in Railway environment variables.\n');
+}
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'mw-secret-2024',
+  secret: process.env.SESSION_SECRET || 'mw-secret-2024-CHANGE-ME',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 8 * 60 * 60 * 1000 } // 8 hours
+  cookie: {
+    maxAge: 8 * 60 * 60 * 1000, // 8 hours
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production'
+  }
 }));
 
 // --- Auth middleware ---
@@ -88,7 +119,7 @@ app.get('/api/slots', async (req, res) => {
 });
 
 // Submit a new booking
-app.post('/api/book', async (req, res) => {
+app.post('/api/book', bookingRateLimit, async (req, res) => {
   const { name, phone, email, serviceType, date, time, model, year, plate, km, notes, description } = req.body;
 
   const isOther = serviceType === 'other';
@@ -737,6 +768,60 @@ app.get('/api/service-history', requireAdminOrPartner, async (req, res) => {
   } catch (err) {
     console.error('[Service history error]', err);
     res.status(500).json({ error: 'Failed to load service history.' });
+  }
+});
+
+// ==================== CUSTOMER SELF-CANCEL ====================
+
+// Serve the cancel page (pre-fills ref from query string in the HTML)
+app.get('/cancel', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'cancel.html'));
+});
+
+// Customer submits cancellation
+app.post('/api/booking/cancel', bookingRateLimit, async (req, res) => {
+  try {
+    const { ref, phone } = req.body;
+    if (!ref || !phone) {
+      return res.status(400).json({ error: 'Booking reference and phone number are required.' });
+    }
+
+    const result = await db.cancelBookingByCustomer(ref, phone);
+
+    if (result.error === 'not-found') {
+      return res.status(404).json({ error: 'No active booking found with that reference number. It may have already been cancelled or completed.' });
+    }
+    if (result.error === 'phone-mismatch') {
+      return res.status(403).json({ error: 'The phone number does not match our records for this booking.' });
+    }
+
+    const booking = result.booking;
+    console.log(`[Self-Cancel] Booking ${booking.ref} cancelled by customer (phone verified)`);
+
+    // Send confirmation email to customer
+    if (booking.email) {
+      try {
+        await emailService.sendCancellationToCustomer(booking);
+        console.log('[Email] Self-cancel confirmation sent to ' + booking.email);
+      } catch (e) {
+        console.error('[Email] Self-cancel confirmation FAILED:', e.message);
+      }
+    }
+
+    // Notify admin
+    try {
+      await emailService.sendNewBookingAlert({
+        ...booking,
+        _selfCancelAlert: true
+      });
+    } catch (e) {
+      // Not critical — admin can see it in the panel
+    }
+
+    res.json({ success: true, ref: booking.ref, name: booking.name, date: booking.date, time: booking.time });
+  } catch (err) {
+    console.error('[Self-cancel error]', err);
+    res.status(500).json({ error: 'Something went wrong. Please call us on 22 328 788 to cancel.' });
   }
 });
 
