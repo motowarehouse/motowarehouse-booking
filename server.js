@@ -46,6 +46,7 @@ setInterval(() => {
 }, 60 * 60 * 1000);
 
 // --- Middleware ---
+app.set('trust proxy', 1); // Required for Railway/Heroku HTTPS proxy
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -56,7 +57,7 @@ app.use(session({
   store: new pgSession({
     pool:               sessionPool,
     tableName:          'session',
-    createTableIfMissing: false  // we create it in initDB()
+    createTableIfMissing: true  // safety net — also created in initDB()
   }),
   secret: process.env.SESSION_SECRET || 'mw-secret-2024-CHANGE-ME',
   resave: false,
@@ -215,7 +216,13 @@ app.post('/api/admin/login', async (req, res) => {
   if (!valid) return res.status(401).json({ error: 'Incorrect password.' });
 
   req.session.admin = true;
-  res.json({ success: true });
+  req.session.save(err => {
+    if (err) {
+      console.error('[Session save error]', err);
+      return res.status(500).json({ error: 'Session could not be saved. Please try again.' });
+    }
+    res.json({ success: true });
+  });
 });
 
 // Logout
