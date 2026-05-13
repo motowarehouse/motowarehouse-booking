@@ -139,6 +139,20 @@ app.post('/api/book', async (req, res) => {
   }
 });
 
+// ── Public plate lookup (used by booking form for auto-fill) ─────────────────
+app.get('/api/booking/vehicle-lookup', async (req, res) => {
+  try {
+    const plate = (req.query.plate || '').trim().toUpperCase();
+    if (!plate) return res.status(400).json({ error: 'plate required' });
+    const vehicle = await db.getVehicleByPlate(plate);
+    if (!vehicle) return res.status(404).json({ found: false });
+    res.json({ found: true, model: vehicle.model, year: vehicle.year, manufacturer: vehicle.manufacturer });
+  } catch (err) {
+    console.error('[Public vehicle lookup error]', err);
+    res.status(500).json({ found: false });
+  }
+});
+
 // ==================== ADMIN API ====================
 
 // Login
@@ -714,24 +728,4 @@ app.post('/api/admin/warranties/:id/status', requireAdmin, async (req, res) => {
 });
 
 // Get service history by plate (partner + admin)
-app.get('/api/service-history', requireAdminOrPartner, async (req, res) => {
-  try {
-    const { plate } = req.query;
-    if (!plate) return res.status(400).json({ error: 'plate required' });
-    const history = await db.getServiceHistoryByPlate(plate);
-    res.json(history);
-  } catch (err) {
-    console.error('[Service history error]', err);
-    res.status(500).json({ error: 'Failed to load service history.' });
-  }
-});
-
-// ==================== START ====================
-
-startReminderCron();
-
-app.listen(PORT, () => {
-  console.log(`\n✅ Motowarehouse Service Portal running on http://localhost:${PORT}`);
-  console.log(`   Admin panel: http://localhost:${PORT}/admin`);
-  console.log(`   Partner portal: http://localhost:${PORT}/partner\n`);
-});
+app.get('/api/service-history', requireAdminOrPartner, async (req, res) =

@@ -1102,10 +1102,12 @@
           <input type="text" id="plate" placeholder="e.g. PXX833"
                  maxlength="6"
                  style="text-transform:uppercase;letter-spacing:0.1em;"
-                 oninput="formatPlate(this)">
+                 oninput="formatPlate(this)"
+                 onblur="lookupPlate(this.value)">
           <div id="plate-hint" style="font-size:11px;color:var(--grey);margin-top:3px;display:none;">
             Format: 3 letters + 3 numbers (e.g. PXX833)
           </div>
+          <div id="plate-lookup-hint" style="font-size:12px;margin-top:5px;display:none;padding:6px 10px;border-radius:6px;"></div>
         </div>
 
         <div class="form-group full field-reveal" style="transition-delay:0.16s">
@@ -1465,6 +1467,81 @@
     input.classList.toggle('plate-valid',   result.length === 6 &&  valid);
     input.classList.toggle('plate-invalid', result.length > 0  && !valid);
     hint.style.display = (result.length > 0 && !valid) ? 'block' : 'none';
+
+    // Clear lookup hint when user changes plate
+    const lh = document.getElementById('plate-lookup-hint');
+    if (lh) { lh.style.display = 'none'; lh.textContent = ''; }
+  }
+
+  // ── PLATE LOOKUP & AUTO-FILL ───────────────────────────────────────
+  async function lookupPlate(rawPlate) {
+    const plate = (rawPlate || '').trim().toUpperCase();
+    const lh = document.getElementById('plate-lookup-hint');
+    if (!lh) return;
+
+    // Only run if plate is valid format
+    if (!/^[A-Z]{3}[0-9]{3}$/.test(plate)) return;
+
+    lh.style.display = 'none';
+    lh.textContent = '';
+
+    try {
+      const res = await fetch(`/api/booking/vehicle-lookup?plate=${encodeURIComponent(plate)}`);
+      const data = await res.json();
+
+      if (data.found && data.model) {
+        // Auto-fill model
+        const modelInput   = document.getElementById('model');
+        const modelDisplay = document.getElementById('model-display');
+
+        // Find matching option in the dropdown
+        const allOptions = document.querySelectorAll('.cs-option');
+        let matched = null;
+        allOptions.forEach(opt => {
+          if (opt.textContent.trim().toUpperCase() === data.model.trim().toUpperCase()) matched = opt;
+        });
+
+        if (matched) {
+          selectModel(matched);
+        } else {
+          // Model not in dropdown list — set hidden field directly
+          if (modelInput) modelInput.value = data.model;
+          if (modelDisplay) {
+            modelDisplay.textContent = data.model;
+            modelDisplay.classList.remove('placeholder');
+          }
+          revealVehicleSection();
+        }
+
+        // Auto-fill year
+        if (data.year) {
+          const yearSel = document.getElementById('year');
+          if (yearSel) {
+            yearSel.value = data.year;
+            if (!yearSel.value) {
+              // Year not in list — add it dynamically
+              const opt = document.createElement('option');
+              opt.value = data.year;
+              opt.textContent = data.year;
+              yearSel.appendChild(opt);
+              yearSel.value = data.year;
+            }
+            animateYear(yearSel);
+          }
+        }
+
+        // Show success hint
+        lh.style.cssText = 'font-size:12px;margin-top:5px;display:block;padding:6px 10px;border-radius:6px;background:rgba(0,200,120,0.1);color:#00c878;border:1px solid rgba(0,200,120,0.3);';
+        lh.textContent = `✓ Found: ${data.model}${data.year ? ' (' + data.year + ')' : ''}`;
+
+      } else {
+        // Not found — soft warning, don't block
+        lh.style.cssText = 'font-size:12px;margin-top:5px;display:block;padding:6px 10px;border-radius:6px;background:rgba(229,184,0,0.1);color:#e5b800;border:1px solid rgba(229,184,0,0.3);';
+        lh.textContent = '⚠ Plate not found in our records. Please verify your plate number.';
+      }
+    } catch (e) {
+      // Silent fail — don't interrupt the booking
+    }
   }
 
   // ── SCROLL ANIMATIONS ──────────────────────────────────────────────
@@ -1598,75 +1675,4 @@
       <rect x="22" y="12" width="20" height="16" rx="4"  fill="none" stroke="currentColor" stroke-width="2"/>
       <rect x="34" y="8"  width="28" height="24" rx="12" fill="none" stroke="currentColor" stroke-width="3"/>
       <rect x="54" y="12" width="20" height="16" rx="4"  fill="none" stroke="currentColor" stroke-width="2"/>
-      <rect x="66" y="8"  width="28" height="24" rx="12" fill="none" stroke="currentColor" stroke-width="3"/>
-      <rect x="86" y="12" width="20" height="16" rx="4"  fill="none" stroke="currentColor" stroke-width="2"/>
-      <rect x="98" y="8"  width="20" height="24" rx="10" fill="none" stroke="currentColor" stroke-width="3"/>
-    </svg>`,
-
-    piston: `<svg viewBox="0 0 60 110" xmlns="http://www.w3.org/2000/svg">
-      <rect x="8"  y="2"  width="44" height="50" rx="6" fill="none" stroke="currentColor" stroke-width="3"/>
-      <rect x="2"  y="18" width="4"  height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
-      <rect x="54" y="18" width="4"  height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
-      <rect x="16" y="52" width="28" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2.5"/>
-      <rect x="22" y="62" width="16" height="44" rx="4" fill="none" stroke="currentColor" stroke-width="2.5"/>
-      <line x1="8"  y1="30" x2="52" y2="30" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 4"/>
-    </svg>`,
-  };
-
-  function createShapes() {
-    const container = document.getElementById('bg-shapes');
-
-    const placements = [
-      { type:'wheel',  size:160, top:'8%',   side:'left',  offset:'-55px', color:'rgba(0,155,180,0.07)',  dur:22, delay:0 },
-      { type:'gear',   size:130, top:'30%',  side:'right', offset:'-45px', color:'rgba(0,239,209,0.065)', dur:28, delay:5 },
-      { type:'wrench', size:110, top:'52%',  side:'left',  offset:'-36px', color:'rgba(0,155,180,0.06)',  dur:18, delay:2 },
-      { type:'chain',  size:160, top:'68%',  side:'right', offset:'-60px', color:'rgba(0,239,209,0.055)', dur:32, delay:8 },
-      { type:'piston', size: 90, top:'82%',  side:'left',  offset:'-28px', color:'rgba(0,155,180,0.065)', dur:20, delay:4 },
-      { type:'gear',   size: 80, top:'92%',  side:'right', offset:'-25px', color:'rgba(0,239,209,0.05)',  dur:24, delay:11},
-    ];
-
-    placements.forEach(p => {
-      const wrap = document.createElement('div');
-      wrap.className = 'bg-shape';
-      wrap.style.cssText = `
-        width:${p.size}px; height:${p.size}px;
-        top:${p.top};
-        ${p.side}:${p.offset};
-        color:${p.color};
-        animation-duration:${p.dur}s;
-        animation-delay:-${p.delay}s;
-        display:flex; align-items:center; justify-content:center;
-      `;
-      wrap.innerHTML = MOTO_SVGS[p.type];
-      container.appendChild(wrap);
-      setTimeout(() => wrap.classList.add('show'), 600);
-    });
-  }
-
-  createShapes();
-
-  // 5. Vehicle section reveal — triggered when a model is selected
-  function revealVehicleSection() {
-    const sec = document.getElementById('vehicle-section');
-    if (!sec.classList.contains('revealed')) {
-      sec.classList.add('revealed');
-      // Stagger the field-reveal items inside
-      sec.querySelectorAll('.field-reveal').forEach((el, i) => {
-        setTimeout(() => el.classList.add('visible'), 80 + i * 80);
-      });
-    }
-  }
-
-  // Attach scroll listener
-  window.addEventListener('scroll', () => {
-    updateProgress();
-    updateTracker();
-  }, { passive: true });
-
-  // Run once on load
-  updateProgress();
-  updateTracker();
-</script>
-
-</body>
-</html>
+      <rect x="66" y="8"  width="28" h
