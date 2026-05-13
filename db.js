@@ -123,6 +123,18 @@ async function initDB() {
       )
     `);
 
+    // Session store table (used by connect-pg-simple)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS session (
+        sid    VARCHAR    NOT NULL COLLATE "default" PRIMARY KEY,
+        sess   JSON       NOT NULL,
+        expire TIMESTAMP  NOT NULL
+      )
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS session_expire_idx ON session (expire)
+    `);
+
     await client.query(`
       CREATE TABLE IF NOT EXISTS warranty_claims (
         id                 SERIAL PRIMARY KEY,

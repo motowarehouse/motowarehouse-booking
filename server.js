@@ -1,12 +1,22 @@
 require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
 const bcrypt = require('bcryptjs');
 const path = require('path');
+const { Pool } = require('pg');
 const db = require('./db');
 const emailService = require('./emailService');
 const smsService = require('./smsService');
 const { startReminderCron } = require('./reminderCron');
+
+// Separate pool for the session store (connect-pg-simple manages its own connection)
+const sessionPool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' || (process.env.DATABASE_URL || '').includes('railway')
+    ? { rejectUnauthorized: false }
+    : false
+});
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -43,11 +53,16 @@ if (!process.env.SESSION_SECRET) {
   console.warn('\n⚠️  SESSION_SECRET is not set. Using insecure default. Set SESSION_SECRET in Railway environment variables.\n');
 }
 app.use(session({
+  store: new pgSession({
+    pool:               sessionPool,
+    tableName:          'session',
+    createTableIfMissing: false  // we create it in initDB()
+  }),
   secret: process.env.SESSION_SECRET || 'mw-secret-2024-CHANGE-ME',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    maxAge: 8 * 60 * 60 * 1000, // 8 hours
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days (survives across deployments)
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production'
   }
