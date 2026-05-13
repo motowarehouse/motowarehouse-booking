@@ -897,13 +897,6 @@
     @keyframes circleDraw { to { stroke-dashoffset: 0; } }
     @keyframes checkDraw  { to { stroke-dashoffset: 0; } }
 
-    /* Confetti canvas */
-    #confetti-canvas {
-      position: fixed; inset: 0;
-      pointer-events: none;
-      z-index: 9000;
-    }
-
     /* ── SLOT STAGGER ── */
     .slot-btn {
       opacity: 0;
@@ -1260,9 +1253,6 @@
 
 </div>
 
-<!-- CONFETTI CANVAS -->
-<canvas id="confetti-canvas"></canvas>
-
 <!-- FOOTER -->
 <footer>
   <div class="footer-grid">
@@ -1538,7 +1528,6 @@
       document.getElementById('booking-section').querySelectorAll('.step-label, .step-title, .service-cards, .sym-note, .form-card, #other-desc-panel').forEach(el => el.style.display = 'none');
       document.getElementById('success-screen').classList.add('show');
       countUpRef(data.ref);
-      setTimeout(launchConfetti, 300);
 
     } catch {
       showError('Network error. Please check your connection and try again.');
@@ -1710,53 +1699,6 @@
 
   document.querySelectorAll('.form-card').forEach(card => formCardObserver.observe(card));
 
-  // ── CONFETTI ───────────────────────────────────────────────────────
-  function launchConfetti() {
-    const canvas = document.getElementById('confetti-canvas');
-    if (!canvas) return;
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
-    const ctx = canvas.getContext('2d');
-    const COLORS = ['#009BB4','#00EFD1','#ffffff','#00c896','#E50052'];
-    const pieces = Array.from({ length: 120 }, () => ({
-      x:  Math.random() * canvas.width,
-      y: -20 - Math.random() * 100,
-      w:  6 + Math.random() * 8,
-      h:  3 + Math.random() * 5,
-      r:  Math.random() * Math.PI * 2,
-      vx: (Math.random() - 0.5) * 4,
-      vy: 2.5 + Math.random() * 3.5,
-      vr: (Math.random() - 0.5) * 0.2,
-      color: COLORS[Math.floor(Math.random() * COLORS.length)],
-      alpha: 1
-    }));
-    let frame;
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      let alive = false;
-      pieces.forEach(p => {
-        p.x  += p.vx;
-        p.y  += p.vy;
-        p.r  += p.vr;
-        p.vy += 0.08;
-        if (p.y > canvas.height * 0.7) p.alpha -= 0.025;
-        if (p.alpha <= 0) return;
-        alive = true;
-        ctx.save();
-        ctx.globalAlpha = Math.max(0, p.alpha);
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.r);
-        ctx.fillStyle = p.color;
-        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-        ctx.restore();
-      });
-      if (alive) frame = requestAnimationFrame(draw);
-      else ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-    draw();
-    setTimeout(() => { cancelAnimationFrame(frame); ctx.clearRect(0, 0, canvas.width, canvas.height); }, 4000);
-  }
-
   // ── REF COUNT-UP ──────────────────────────────────────────────────
   function countUpRef(ref) {
     const el = document.getElementById('success-ref');
@@ -1896,3 +1838,4 @@
 </script>
 </body>
 </html>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
