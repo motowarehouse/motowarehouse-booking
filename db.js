@@ -56,6 +56,7 @@ async function initDB() {
         status         TEXT    NOT NULL DEFAULT 'pending',
         contact_status TEXT,
         reminder_sent  BOOLEAN DEFAULT FALSE,
+        mechanic_notes TEXT,
         service_km     TEXT,
         service_reg_no TEXT,
         completed_at   TIMESTAMPTZ,
@@ -63,6 +64,9 @@ async function initDB() {
         created_at     TIMESTAMPTZ DEFAULT NOW()
       )
     `);
+
+    // Safe migration for existing production tables — ADD COLUMN IF NOT EXISTS is idempotent
+    await client.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS mechanic_notes TEXT`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS blocks (
@@ -195,6 +199,7 @@ function rowToBooking(r) {
     status:        r.status,
     contactStatus: r.contact_status,
     reminderSent:  r.reminder_sent,
+    mechanicNotes: r.mechanic_notes,
     serviceKm:     r.service_km,
     serviceRegNo:  r.service_reg_no,
     completedAt:   r.completed_at,
@@ -861,6 +866,17 @@ async function updateWarrantyStatus(id, status, adminNotes) {
   return rowToWarranty(rows[0] || null);
 }
 
+// ── Mechanic Notes ────────────────────────────────────────────────────────────
+
+async function updateMechanicNotes(id, notes) {
+  const { rows } = await pool.query(
+    `UPDATE bookings SET mechanic_notes = $1, updated_at = NOW()
+     WHERE id = $2 RETURNING *`,
+    [notes || null, parseInt(id)]
+  );
+  return rowToBooking(rows[0] || null);
+}
+
 // ── Customer Self-Cancel ──────────────────────────────────────────────────────
 
 async function cancelBookingByCustomer(ref, phone) {
@@ -905,6 +921,7 @@ module.exports = {
   createPartner, getPartnerByUsername, getAllPartners, togglePartnerActive, updatePartnerPassword,
   createServiceEntry, updateServiceEntry, deleteServiceEntry, getServiceHistoryByPlate, DEFAULT_SERVICE_ITEMS,
   createWarrantyClaim, getWarrantyByPlate, getAllWarranties, updateWarrantyStatus,
+  updateMechanicNotes,
   cancelBookingByCustomer,
   initDB
 };

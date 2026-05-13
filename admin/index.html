@@ -369,6 +369,10 @@
         <div class="nav-item" id="nav-workload" onclick="setView('workload')">
           <i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></i> Mechanic Workload
         </div>
+        <div class="nav-section-label">Analytics</div>
+        <div class="nav-item" id="nav-stats" onclick="setView('stats')">
+          <i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></i> Dashboard
+        </div>
         <div class="nav-section-label">Management</div>
         <div class="nav-item" id="nav-schedule" onclick="setView('schedule')">
           <i class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></i> Block Time
@@ -434,6 +438,9 @@
 
         <!-- Cancelled view -->
         <div id="cancelled-view" style="display:none;"></div>
+
+        <!-- Stats / Dashboard view -->
+        <div id="stats-view" style="display:none;"></div>
 
         <!-- Today view -->
         <div id="today-view" style="display:none;"></div>
@@ -762,6 +769,56 @@
               </div>
             </div>
 
+            <!-- MECHANIC NOTES -->
+            <div class="help-card">
+              <div class="help-card-header">
+                <div class="help-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+                <div class="help-card-title" data-en="Mechanic Notes" data-gr="Σημειώσεις Μηχανικού">Mechanic Notes</div>
+              </div>
+              <div class="help-card-body">
+                <div class="help-block">
+                  <div class="help-q" data-en="How do I add notes for the mechanic?" data-gr="Πώς προσθέτω σημειώσεις για τον μηχανικό;">How do I add notes for the mechanic?</div>
+                  <ul class="help-steps">
+                    <li><span class="help-step-num">1</span><span data-en="Open an <strong>Accepted</strong> booking by clicking on it." data-gr="Ανοίξτε μια <strong>Αποδεκτή</strong> κράτηση κάνοντας κλικ πάνω της.">Open an <strong>Accepted</strong> booking by clicking on it.</span></li>
+                    <li><span class="help-step-num">2</span><span data-en="Find the <strong>Mechanic Notes</strong> text box at the bottom of the card." data-gr="Βρείτε το πεδίο <strong>Σημειώσεις Μηχανικού</strong> στο κάτω μέρος της κάρτας.">Find the <strong>Mechanic Notes</strong> text box at the bottom of the card.</span></li>
+                    <li><span class="help-step-num">3</span><span data-en="Type any internal instructions and click <strong>Save Notes</strong>. Notes are internal — the customer never sees them." data-gr="Γράψτε εσωτερικές οδηγίες και πατήστε <strong>Αποθήκευση</strong>. Οι σημειώσεις είναι εσωτερικές — ο πελάτης δεν τις βλέπει.">Type any internal instructions and click <strong>Save Notes</strong>. Notes are internal — the customer never sees them.</span></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- DASHBOARD -->
+            <div class="help-card">
+              <div class="help-card-header">
+                <div class="help-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+                <div class="help-card-title" data-en="Dashboard" data-gr="Πίνακας Ελέγχου">Dashboard</div>
+              </div>
+              <div class="help-card-body">
+                <div class="help-block">
+                  <div class="help-q" data-en="What does the Dashboard show?" data-gr="Τι δείχνει ο Πίνακας Ελέγχου;">What does the Dashboard show?</div>
+                  <p data-en="Go to <strong>Dashboard</strong> in the sidebar. You'll see: today's accepted bookings, pending count, all-time totals (completed, no-shows, cancelled), weekly booking trend over the last 4 weeks, service type breakdown for the last 30 days, and a day-of-week chart showing your busiest days." data-gr="Πηγαίνετε στον <strong>Πίνακα Ελέγχου</strong> από το μενού. Βλέπετε: σημερινές αποδεκτές κρατήσεις, εκκρεμείς, σύνολα (ολοκληρωμένες, μη εμφανίσεις, ακυρώσεις), εβδομαδιαία τάση τελευταίων 4 εβδομάδων, ανάλυση τύπων σέρβις και τις πιο πολυάσχολες μέρες της εβδομάδας.">Go to <strong>Dashboard</strong> in the sidebar. You'll see: today's accepted bookings, pending count, all-time totals (completed, no-shows, cancelled), weekly booking trend over the last 4 weeks, service type breakdown for the last 30 days, and a day-of-week chart showing your busiest days.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- PRINT SCHEDULE -->
+            <div class="help-card">
+              <div class="help-card-header">
+                <div class="help-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></div>
+                <div class="help-card-title" data-en="Print Day Schedule" data-gr="Εκτύπωση Ημερήσιου Προγράμματος">Print Day Schedule</div>
+              </div>
+              <div class="help-card-body">
+                <div class="help-block">
+                  <div class="help-q" data-en="How do I print today's schedule?" data-gr="Πώς εκτυπώνω το πρόγραμμα της ημέρας;">How do I print today's schedule?</div>
+                  <ul class="help-steps">
+                    <li><span class="help-step-num">1</span><span data-en="Go to <strong>Today's Schedule</strong> in the sidebar." data-gr="Πηγαίνετε στο <strong>Πρόγραμμα Σήμερα</strong> από το μενού.">Go to <strong>Today's Schedule</strong> in the sidebar.</span></li>
+                    <li><span class="help-step-num">2</span><span data-en="Click <strong>🖨️ Print Schedule</strong> at the top right." data-gr="Πατήστε <strong>🖨️ Εκτύπωση Προγράμματος</strong> πάνω δεξιά.">Click <strong>🖨️ Print Schedule</strong> at the top right.</span></li>
+                    <li><span class="help-step-num">3</span><span data-en="A clean print-ready page opens in a new tab with a table of all appointments — time, customer, vehicle, service type, mechanic assignment, and notes. Click <strong>Print</strong> or use Ctrl+P." data-gr="Ανοίγει μια καθαρή σελίδα για εκτύπωση σε νέα καρτέλα με πίνακα όλων των ραντεβού — ώρα, πελάτης, όχημα, τύπος σέρβις, μηχανικός και σημειώσεις. Πατήστε <strong>Εκτύπωση</strong> ή Ctrl+P.">A clean print-ready page opens in a new tab with a table of all appointments — time, customer, vehicle, service type, mechanic assignment, and notes. Click <strong>Print</strong> or use Ctrl+P.</span></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -1085,7 +1142,7 @@
     cancelled:'Closed (Completed / No Show / Cancelled)', today:"Today's Schedule",
     calendar:'Calendar', schedule:'Block Time', hours:'Opening Hours',
     vehicles:'Vehicles', partners:'Partners', warranty:'Warranty Inbox',
-    help:'User Manual', workload:'Mechanic Workload'
+    help:'User Manual', workload:'Mechanic Workload', stats:'Dashboard'
   };
 
   function setView(view) {
@@ -1098,7 +1155,7 @@
   }
 
   function renderView() {
-    const ids = ['bookings-view','cancelled-view','today-view','calendar-view','schedule-view','hours-view','vehicles-view','partners-view','warranty-view','help-view','workload-view'];
+    const ids = ['bookings-view','cancelled-view','stats-view','today-view','calendar-view','schedule-view','hours-view','vehicles-view','partners-view','warranty-view','help-view','workload-view'];
     ids.forEach(id => document.getElementById(id).style.display = 'none');
     document.getElementById('stats-grid').style.display = 'none';
     // Show search bar only for booking list views
@@ -1107,7 +1164,10 @@
     searchWrap.style.display = showSearch ? 'block' : 'none';
     if (showSearch) { const s = document.getElementById('booking-search'); if(s) s.value = ''; }
 
-    if (currentView === 'today') {
+    if (currentView === 'stats') {
+      document.getElementById('stats-view').style.display = 'block';
+      renderStatsView();
+    } else if (currentView === 'today') {
       document.getElementById('today-view').style.display = 'block';
       renderToday();
     } else if (currentView === 'calendar') {
@@ -2369,11 +2429,18 @@
         <button class="btn-cancel-booking" onclick="cancelBooking(${b.id}, event)">✕ Cancel</button>
       </div>`;
     } else if (b.status === 'accepted') {
+      const escapedNotes = (b.mechanicNotes || '').replace(/'/g, '&#39;').replace(/"/g, '&quot;');
       actions = `<div class="action-row">
         <button class="btn-complete" onclick="openCompleteModal(${b.id}, event)">✔ Mark as Completed</button>
         <button class="btn-reschedule" onclick="openRescheduleModal(${b.id}, event)">↺ Reschedule</button>
         <button class="btn-no-show" onclick="noShowBooking(${b.id}, event)">— No Show</button>
         <button class="btn-cancel-booking" onclick="cancelBooking(${b.id}, event)">✕ Cancel</button>
+      </div>
+      <div style="margin-top:10px;" onclick="event.stopPropagation()">
+        <label style="font-size:11px;font-weight:700;color:var(--grey);letter-spacing:0.05em;text-transform:uppercase;display:block;margin-bottom:5px;">Mechanic Notes (internal)</label>
+        <textarea id="mech-notes-${b.id}" rows="2" class="admin-input" style="width:100%;resize:vertical;font-size:13px;" placeholder="Add notes for the mechanic…">${escapedNotes}</textarea>
+        <button onclick="saveMechanicNotes(${b.id})" style="margin-top:6px;background:rgba(0,155,180,0.12);border:1px solid rgba(0,155,180,0.3);color:var(--blue);border-radius:6px;padding:5px 14px;font-size:12px;cursor:pointer;font-family:inherit;">Save Notes</button>
+        <span id="mech-notes-msg-${b.id}" style="font-size:11px;color:#00b882;margin-left:8px;display:none;">Saved ✓</span>
       </div>`;
     } else if (b.status === 'completed') {
       actions = `<div style="background:rgba(0,180,130,0.07);border:1px solid rgba(0,180,130,0.2);border-radius:8px;padding:11px 14px;font-size:12px;color:#00b882;">
@@ -2488,7 +2555,7 @@
     el.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
         <div style="font-size:16px;font-weight:700;">${allToday.length} item${allToday.length>1?'s':''} today</div>
-        <button onclick="window.print()" style="background:none;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:var(--grey);cursor:pointer;font-size:12px;padding:7px 14px;">🖨️ Print</button>
+        <button onclick="printDaySchedule()" style="background:none;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:var(--grey);cursor:pointer;font-size:12px;padding:7px 14px;">🖨️ Print Schedule</button>
       </div>
       ${allToday.map(item => item._type === 'block' ? `
         <div class="today-slot" style="border-left:3px solid var(--purple);">
@@ -2504,10 +2571,12 @@
           <div class="today-info">
             <div class="today-name">${item.name}</div>
             <div class="today-vehicle">${item.year} ${item.model} · ${item.plate} · ${SVC[item.serviceType]}</div>
+            ${item.mechanicNotes ? `<div style="font-size:11px;color:var(--grey);margin-top:3px;font-style:italic;">📝 ${item.mechanicNotes}</div>` : ''}
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
             <span class="status-badge status-${item.status}">${item.status}</span>
             <div style="font-size:12px;color:var(--grey);">${item.phone}</div>
+            ${item.mechanic ? `<span class="mechanic-badge mechanic-${item.mechanic}" style="font-size:10px;">M${item.mechanic}</span>` : ''}
           </div>
         </div>`
       ).join('')}`;
@@ -3064,6 +3133,187 @@
       : `<img src="${src}" style="max-width:100%;max-height:100vh;object-fit:contain;">`;
     w.document.write(`<!DOCTYPE html><html><head><title>Media</title></head><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;">${content}</body></html>`);
     w.document.close();
+  }
+
+  // ── MECHANIC NOTES ────────────────────────────────────────────────────
+  async function saveMechanicNotes(id) {
+    const ta = document.getElementById('mech-notes-' + id);
+    const msg = document.getElementById('mech-notes-msg-' + id);
+    if (!ta) return;
+    try {
+      const res = await fetch(`/api/admin/bookings/${id}/mechanic-notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: ta.value.trim() })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        // Update in local array so card re-renders correctly without a full reload
+        const idx = allBookings.findIndex(b => b.id === id);
+        if (idx !== -1) allBookings[idx].mechanicNotes = ta.value.trim();
+        if (msg) { msg.style.display = 'inline'; setTimeout(() => { if(msg) msg.style.display = 'none'; }, 2000); }
+      } else {
+        showToast(data.error || 'Failed to save notes', 'error');
+      }
+    } catch { showToast('Network error', 'error'); }
+  }
+
+  // ── PRINT DAY SCHEDULE ────────────────────────────────────────────────
+  function printDaySchedule() {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const dateLabel = new Date(todayStr + 'T12:00:00').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    const todayB = allBookings.filter(b => b.date === todayStr && b.status === 'accepted').sort((a,b) => a.time.localeCompare(b.time));
+    const todayBlocks = allBlocks.filter(bl => bl.date === todayStr).sort((a,b) => a.startTime.localeCompare(b.startTime));
+
+    const allItems = [
+      ...todayB.map(b => ({ _type:'booking', time: b.time, name: b.name, phone: b.phone, vehicle: `${b.year} ${b.model}`, plate: b.plate, service: SVC[b.serviceType] || b.serviceType, mechanic: b.mechanic ? 'Mechanic ' + b.mechanic : '—', notes: b.mechanicNotes || '' })),
+      ...todayBlocks.map(bl => ({ _type:'block', time: bl.startTime, name: bl.customerName || bl.reason || 'Manual Block', phone: bl.customerPhone || '—', vehicle: bl.vehicleModel || '—', plate: '—', service: 'Via Phone', mechanic: '—', notes: bl.notes || '' }))
+    ].sort((a,b) => a.time.localeCompare(b.time));
+
+    const rows = allItems.map(item => `
+      <tr style="${item._type==='block' ? 'background:#f5f0ff;' : ''}">
+        <td style="font-weight:700;">${item.time}</td>
+        <td>${item.name}</td>
+        <td>${item.phone}</td>
+        <td>${item.vehicle}<br><span style="font-size:11px;color:#666;">${item.plate}</span></td>
+        <td>${item.service}</td>
+        <td>${item.mechanic}</td>
+        <td style="font-style:italic;color:#555;">${item.notes}</td>
+      </tr>`).join('');
+
+    const html = `<!DOCTYPE html><html><head><title>Schedule – ${dateLabel}</title>
+    <style>
+      body { font-family: Arial, sans-serif; font-size: 13px; color: #111; margin: 20px; }
+      h1 { font-size: 18px; margin-bottom: 4px; }
+      .sub { color: #666; font-size: 12px; margin-bottom: 16px; }
+      table { width: 100%; border-collapse: collapse; }
+      th { background: #0a1a1f; color: #fff; text-align: left; padding: 8px 10px; font-size: 12px; }
+      td { padding: 7px 10px; border-bottom: 1px solid #e0e0e0; vertical-align: top; }
+      tr:hover td { background: #f9f9f9; }
+      @media print { body { margin: 0; } button { display: none; } }
+    </style></head><body>
+    <h1>🏍️ Motowarehouse – Day Schedule</h1>
+    <div class="sub">${dateLabel} &nbsp;·&nbsp; ${allItems.length} appointment${allItems.length !== 1 ? 's' : ''}</div>
+    <button onclick="window.print()" style="margin-bottom:14px;padding:6px 16px;background:#009BB4;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:12px;">🖨️ Print</button>
+    <table>
+      <thead><tr><th>Time</th><th>Customer</th><th>Phone</th><th>Vehicle / Plate</th><th>Service</th><th>Mechanic</th><th>Notes</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </body></html>`;
+
+    const w = window.open('', '_blank');
+    if (w) { w.document.write(html); w.document.close(); }
+  }
+
+  // ── STATS DASHBOARD ───────────────────────────────────────────────────
+  function renderStatsView() {
+    const el = document.getElementById('stats-view');
+    if (!allBookings.length) {
+      el.innerHTML = `<div class="empty-state"><p>No booking data available yet.</p></div>`;
+      return;
+    }
+
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+
+    // Last 30 days range
+    const d30 = new Date(now); d30.setDate(d30.getDate() - 30);
+    const recent = allBookings.filter(b => new Date(b.createdAt) >= d30);
+
+    // Totals (all time, from loaded data)
+    const totals = { pending:0, accepted:0, completed:0, cancelled:0, 'no-show':0 };
+    allBookings.forEach(b => { if (totals[b.status] !== undefined) totals[b.status]++; });
+
+    // Service type breakdown (last 30 days)
+    const svcBreak = {};
+    recent.forEach(b => { const k = SVC[b.serviceType] || b.serviceType; svcBreak[k] = (svcBreak[k]||0)+1; });
+
+    // Busiest days of week (last 30 days accepted+completed)
+    const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const dowCounts = [0,0,0,0,0,0,0];
+    recent.filter(b => ['accepted','completed'].includes(b.status)).forEach(b => {
+      if (b.date) { const d = new Date(b.date+'T12:00:00'); dowCounts[d.getDay()]++; }
+    });
+    const maxDow = Math.max(...dowCounts, 1);
+
+    // Weekly trend — last 4 weeks (Mon–Sat, accepted+completed)
+    const weeks = [];
+    for (let w = 3; w >= 0; w--) {
+      const wStart = new Date(now);
+      const dayOw = now.getDay() === 0 ? 6 : now.getDay() - 1;
+      wStart.setDate(now.getDate() - dayOw - w * 7);
+      const wEnd = new Date(wStart); wEnd.setDate(wStart.getDate() + 6);
+      const wLabel = wStart.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+      const wCount = allBookings.filter(b => {
+        if (!b.date || !['accepted','completed'].includes(b.status)) return false;
+        const bd = new Date(b.date+'T12:00:00');
+        return bd >= wStart && bd <= wEnd;
+      }).length;
+      weeks.push({ label: wLabel, count: wCount });
+    }
+    const maxWeek = Math.max(...weeks.map(w => w.count), 1);
+
+    // Today quick stats
+    const todayCount = allBookings.filter(b => b.date === todayStr && b.status === 'accepted').length;
+    const pendingCount = allBookings.filter(b => b.status === 'pending').length;
+
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:24px;">
+        <div class="stat-card"><div class="stat-label">Today</div><div class="stat-value" style="color:var(--blue);">${todayCount}</div><div style="font-size:11px;color:var(--grey);">accepted</div></div>
+        <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value pending">${totals.pending}</div><div style="font-size:11px;color:var(--grey);">needs action</div></div>
+        <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="color:#00b882;">${totals.completed}</div><div style="font-size:11px;color:var(--grey);">all time</div></div>
+        <div class="stat-card"><div class="stat-label">No-shows</div><div class="stat-value" style="color:var(--grey);">${totals['no-show']}</div><div style="font-size:11px;color:var(--grey);">all time</div></div>
+        <div class="stat-card"><div class="stat-label">Cancelled</div><div class="stat-value cancelled">${totals.cancelled}</div><div style="font-size:11px;color:var(--grey);">all time</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px;">
+
+        <!-- Weekly trend -->
+        <div class="panel-card" style="padding:18px;">
+          <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--text);">Weekly Bookings (last 4 weeks)</div>
+          ${weeks.map(w => `
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:9px;">
+              <div style="font-size:11px;color:var(--grey);width:58px;flex-shrink:0;">${w.label}</div>
+              <div style="flex:1;background:rgba(255,255,255,0.07);border-radius:4px;height:16px;overflow:hidden;">
+                <div style="height:100%;width:${w.count ? Math.max(6, Math.round(w.count/maxWeek*100)) : 0}%;background:var(--blue);border-radius:4px;transition:width 0.4s;"></div>
+              </div>
+              <div style="font-size:12px;font-weight:700;color:var(--text);width:20px;text-align:right;">${w.count}</div>
+            </div>`).join('')}
+        </div>
+
+        <!-- Service type breakdown -->
+        <div class="panel-card" style="padding:18px;">
+          <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--text);">Service Types (last 30 days)</div>
+          ${Object.keys(svcBreak).length === 0 ? `<div style="color:var(--grey);font-size:13px;">No data for this period.</div>` :
+            Object.entries(svcBreak).sort((a,b) => b[1]-a[1]).map(([k,v]) => {
+              const total30 = recent.length || 1;
+              const pct = Math.round(v/total30*100);
+              return `
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:9px;">
+                <div style="font-size:11px;color:var(--grey);width:92px;flex-shrink:0;">${k}</div>
+                <div style="flex:1;background:rgba(255,255,255,0.07);border-radius:4px;height:16px;overflow:hidden;">
+                  <div style="height:100%;width:${Math.max(6,pct)}%;background:var(--blue);opacity:0.8;border-radius:4px;"></div>
+                </div>
+                <div style="font-size:12px;font-weight:700;color:var(--text);width:32px;text-align:right;">${v} <span style="font-weight:400;color:var(--grey);">(${pct}%)</span></div>
+              </div>`;
+            }).join('')}
+        </div>
+      </div>
+
+      <!-- Busiest days -->
+      <div class="panel-card" style="padding:18px;margin-bottom:18px;">
+        <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--text);">Busiest Days of the Week (last 30 days)</div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;text-align:center;">
+          ${dowCounts.map((c,i) => `
+            <div>
+              <div style="font-size:11px;color:var(--grey);margin-bottom:6px;">${dayNames[i]}</div>
+              <div style="height:60px;display:flex;align-items:flex-end;justify-content:center;">
+                <div style="width:28px;background:var(--blue);opacity:${i===0||i===6?'0.35':'0.85'};border-radius:4px 4px 0 0;height:${c ? Math.max(6, Math.round(c/maxDow*60)) : 2}px;"></div>
+              </div>
+              <div style="font-size:13px;font-weight:700;color:var(--text);margin-top:4px;">${c}</div>
+            </div>`).join('')}
+        </div>
+      </div>`;
   }
 
   checkAuth();

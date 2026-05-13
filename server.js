@@ -381,6 +381,19 @@ app.post('/api/admin/bookings/:id/no-show', requireAdmin, async (req, res) => {
   }
 });
 
+// Save mechanic notes on an accepted booking
+app.post('/api/admin/bookings/:id/mechanic-notes', requireAdmin, async (req, res) => {
+  try {
+    const { notes } = req.body;
+    const booking = await db.updateMechanicNotes(req.params.id, notes);
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+    res.json({ success: true, booking });
+  } catch (err) {
+    console.error('[Mechanic notes error]', err);
+    res.status(500).json({ error: 'Failed to save notes.' });
+  }
+});
+
 // Get all blocks
 app.get('/api/admin/blocks', requireAdmin, async (req, res) => {
   try {
