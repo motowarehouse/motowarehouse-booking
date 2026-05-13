@@ -67,7 +67,19 @@ app.get('/api/slots', (req, res) => {
   }
 
   const booked = db.getBookedSlots(date);
-  const available = slots.filter(s => !booked.includes(s));
+
+  // If the requested date is today, filter out slots that are in the past
+  const todayStr = new Date().toISOString().split('T')[0];
+  let available = slots.filter(s => !booked.includes(s));
+  if (date === todayStr) {
+    const nowCyprus = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Nicosia' }));
+    const nowMins = nowCyprus.getHours() * 60 + nowCyprus.getMinutes() + 30; // 30min buffer
+    available = available.filter(s => {
+      const [h, m] = s.split(':').map(Number);
+      return h * 60 + m > nowMins;
+    });
+  }
+
   res.json({ slots: available, booked });
 });
 
@@ -501,7 +513,7 @@ app.get('/partner', (req, res) => {
 
 // Log a warranty claim (partner or admin)
 app.post('/api/warranty-claim', requireAdminOrPartner, (req, res) => {
-  const { regNo, frameNo, km, symptom, priority, engineDisassembly, defectAgreed, courtesyVehicle, notes, photos } = req.body;
+  const { regNo, frameNo, km, symptom, priority, engineDisassembly, defectAgreed, courtesyVehicle, notes, photos, mediaTypes } = req.body;
   if (!regNo || !symptom) {
     return res.status(400).json({ error: 'Registration number and symptom are required.' });
   }
@@ -510,7 +522,8 @@ app.post('/api/warranty-claim', requireAdminOrPartner, (req, res) => {
   const claim = db.createWarrantyClaim({
     regNo, frameNo, km, symptom, priority,
     engineDisassembly, defectAgreed, courtesyVehicle, notes,
-    photos: Array.isArray(photos) ? photos : [],
+    photos:     Array.isArray(photos)     ? photos     : [],
+    mediaTypes: Array.isArray(mediaTypes) ? mediaTypes : [],
     partnerId:    partnerInfo ? partnerInfo.id : null,
     partnerName:  partnerInfo ? partnerInfo.workshopName : 'Motowarehouse',
     loggedBy:     partnerInfo ? partnerInfo.workshopName : 'Motowarehouse',

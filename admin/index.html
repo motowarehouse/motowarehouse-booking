@@ -1631,9 +1631,20 @@
       const date     = new Date(w.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
       const priColor = PRIORITY_COLOR[w.priority] || 'var(--grey)';
       const stColor  = STATUS_COLOR[w.status]     || 'var(--grey)';
+      const mediaTypes = w.mediaTypes || [];
       const photoBar = w.photos && w.photos.length
         ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
-            ${w.photos.map(src => `<span onclick="viewPhoto('${src}')" style="cursor:pointer;"><img src="${src}" style="width:56px;height:56px;object-fit:cover;border-radius:5px;border:1px solid rgba(255,255,255,0.1);"></span>`).join('')}
+            ${w.photos.map((src, i) => {
+              const isVideo = mediaTypes[i] === 'video' || /\.(mp4|mov|avi|webm)(\?|$)/i.test(src);
+              return isVideo
+                ? `<span onclick="viewPhoto('${src}','video')" style="cursor:pointer;position:relative;display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:5px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);background:#000;">
+                     <video src="${src}" style="width:100%;height:100%;object-fit:cover;" muted></video>
+                     <span style="position:absolute;background:rgba(0,0,0,0.55);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+                       <svg viewBox="0 0 24 24" width="10" height="10" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                     </span>
+                   </span>`
+                : `<span onclick="viewPhoto('${src}','image')" style="cursor:pointer;"><img src="${src}" style="width:56px;height:56px;object-fit:cover;border-radius:5px;border:1px solid rgba(255,255,255,0.1);"></span>`;
+            }).join('')}
            </div>` : '';
       const adminNotesField = w.status === 'open'
         ? `<textarea id="anotes-${w.id}" placeholder="Internal notes (optional)…" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--white);font-family:inherit;font-size:12px;padding:8px 10px;resize:vertical;min-height:56px;margin-top:10px;">${w.adminNotes||''}</textarea>` : '';
@@ -2535,10 +2546,14 @@
   }
 
   // ── PHOTO VIEWER ──────────────────────────────────────────────────────
-  function viewPhoto(src) {
+  function viewPhoto(src, type) {
     const w = window.open('', '_blank');
     if (!w) return;
-    w.document.write(`<!DOCTYPE html><html><head><title>Photo</title></head><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;"><img src="${src}" style="max-width:100%;max-height:100vh;object-fit:contain;"></body></html>`);
+    const isVideo = type === 'video' || /\.(mp4|mov|avi|webm)(\?|$)/i.test(src);
+    const content = isVideo
+      ? `<video src="${src}" controls autoplay style="max-width:100%;max-height:100vh;object-fit:contain;"></video>`
+      : `<img src="${src}" style="max-width:100%;max-height:100vh;object-fit:contain;">`;
+    w.document.write(`<!DOCTYPE html><html><head><title>Media</title></head><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;">${content}</body></html>`);
     w.document.close();
   }
 
