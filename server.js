@@ -236,10 +236,16 @@ app.get('/api/admin/me', requireAdmin, (req, res) => {
   res.json({ admin: true });
 });
 
-// Get all bookings
+// Get bookings — defaults to last 30 days; pass ?from=all to load everything
 app.get('/api/admin/bookings', requireAdmin, async (req, res) => {
   try {
-    const bookings = await db.getAllBookings();
+    let fromDate = null;
+    if (req.query.from !== 'all') {
+      const d = new Date();
+      d.setDate(d.getDate() - 30);
+      fromDate = d.toISOString().slice(0, 10); // YYYY-MM-DD
+    }
+    const bookings = await db.getAllBookings({ fromDate });
     res.json(bookings);
   } catch (err) {
     console.error('[Get bookings error]', err);

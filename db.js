@@ -350,10 +350,22 @@ async function createBooking(data) {
   return rowToBooking(rows[0]);
 }
 
-async function getAllBookings() {
-  const { rows } = await pool.query(
-    'SELECT * FROM bookings ORDER BY created_at DESC'
-  );
+async function getAllBookings({ fromDate } = {}) {
+  let query, params;
+  if (fromDate) {
+    // Return bookings within range OR any active booking (pending/accepted) regardless of age
+    query = `
+      SELECT * FROM bookings
+      WHERE created_at >= $1
+         OR status IN ('pending', 'accepted')
+      ORDER BY created_at DESC
+    `;
+    params = [fromDate];
+  } else {
+    query = 'SELECT * FROM bookings ORDER BY created_at DESC';
+    params = [];
+  }
+  const { rows } = await pool.query(query, params);
   return rows.map(rowToBooking);
 }
 

@@ -418,10 +418,16 @@
         <!-- Bookings list view -->
         <div id="bookings-view">
           <div id="search-bar-wrap" style="margin-bottom:14px;display:none;">
-            <input type="text" id="booking-search" class="admin-input"
-              placeholder="Search by name, phone, plate, or reference…"
-              oninput="renderBookings()"
-              style="max-width:440px;">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <input type="text" id="booking-search" class="admin-input"
+                placeholder="Search by name, phone, plate, or reference…"
+                oninput="renderBookings()"
+                style="flex:1;min-width:220px;max-width:400px;">
+              <div id="date-range-tag" style="font-size:12px;color:var(--grey);white-space:nowrap;">
+                Showing last 30 days
+                <button onclick="loadAllBookings()" style="background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline;padding:0;margin-left:6px;">Load all</button>
+              </div>
+            </div>
           </div>
           <div class="bookings-list" id="bookings-list"></div>
         </div>
@@ -1033,13 +1039,24 @@
     }).catch(() => {});
   }
 
+  let bookingLoadMode = '30d'; // '30d' or 'all'
+
   async function loadBookings() {
-    const [bRes, blRes] = await Promise.all([fetch('/api/admin/bookings'), fetch('/api/admin/blocks')]);
+    const url = bookingLoadMode === 'all' ? '/api/admin/bookings?from=all' : '/api/admin/bookings';
+    const [bRes, blRes] = await Promise.all([fetch(url), fetch('/api/admin/blocks')]);
     if (bRes.ok)  allBookings = await bRes.json();
     if (blRes.ok) allBlocks   = await blRes.json();
     updateStats();
     if (['all','pending','accepted','today','calendar'].includes(currentView)) renderView();
     if (currentView === 'cancelled') renderView();
+  }
+
+  async function loadAllBookings() {
+    bookingLoadMode = 'all';
+    const tag = document.getElementById('date-range-tag');
+    if (tag) tag.innerHTML = 'Showing all bookings <span style="color:var(--grey);">(loading…)</span>';
+    await loadBookings();
+    if (tag) tag.innerHTML = 'Showing all bookings';
   }
 
   // ── STATS ──────────────────────────────────────────────────────────────
