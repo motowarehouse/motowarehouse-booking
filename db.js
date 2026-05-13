@@ -1,333 +1,527 @@
-const fs = require('fs');
-const path = require('path');
+require('dotenv').config();
+const { Pool } = require('pg');
 
-// Use Railway persistent volume if available, otherwise fall back to local (for development)
-const DB_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH
-  ? path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, 'bookings.json')
-  : path.join(__dirname, 'bookings.json');
+// ── Connection ────────────────────────────────────────────────────────────────
 
-function readDB() {
-  if (!fs.existsSync(DB_PATH)) {
-    const initial = { bookings: [], blocks: [], hours: null, lastId: 0, vehicles: [], partners: [], serviceHistory: [], warrantyHistory: [], settings: {} };
-    fs.writeFileSync(DB_PATH, JSON.stringify(initial, null, 2));
-    return initial;
-  }
-  const db = JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
-  // Migrate older DBs
-  if (!db.blocks) db.blocks = [];
-  if (!db.hours) db.hours = null;
-  if (!db.vehicles) db.vehicles = [];
-  if (!db.partners) db.partners = [];
-  if (!db.serviceHistory) db.serviceHistory = [];
-  if (!db.warrantyHistory) db.warrantyHistory = [];
-  if (!db.settings) db.settings = {};
-  return db;
+if (!process.env.DATABASE_URL) {
+  console.error('\n❌  DATABASE_URL is not set.');
+  console.error('    Add your PostgreSQL connection string to .env or Railway variables.\n');
+  process.exit(1);
+}
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' || process.env.DATABASE_URL.includes('railway')
+    ? { rejectUnauthorized: false }
+    : false
+});
+
+pool.on('error', (err) => {
+  console.error('[DB] Unexpected pool error:', err.message);
+});
+
+// ── Row mappers (DB snake_case → JS camelCase) ────────────────────────────────
+
+function rowToBooking(r) {
+  if (!r) return null;
+  return {
+    id:            r.id,
+    ref:           r.ref,
+    name:          r.name,
+    phone:         r.phone,
+    email:         r.email,
+    serviceType:   r.service_type,
+    date:          r.date,
+    time:          r.time,
+    model:         r.model,
+    year:          r.year,
+    plate:         r.plate,
+    km:            r.km,
+    notes:         r.notes,
+    description:   r.description,
+    mechanic:      r.mechanic,
+    status:        r.status,
+    contactStatus: r.contact_status,
+    reminderSent:  r.reminder_sent,
+    serviceKm:     r.service_km,
+    serviceRegNo:  r.service_reg_no,
+    completedAt:   r.completed_at,
+    updatedAt:     r.updated_at,
+    createdAt:     r.created_at
+  };
+}
+
+function rowToBlock(r) {
+  if (!r) return null;
+  return {
+    id:            r.id,
+    date:          r.date,
+    startTime:     r.start_time,
+    endTime:       r.end_time,
+    reason:        r.reason,
+    customerName:  r.customer_name,
+    customerPhone: r.customer_phone,
+    vehicleModel:  r.vehicle_model,
+    notes:         r.notes,
+    createdAt:     r.created_at
+  };
+}
+
+function rowToVehicle(r) {
+  if (!r) return null;
+  return {
+    regNo:        r.reg_no,
+    frameNo:      r.frame_no,
+    engineNo:     r.engine_no,
+    model:        r.model,
+    manufacturer: r.manufacturer,
+    description:  r.description,
+    year:         r.year,
+    status:       r.status,
+    updatedAt:    r.updated_at,
+    createdAt:    r.created_at
+  };
+}
+
+function rowToPartner(r) {
+  if (!r) return null;
+  return {
+    id:           r.id,
+    username:     r.username,
+    passwordHash: r.password_hash,
+    workshopName: r.workshop_name,
+    phone:        r.phone,
+    active:       r.active,
+    createdAt:    r.created_at
+  };
+}
+
+function rowToServiceEntry(r) {
+  if (!r) return null;
+  return {
+    id:            r.id,
+    regNo:         r.reg_no,
+    date:          r.date,
+    km:            r.km,
+    items:         r.items || [],
+    notes:         r.notes,
+    partnerId:     r.partner_id,
+    partnerName:   r.partner_name,
+    loggedByAdmin: r.logged_by_admin,
+    bookingRef:    r.booking_ref,
+    updatedAt:     r.updated_at,
+    createdAt:     r.created_at
+  };
+}
+
+function rowToWarranty(r) {
+  if (!r) return null;
+  return {
+    id:                r.id,
+    regNo:             r.reg_no,
+    frameNo:           r.frame_no,
+    km:                r.km,
+    saleDate:          r.sale_date,
+    symptom:           r.symptom,
+    priority:          r.priority,
+    engineDisassembly: r.engine_disassembly,
+    defectAgreed:      r.defect_agreed,
+    courtesyVehicle:   r.courtesy_vehicle,
+    notes:             r.notes,
+    photos:            r.photos     || [],
+    mediaTypes:        r.media_types || [],
+    loggedBy:          r.logged_by,
+    loggedByAdmin:     r.logged_by_admin,
+    partnerId:         r.partner_id,
+    partnerName:       r.partner_name,
+    status:            r.status,
+    adminNotes:        r.admin_notes,
+    updatedAt:         r.updated_at,
+    createdAt:         r.created_at
+  };
 }
 
 // ── Settings ──────────────────────────────────────────────────────────────────
 
-function getSetting(key) {
-  return readDB().settings[key] ?? null;
+async function getSetting(key) {
+  const { rows } = await pool.query(
+    'SELECT value FROM settings WHERE key = $1', [key]
+  );
+  return rows.length ? rows[0].value : null;
 }
 
-function setSetting(key, value) {
-  const db = readDB();
-  db.settings[key] = value;
-  writeDB(db);
-}
-
-function writeDB(data) {
-  fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
-}
-
-function generateRef(id) {
-  return 'MW' + String(id).padStart(5, '0');
+async function setSetting(key, value) {
+  await pool.query(
+    `INSERT INTO settings (key, value) VALUES ($1, $2::jsonb)
+     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+    [key, JSON.stringify(value)]
+  );
 }
 
 // ── Bookings ─────────────────────────────────────────────────────────────────
 
 const MECHANIC_COUNT = 2;
 
-function createBooking(data) {
-  const db = readDB();
-
-  // Auto-assign to whichever mechanic is free at this slot
-  const existing = db.bookings.filter(
-    b => b.date === data.date && b.time === data.time &&
-    (b.status === 'pending' || b.status === 'accepted')
+async function createBooking(data) {
+  // Auto-assign to the mechanic that is free at this slot
+  const { rows: taken } = await pool.query(
+    `SELECT mechanic FROM bookings
+     WHERE date = $1 AND time = $2 AND status IN ('pending','accepted')`,
+    [data.date, data.time]
   );
-  const mechanic = existing.some(b => b.mechanic === 1) ? 2 : 1;
+  const mechanic = taken.some(b => b.mechanic === 1) ? 2 : 1;
 
-  db.lastId += 1;
-  const booking = {
-    id: db.lastId,
-    ref: generateRef(db.lastId),
-    ...data,
-    mechanic,
-    status: 'pending',
-    createdAt: new Date().toISOString(),
-    reminderSent: false
-  };
-  db.bookings.push(booking);
-  writeDB(db);
-  return booking;
+  const { rows } = await pool.query(
+    `INSERT INTO bookings
+       (name, phone, email, service_type, date, time, model, year, plate, km,
+        notes, description, mechanic, status, contact_status, reminder_sent)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'pending',$14,false)
+     RETURNING *`,
+    [
+      data.name, data.phone, data.email || '', data.serviceType,
+      data.date || '', data.time || '',
+      data.model, data.year, data.plate, data.km,
+      data.notes || '', data.description || '',
+      mechanic,
+      data.contactStatus || null
+    ]
+  );
+  return rowToBooking(rows[0]);
 }
 
-function getAllBookings() {
-  return readDB().bookings;
+async function getAllBookings() {
+  const { rows } = await pool.query(
+    'SELECT * FROM bookings ORDER BY created_at DESC'
+  );
+  return rows.map(rowToBooking);
 }
 
-function getBookingById(id) {
-  return readDB().bookings.find(b => b.id === parseInt(id));
+async function getBookingById(id) {
+  const { rows } = await pool.query(
+    'SELECT * FROM bookings WHERE id = $1', [parseInt(id)]
+  );
+  return rowToBooking(rows[0] || null);
 }
 
-function updateBookingStatus(id, status) {
-  const db = readDB();
-  const idx = db.bookings.findIndex(b => b.id === parseInt(id));
-  if (idx === -1) return null;
-  db.bookings[idx].status = status;
-  db.bookings[idx].updatedAt = new Date().toISOString();
-  if (status === 'cancelled') {
-    db.bookings[idx].contactStatus = 'needs-contact';
-  }
-  writeDB(db);
-  return db.bookings[idx];
+async function updateBookingStatus(id, status) {
+  const extra = status === 'cancelled'
+    ? `, contact_status = 'needs-contact'`
+    : '';
+  const { rows } = await pool.query(
+    `UPDATE bookings SET status = $1, updated_at = NOW()${extra}
+     WHERE id = $2 RETURNING *`,
+    [status, parseInt(id)]
+  );
+  return rowToBooking(rows[0] || null);
 }
 
-function rescheduleBooking(id, newDate, newTime) {
-  const db = readDB();
-  const idx = db.bookings.findIndex(b => b.id === parseInt(id));
-  if (idx === -1) return null;
-  db.bookings[idx].date = newDate;
-  db.bookings[idx].time = newTime;
-  db.bookings[idx].status = 'accepted';
-  db.bookings[idx].contactStatus = null;
-  db.bookings[idx].reminderSent = false;
-  db.bookings[idx].updatedAt = new Date().toISOString();
-  writeDB(db);
-  return db.bookings[idx];
+async function rescheduleBooking(id, newDate, newTime) {
+  const { rows } = await pool.query(
+    `UPDATE bookings
+     SET date = $1, time = $2, status = 'accepted',
+         contact_status = NULL, reminder_sent = false, updated_at = NOW()
+     WHERE id = $3 RETURNING *`,
+    [newDate, newTime, parseInt(id)]
+  );
+  return rowToBooking(rows[0] || null);
 }
 
-function updateContactStatus(id, contactStatus) {
-  const db = readDB();
-  const idx = db.bookings.findIndex(b => b.id === parseInt(id));
-  if (idx === -1) return null;
-  db.bookings[idx].contactStatus = contactStatus;
-  db.bookings[idx].updatedAt = new Date().toISOString();
-  writeDB(db);
-  return db.bookings[idx];
+async function updateContactStatus(id, contactStatus) {
+  const { rows } = await pool.query(
+    `UPDATE bookings SET contact_status = $1, updated_at = NOW()
+     WHERE id = $2 RETURNING *`,
+    [contactStatus, parseInt(id)]
+  );
+  return rowToBooking(rows[0] || null);
 }
 
-function markReminderSent(id) {
-  const db = readDB();
-  const idx = db.bookings.findIndex(b => b.id === parseInt(id));
-  if (idx !== -1) {
-    db.bookings[idx].reminderSent = true;
-    writeDB(db);
-  }
+async function markReminderSent(id) {
+  await pool.query(
+    'UPDATE bookings SET reminder_sent = true WHERE id = $1', [parseInt(id)]
+  );
 }
 
-function getAcceptedBookingsDueForReminder() {
-  const db = readDB();
+async function getAcceptedBookingsDueForReminder() {
+  const { rows } = await pool.query(
+    `SELECT * FROM bookings WHERE status = 'accepted' AND reminder_sent = false`
+  );
   const now = new Date();
-  const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-  const windowStart = new Date(now.getTime() + 90 * 60 * 1000);
-  return db.bookings.filter(b => {
-    if (b.status !== 'accepted' || b.reminderSent) return false;
+  const windowStart    = new Date(now.getTime() + 90 * 60 * 1000);
+  const twoHoursFromNow = new Date(now.getTime() + 2  * 60 * 60 * 1000);
+  return rows.map(rowToBooking).filter(b => {
+    if (!b.date || !b.time) return false;
     const apptTime = new Date(b.date + 'T' + b.time);
     return apptTime >= windowStart && apptTime <= twoHoursFromNow;
   });
 }
 
-// Returns all fully-booked + manually blocked 30-min slots for a given date
-// A slot is only fully booked when all mechanics (MECHANIC_COUNT) are taken
-function getBookedSlots(date) {
-  const db = readDB();
-
-  // Count active bookings per slot
+async function getBookedSlots(date) {
+  const { rows: appts } = await pool.query(
+    `SELECT time, mechanic FROM bookings
+     WHERE date = $1 AND status IN ('pending','accepted')`,
+    [date]
+  );
   const slotCounts = {};
-  db.bookings
-    .filter(b => b.date === date && (b.status === 'pending' || b.status === 'accepted'))
-    .forEach(b => { slotCounts[b.time] = (slotCounts[b.time] || 0) + 1; });
+  appts.forEach(b => { slotCounts[b.time] = (slotCounts[b.time] || 0) + 1; });
+  const bookingSlots = Object.keys(slotCounts)
+    .filter(s => slotCounts[s] >= MECHANIC_COUNT);
 
-  // Only mark slot as unavailable when all mechanics are booked
-  const bookingSlots = Object.keys(slotCounts).filter(s => slotCounts[s] >= MECHANIC_COUNT);
-
-  // Manual blocks always block the full slot (both mechanics)
+  const { rows: blks } = await pool.query(
+    'SELECT start_time, end_time FROM blocks WHERE date = $1', [date]
+  );
   const blockSlots = [];
-  (db.blocks || [])
-    .filter(bl => bl.date === date)
-    .forEach(bl => {
-      let [sh, sm] = bl.startTime.split(':').map(Number);
-      const [eh, em] = bl.endTime.split(':').map(Number);
-      while (sh * 60 + sm < eh * 60 + em) {
-        blockSlots.push(`${String(sh).padStart(2,'0')}:${String(sm).padStart(2,'0')}`);
-        sm += 30;
-        if (sm >= 60) { sh++; sm -= 60; }
-      }
-    });
+  blks.forEach(bl => {
+    let [sh, sm] = bl.start_time.split(':').map(Number);
+    const [eh, em] = bl.end_time.split(':').map(Number);
+    while (sh * 60 + sm < eh * 60 + em) {
+      blockSlots.push(`${String(sh).padStart(2,'0')}:${String(sm).padStart(2,'0')}`);
+      sm += 30;
+      if (sm >= 60) { sh++; sm -= 60; }
+    }
+  });
 
   return [...new Set([...bookingSlots, ...blockSlots])];
 }
 
+// ── Complete / No-Show ────────────────────────────────────────────────────────
+
+async function completeBooking(id, serviceData) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Fetch booking first to check it exists and get defaults
+    const { rows: bRows } = await client.query(
+      'SELECT * FROM bookings WHERE id = $1', [parseInt(id)]
+    );
+    if (!bRows.length) { await client.query('ROLLBACK'); return null; }
+
+    const b = bRows[0];
+    const regNo = (serviceData.regNo || b.plate || '').toString()
+      .toUpperCase().replace(/\s/g, '');
+
+    // Update booking
+    const { rows: updatedRows } = await client.query(
+      `UPDATE bookings
+       SET status = 'completed', completed_at = NOW(), updated_at = NOW(),
+           service_km = $1, service_reg_no = $2
+       WHERE id = $3 RETURNING *`,
+      [parseInt(serviceData.km) || 0, regNo, parseInt(id)]
+    );
+
+    // Insert service history entry atomically
+    const entryId = Date.now();
+    const { rows: entryRows } = await client.query(
+      `INSERT INTO service_history
+         (id, reg_no, date, km, items, notes, partner_id, partner_name, logged_by_admin, booking_ref)
+       VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9,$10)
+       RETURNING *`,
+      [
+        entryId,
+        regNo,
+        serviceData.date || b.date,
+        parseInt(serviceData.km) || 0,
+        JSON.stringify(Array.isArray(serviceData.items) ? serviceData.items : []),
+        serviceData.notes || '',
+        null,
+        'Motowarehouse',
+        true,
+        b.ref
+      ]
+    );
+
+    await client.query('COMMIT');
+    return {
+      booking:      rowToBooking(updatedRows[0]),
+      serviceEntry: rowToServiceEntry(entryRows[0])
+    };
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+async function markNoShow(id) {
+  const { rows } = await pool.query(
+    `UPDATE bookings SET status = 'no-show', updated_at = NOW()
+     WHERE id = $1 RETURNING *`,
+    [parseInt(id)]
+  );
+  return rowToBooking(rows[0] || null);
+}
+
 // ── Manual Blocks ─────────────────────────────────────────────────────────────
 
-function createBlock(data) {
-  const db = readDB();
-  const block = {
-    id: Date.now(),
-    date: data.date,
-    startTime: data.startTime,
-    endTime: data.endTime,
-    reason: data.reason || '',
-    customerName: data.customerName || '',
-    customerPhone: data.customerPhone || '',
-    vehicleModel: data.vehicleModel || '',
-    notes: data.notes || '',
-    createdAt: new Date().toISOString()
-  };
-  db.blocks.push(block);
-  writeDB(db);
-  return block;
+async function createBlock(data) {
+  const id = Date.now();
+  const { rows } = await pool.query(
+    `INSERT INTO blocks (id, date, start_time, end_time, reason, customer_name, customer_phone, vehicle_model, notes)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+    [
+      id, data.date, data.startTime, data.endTime,
+      data.reason || '', data.customerName || '',
+      data.customerPhone || '', data.vehicleModel || '', data.notes || ''
+    ]
+  );
+  return rowToBlock(rows[0]);
 }
 
-function getAllBlocks() {
-  return readDB().blocks || [];
+async function getAllBlocks() {
+  const { rows } = await pool.query(
+    'SELECT * FROM blocks ORDER BY date, start_time'
+  );
+  return rows.map(rowToBlock);
 }
 
-function deleteBlock(id) {
-  const db = readDB();
-  const idx = db.blocks.findIndex(b => b.id === parseInt(id));
-  if (idx === -1) return false;
-  db.blocks.splice(idx, 1);
-  writeDB(db);
-  return true;
+async function deleteBlock(id) {
+  const { rowCount } = await pool.query(
+    'DELETE FROM blocks WHERE id = $1', [parseInt(id)]
+  );
+  return rowCount > 0;
 }
 
 // ── Opening Hours ─────────────────────────────────────────────────────────────
-// Stored as an object keyed by day index (0=Sun ... 6=Sat)
-// Each day: { closed: bool, ranges: [['HH:MM','HH:MM'], ...] }
 
 const DEFAULT_HOURS = {
-  0: { closed: true,  ranges: [] },                                   // Sunday
-  1: { closed: false, ranges: [['08:30','12:30'],['14:00','17:00']] }, // Monday
-  2: { closed: false, ranges: [['08:30','12:30'],['14:00','17:00']] }, // Tuesday
-  3: { closed: false, ranges: [['08:30','12:30']] },                   // Wednesday
-  4: { closed: false, ranges: [['08:30','12:30'],['14:00','17:00']] }, // Thursday
-  5: { closed: false, ranges: [['08:30','12:30'],['14:00','17:00']] }, // Friday
-  6: { closed: false, ranges: [['09:00','12:30']] }                    // Saturday
+  0: { closed: true,  ranges: [] },
+  1: { closed: false, ranges: [['08:30','12:30'],['14:00','17:00']] },
+  2: { closed: false, ranges: [['08:30','12:30'],['14:00','17:00']] },
+  3: { closed: false, ranges: [['08:30','12:30']] },
+  4: { closed: false, ranges: [['08:30','12:30'],['14:00','17:00']] },
+  5: { closed: false, ranges: [['08:30','12:30'],['14:00','17:00']] },
+  6: { closed: false, ranges: [['09:00','12:30']] }
 };
 
-function getHours() {
-  const db = readDB();
-  return db.hours || DEFAULT_HOURS;
+async function getHours() {
+  const val = await getSetting('hours');
+  return val || DEFAULT_HOURS;
 }
 
-function saveHours(hours) {
-  const db = readDB();
-  db.hours = hours;
-  writeDB(db);
+async function saveHours(hours) {
+  await setSetting('hours', hours);
 }
 
 // ── Vehicles ──────────────────────────────────────────────────────────────────
 
-function importVehicles(rows) {
-  // rows: array of { regNo, frameNo, engineNo, model, manufacturer, description, year }
-  // Primary key: regNo (normalised). Fallback for unregistered/stock units: frameNo (stored as "FN:<frameNo>").
-  // This means a vehicle with no plate but a frame number is kept as a stock unit and can be
-  // updated to a registered vehicle later by re-importing with the reg number filled in.
-  const db = readDB();
+async function importVehicles(rows) {
   let added = 0, updated = 0, skipped = 0;
+
   for (const row of rows) {
     const rawReg   = (row.regNo   || '').toString().toUpperCase().replace(/\s/g, '');
     const rawFrame = (row.frameNo || '').toString().trim().toUpperCase().replace(/\s/g, '');
 
-    // Determine the lookup key
     let key;
     let isStock = false;
     if (rawReg) {
       key = rawReg;
     } else if (rawFrame) {
-      key = 'FN:' + rawFrame;   // prefix distinguishes from real plates
+      key = 'FN:' + rawFrame;
       isStock = true;
     } else {
       skipped++;
-      continue; // nothing to identify this row by
+      continue;
     }
 
-    const idx = db.vehicles.findIndex(v => v.regNo === key);
-    const record = {
-      regNo:        key,
-      frameNo:      (row.frameNo || '').toString().trim(),
-      engineNo:     (row.engineNo || '').toString().trim(),
-      model:        (row.model || '').toString().trim(),
-      manufacturer: (row.manufacturer || '').toString().trim(),
-      description:  (row.description || '').toString().trim(),
-      year:         (row.year || '').toString().trim(),
-      status:       isStock ? 'stock' : 'registered',
-      updatedAt:    new Date().toISOString()
-    };
-    if (idx === -1) {
-      record.createdAt = new Date().toISOString();
-      db.vehicles.push(record);
-      added++;
-    } else {
-      db.vehicles[idx] = { ...db.vehicles[idx], ...record };
-      updated++;
-    }
+    // xmax = 0 means row was inserted (not updated)
+    const { rows: res } = await pool.query(
+      `INSERT INTO vehicles (reg_no, frame_no, engine_no, model, manufacturer, description, year, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+       ON CONFLICT (reg_no) DO UPDATE SET
+         frame_no = EXCLUDED.frame_no,
+         engine_no = EXCLUDED.engine_no,
+         model = EXCLUDED.model,
+         manufacturer = EXCLUDED.manufacturer,
+         description = EXCLUDED.description,
+         year = EXCLUDED.year,
+         status = EXCLUDED.status,
+         updated_at = NOW()
+       RETURNING (xmax = 0) AS is_insert`,
+      [
+        key,
+        (row.frameNo     || '').toString().trim(),
+        (row.engineNo    || '').toString().trim(),
+        (row.model       || '').toString().trim(),
+        (row.manufacturer|| '').toString().trim(),
+        (row.description || '').toString().trim(),
+        (row.year        || '').toString().trim(),
+        isStock ? 'stock' : 'registered'
+      ]
+    );
+    if (res[0].is_insert) added++; else updated++;
   }
-  writeDB(db);
-  return { added, updated, skipped, total: db.vehicles.length };
+
+  const { rows: countRows } = await pool.query('SELECT COUNT(*) FROM vehicles');
+  return { added, updated, skipped, total: parseInt(countRows[0].count) };
 }
 
-function getVehicleByPlate(regNo) {
+async function getVehicleByPlate(regNo) {
   const key = (regNo || '').toString().toUpperCase().replace(/\s/g, '');
-  return readDB().vehicles.find(v => v.regNo === key) || null;
+  const { rows } = await pool.query(
+    'SELECT * FROM vehicles WHERE reg_no = $1', [key]
+  );
+  return rowToVehicle(rows[0] || null);
 }
 
-function getAllVehicles() {
-  return readDB().vehicles;
+async function getAllVehicles() {
+  const { rows } = await pool.query(
+    'SELECT * FROM vehicles ORDER BY reg_no'
+  );
+  return rows.map(rowToVehicle);
 }
 
 // ── Partners ──────────────────────────────────────────────────────────────────
 
-function createPartner(data) {
-  const db = readDB();
-  const partner = {
-    id: Date.now(),
-    username:     data.username.toLowerCase().trim(),
-    passwordHash: data.passwordHash,
-    workshopName: data.workshopName.trim(),
-    phone:        data.phone || '',
-    active:       true,
-    createdAt:    new Date().toISOString()
-  };
-  db.partners.push(partner);
-  writeDB(db);
-  return partner;
+async function createPartner(data) {
+  const id = Date.now();
+  const { rows } = await pool.query(
+    `INSERT INTO partners (id, username, password_hash, workshop_name, phone, active)
+     VALUES ($1,$2,$3,$4,$5,true) RETURNING *`,
+    [
+      id,
+      data.username.toLowerCase().trim(),
+      data.passwordHash,
+      data.workshopName.trim(),
+      data.phone || ''
+    ]
+  );
+  return rowToPartner(rows[0]);
 }
 
-function getPartnerByUsername(username) {
+async function getPartnerByUsername(username) {
   const key = (username || '').toLowerCase().trim();
-  return readDB().partners.find(p => p.username === key) || null;
+  const { rows } = await pool.query(
+    'SELECT * FROM partners WHERE username = $1', [key]
+  );
+  return rowToPartner(rows[0] || null);
 }
 
-function getAllPartners() {
-  return readDB().partners;
+async function getAllPartners() {
+  const { rows } = await pool.query(
+    'SELECT * FROM partners ORDER BY workshop_name'
+  );
+  return rows.map(rowToPartner);
 }
 
-function togglePartnerActive(id) {
-  const db = readDB();
-  const idx = db.partners.findIndex(p => p.id === parseInt(id));
-  if (idx === -1) return null;
-  db.partners[idx].active = !db.partners[idx].active;
-  writeDB(db);
-  return db.partners[idx];
+async function togglePartnerActive(id) {
+  const { rows } = await pool.query(
+    `UPDATE partners SET active = NOT active WHERE id = $1 RETURNING *`,
+    [parseInt(id)]
+  );
+  return rowToPartner(rows[0] || null);
+}
+
+async function updatePartnerPassword(id, passwordHash) {
+  const { rows } = await pool.query(
+    `UPDATE partners SET password_hash = $1 WHERE id = $2 RETURNING *`,
+    [passwordHash, parseInt(id)]
+  );
+  return rowToPartner(rows[0] || null);
 }
 
 // ── Service History ───────────────────────────────────────────────────────────
 
-// Official 24-item service checklist (bilingual GR/EN)
 const DEFAULT_SERVICE_ITEMS = [
   { en: 'ENGINE OIL',          el: 'ΛΑΔΙ ΜΗΧΑΝΗΣ' },
   { en: 'GEAR OIL',            el: 'ΛΑΔΙ ΣΥΜΠΛΕΚΤΗ' },
@@ -355,184 +549,153 @@ const DEFAULT_SERVICE_ITEMS = [
   { en: 'REAR TYRE',           el: 'ΕΛΑΣΤΙΚΟ ΠΙΣΩ' }
 ];
 
-function createServiceEntry(data) {
-  // data: { regNo, km, items[], notes, partnerId, partnerName, loggedByAdmin }
-  const db = readDB();
-  const entry = {
-    id:           Date.now(),
-    regNo:        (data.regNo || '').toString().toUpperCase().replace(/\s/g, ''),
-    date:         data.date || new Date().toISOString().split('T')[0],
-    km:           parseInt(data.km) || 0,
-    items:        Array.isArray(data.items) ? data.items : [],
-    notes:        data.notes || '',
-    partnerId:    data.partnerId || null,
-    partnerName:  data.partnerName || 'Motowarehouse',
-    loggedByAdmin: data.loggedByAdmin || false,
-    createdAt:    new Date().toISOString()
-  };
-  db.serviceHistory.push(entry);
-  writeDB(db);
-  return entry;
+async function createServiceEntry(data) {
+  const id = Date.now();
+  const { rows } = await pool.query(
+    `INSERT INTO service_history
+       (id, reg_no, date, km, items, notes, partner_id, partner_name, logged_by_admin, booking_ref)
+     VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9,$10)
+     RETURNING *`,
+    [
+      id,
+      (data.regNo || '').toString().toUpperCase().replace(/\s/g, ''),
+      data.date || new Date().toISOString().split('T')[0],
+      parseInt(data.km) || 0,
+      JSON.stringify(Array.isArray(data.items) ? data.items : []),
+      data.notes || '',
+      data.partnerId   || null,
+      data.partnerName || 'Motowarehouse',
+      data.loggedByAdmin || false,
+      data.bookingRef    || null
+    ]
+  );
+  return rowToServiceEntry(rows[0]);
 }
 
-function getServiceHistoryByPlate(regNo) {
+async function getServiceHistoryByPlate(regNo) {
   const key = (regNo || '').toString().toUpperCase().replace(/\s/g, '');
-  return readDB().serviceHistory
-    .filter(e => e.regNo === key)
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
+  const { rows } = await pool.query(
+    `SELECT * FROM service_history WHERE reg_no = $1 ORDER BY date DESC, created_at DESC`,
+    [key]
+  );
+  return rows.map(rowToServiceEntry);
 }
 
 const EDIT_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
-function updateServiceEntry(id, data) {
-  // Returns { success, locked, entry }
-  const db = readDB();
-  const idx = db.serviceHistory.findIndex(e => e.id === parseInt(id));
-  if (idx === -1) return { success: false, notFound: true };
-  const entry = db.serviceHistory[idx];
+async function updateServiceEntry(id, data) {
+  const { rows } = await pool.query(
+    'SELECT * FROM service_history WHERE id = $1', [parseInt(id)]
+  );
+  if (!rows.length) return { success: false, notFound: true };
+
+  const entry = rowToServiceEntry(rows[0]);
   const age = Date.now() - new Date(entry.createdAt).getTime();
-  if (age > EDIT_WINDOW_MS && !data.adminOverride) return { success: false, locked: true };
-  db.serviceHistory[idx] = {
-    ...entry,
-    km:        parseInt(data.km)    || entry.km,
-    items:     Array.isArray(data.items) ? data.items : entry.items,
-    notes:     data.notes !== undefined ? data.notes : entry.notes,
-    updatedAt: new Date().toISOString()
-  };
-  writeDB(db);
-  return { success: true, entry: db.serviceHistory[idx] };
+  if (age > EDIT_WINDOW_MS && !data.adminOverride) {
+    return { success: false, locked: true };
+  }
+
+  const newKm    = parseInt(data.km) || entry.km;
+  const newItems = Array.isArray(data.items) ? data.items : entry.items;
+  const newNotes = data.notes !== undefined ? data.notes : entry.notes;
+
+  const { rows: updated } = await pool.query(
+    `UPDATE service_history
+     SET km = $1, items = $2::jsonb, notes = $3, updated_at = NOW()
+     WHERE id = $4 RETURNING *`,
+    [newKm, JSON.stringify(newItems), newNotes, parseInt(id)]
+  );
+  return { success: true, entry: rowToServiceEntry(updated[0]) };
 }
 
-function deleteServiceEntry(id, adminOverride) {
-  const db = readDB();
-  const idx = db.serviceHistory.findIndex(e => e.id === parseInt(id));
-  if (idx === -1) return { success: false, notFound: true };
-  const entry = db.serviceHistory[idx];
-  const age = Date.now() - new Date(entry.createdAt).getTime();
-  if (age > EDIT_WINDOW_MS && !adminOverride) return { success: false, locked: true };
-  db.serviceHistory.splice(idx, 1);
-  writeDB(db);
+async function deleteServiceEntry(id, adminOverride) {
+  const { rows } = await pool.query(
+    'SELECT created_at FROM service_history WHERE id = $1', [parseInt(id)]
+  );
+  if (!rows.length) return { success: false, notFound: true };
+
+  const age = Date.now() - new Date(rows[0].created_at).getTime();
+  if (age > EDIT_WINDOW_MS && !adminOverride) {
+    return { success: false, locked: true };
+  }
+
+  await pool.query('DELETE FROM service_history WHERE id = $1', [parseInt(id)]);
   return { success: true };
 }
 
 // ── Warranty History ──────────────────────────────────────────────────────────
 
-function createWarrantyClaim(data) {
-  const db = readDB();
-  const claim = {
-    id:               Date.now(),
-    regNo:            (data.regNo  || '').toString().toUpperCase().replace(/\s/g, ''),
-    frameNo:          data.frameNo  || '',
-    km:               parseInt(data.km) || 0,
-    saleDate:         data.saleDate || '',
-    symptom:          data.symptom  || '',
-    priority:         data.priority || 'normal',
-    engineDisassembly: !!data.engineDisassembly,
-    defectAgreed:     !!data.defectAgreed,
-    courtesyVehicle:  !!data.courtesyVehicle,
-    notes:            data.notes   || '',
-    photos:           Array.isArray(data.photos)     ? data.photos     : [],
-    mediaTypes:       Array.isArray(data.mediaTypes) ? data.mediaTypes : [],
-    loggedBy:         data.loggedBy   || 'Motowarehouse',
-    loggedByAdmin:    data.loggedByAdmin || false,
-    status:           'open',
-    createdAt:        new Date().toISOString()
-  };
-  db.warrantyHistory.push(claim);
-  writeDB(db);
-  return claim;
+async function createWarrantyClaim(data) {
+  const id = Date.now();
+  const { rows } = await pool.query(
+    `INSERT INTO warranty_history
+       (id, reg_no, frame_no, km, sale_date, symptom, priority,
+        engine_disassembly, defect_agreed, courtesy_vehicle,
+        notes, photos, media_types, logged_by, logged_by_admin,
+        partner_id, partner_name, status)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb,$13::jsonb,$14,$15,$16,$17,'open')
+     RETURNING *`,
+    [
+      id,
+      (data.regNo  || '').toString().toUpperCase().replace(/\s/g, ''),
+      data.frameNo  || '',
+      parseInt(data.km) || 0,
+      data.saleDate || '',
+      data.symptom  || '',
+      data.priority || 'normal',
+      !!data.engineDisassembly,
+      !!data.defectAgreed,
+      !!data.courtesyVehicle,
+      data.notes || '',
+      JSON.stringify(Array.isArray(data.photos)     ? data.photos     : []),
+      JSON.stringify(Array.isArray(data.mediaTypes) ? data.mediaTypes : []),
+      data.loggedBy      || 'Motowarehouse',
+      data.loggedByAdmin || false,
+      data.partnerId     || null,
+      data.partnerName   || 'Motowarehouse'
+    ]
+  );
+  return rowToWarranty(rows[0]);
 }
 
-function getWarrantyByPlate(regNo) {
+async function getWarrantyByPlate(regNo) {
   const key = (regNo || '').toString().toUpperCase().replace(/\s/g, '');
-  return readDB().warrantyHistory
-    .filter(e => e.regNo === key)
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const { rows } = await pool.query(
+    `SELECT * FROM warranty_history WHERE reg_no = $1 ORDER BY created_at DESC`,
+    [key]
+  );
+  return rows.map(rowToWarranty);
 }
 
-function getAllWarranties() {
-  return readDB().warrantyHistory
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+async function getAllWarranties() {
+  const { rows } = await pool.query(
+    'SELECT * FROM warranty_history ORDER BY created_at DESC'
+  );
+  return rows.map(rowToWarranty);
 }
 
-function updateWarrantyStatus(id, status, adminNotes) {
-  const db = readDB();
-  const idx = db.warrantyHistory.findIndex(e => e.id === parseInt(id));
-  if (idx === -1) return null;
-  db.warrantyHistory[idx].status = status;
-  db.warrantyHistory[idx].updatedAt = new Date().toISOString();
-  if (adminNotes !== undefined) db.warrantyHistory[idx].adminNotes = adminNotes;
-  writeDB(db);
-  return db.warrantyHistory[idx];
+async function updateWarrantyStatus(id, status, adminNotes) {
+  const { rows } = await pool.query(
+    `UPDATE warranty_history
+     SET status = $1, admin_notes = COALESCE($2, admin_notes), updated_at = NOW()
+     WHERE id = $3 RETURNING *`,
+    [status, adminNotes !== undefined ? adminNotes : null, parseInt(id)]
+  );
+  return rowToWarranty(rows[0] || null);
 }
 
-// ── Complete / No-Show ────────────────────────────────────────────────────────
-
-function completeBooking(id, serviceData) {
-  // Marks booking as 'completed' and writes a service history entry in one atomic write.
-  const db = readDB();
-  const idx = db.bookings.findIndex(b => b.id === parseInt(id));
-  if (idx === -1) return null;
-
-  const booking = db.bookings[idx];
-  const regNo = (serviceData.regNo || booking.plate || '').toString().toUpperCase().replace(/\s/g, '');
-
-  // Update booking
-  booking.status       = 'completed';
-  booking.completedAt  = new Date().toISOString();
-  booking.updatedAt    = new Date().toISOString();
-  booking.serviceKm    = parseInt(serviceData.km) || 0;
-  booking.serviceRegNo = regNo; // may differ from original plate if admin corrected it
-
-  // Build service history entry
-  const entry = {
-    id:            Date.now(),
-    regNo:         regNo,
-    date:          serviceData.date || booking.date,
-    km:            parseInt(serviceData.km) || 0,
-    items:         Array.isArray(serviceData.items) ? serviceData.items : [],
-    notes:         serviceData.notes || '',
-    partnerId:     null,
-    partnerName:   'Motowarehouse',
-    loggedByAdmin: true,
-    bookingRef:    booking.ref,
-    createdAt:     new Date().toISOString()
-  };
-
-  db.serviceHistory.push(entry);
-  writeDB(db);
-  return { booking: db.bookings[idx], serviceEntry: entry };
-}
-
-function markNoShow(id) {
-  const db = readDB();
-  const idx = db.bookings.findIndex(b => b.id === parseInt(id));
-  if (idx === -1) return null;
-  db.bookings[idx].status    = 'no-show';
-  db.bookings[idx].updatedAt = new Date().toISOString();
-  writeDB(db);
-  return db.bookings[idx];
-}
-
-function updatePartnerPassword(id, passwordHash) {
-  const db = readDB();
-  const idx = db.partners.findIndex(p => p.id === parseInt(id));
-  if (idx === -1) return null;
-  db.partners[idx].passwordHash = passwordHash;
-  writeDB(db);
-  return db.partners[idx];
-}
+// ── Exports ───────────────────────────────────────────────────────────────────
 
 module.exports = {
   getSetting, setSetting,
   createBooking, getAllBookings, getBookingById,
   updateBookingStatus, rescheduleBooking, updateContactStatus,
   markReminderSent, getAcceptedBookingsDueForReminder, getBookedSlots,
+  completeBooking, markNoShow,
   createBlock, getAllBlocks, deleteBlock,
   getHours, saveHours, DEFAULT_HOURS,
   importVehicles, getVehicleByPlate, getAllVehicles,
   createPartner, getPartnerByUsername, getAllPartners, togglePartnerActive, updatePartnerPassword,
   createServiceEntry, updateServiceEntry, deleteServiceEntry, getServiceHistoryByPlate, DEFAULT_SERVICE_ITEMS,
-  completeBooking, markNoShow,
   createWarrantyClaim, getWarrantyByPlate, getAllWarranties, updateWarrantyStatus
 };
