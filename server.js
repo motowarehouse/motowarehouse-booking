@@ -728,4 +728,24 @@ app.post('/api/admin/warranties/:id/status', requireAdmin, async (req, res) => {
 });
 
 // Get service history by plate (partner + admin)
-app.get('/api/service-history', requireAdminOrPartner, async (req, res) =
+app.get('/api/service-history', requireAdminOrPartner, async (req, res) => {
+  try {
+    const { plate } = req.query;
+    if (!plate) return res.status(400).json({ error: 'plate required' });
+    const history = await db.getServiceHistoryByPlate(plate);
+    res.json(history);
+  } catch (err) {
+    console.error('[Service history error]', err);
+    res.status(500).json({ error: 'Failed to load service history.' });
+  }
+});
+
+// ==================== START ====================
+
+startReminderCron();
+
+app.listen(PORT, () => {
+  console.log(`\n✅ Motowarehouse Service Portal running on http://localhost:${PORT}`);
+  console.log(`   Admin panel: http://localhost:${PORT}/admin`);
+  console.log(`   Partner portal: http://localhost:${PORT}/partner\n`);
+});

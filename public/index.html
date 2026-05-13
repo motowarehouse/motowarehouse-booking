@@ -1675,4 +1675,75 @@
       <rect x="22" y="12" width="20" height="16" rx="4"  fill="none" stroke="currentColor" stroke-width="2"/>
       <rect x="34" y="8"  width="28" height="24" rx="12" fill="none" stroke="currentColor" stroke-width="3"/>
       <rect x="54" y="12" width="20" height="16" rx="4"  fill="none" stroke="currentColor" stroke-width="2"/>
-      <rect x="66" y="8"  width="28" h
+      <rect x="66" y="8"  width="28" height="24" rx="12" fill="none" stroke="currentColor" stroke-width="3"/>
+      <rect x="86" y="12" width="20" height="16" rx="4"  fill="none" stroke="currentColor" stroke-width="2"/>
+      <rect x="98" y="8"  width="20" height="24" rx="10" fill="none" stroke="currentColor" stroke-width="3"/>
+    </svg>`,
+
+    piston: `<svg viewBox="0 0 60 110" xmlns="http://www.w3.org/2000/svg">
+      <rect x="8"  y="2"  width="44" height="50" rx="6" fill="none" stroke="currentColor" stroke-width="3"/>
+      <rect x="2"  y="18" width="4"  height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+      <rect x="54" y="18" width="4"  height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+      <rect x="16" y="52" width="28" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2.5"/>
+      <rect x="22" y="62" width="16" height="44" rx="4" fill="none" stroke="currentColor" stroke-width="2.5"/>
+      <line x1="8"  y1="30" x2="52" y2="30" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 4"/>
+    </svg>`,
+  };
+
+  function createShapes() {
+    const container = document.getElementById('bg-shapes');
+
+    const placements = [
+      { type:'wheel',  size:160, top:'8%',   side:'left',  offset:'-55px', color:'rgba(0,155,180,0.07)',  dur:22, delay:0 },
+      { type:'gear',   size:130, top:'30%',  side:'right', offset:'-45px', color:'rgba(0,239,209,0.065)', dur:28, delay:5 },
+      { type:'wrench', size:110, top:'52%',  side:'left',  offset:'-36px', color:'rgba(0,155,180,0.06)',  dur:18, delay:2 },
+      { type:'chain',  size:160, top:'68%',  side:'right', offset:'-60px', color:'rgba(0,239,209,0.055)', dur:32, delay:8 },
+      { type:'piston', size: 90, top:'82%',  side:'left',  offset:'-28px', color:'rgba(0,155,180,0.065)', dur:20, delay:4 },
+      { type:'gear',   size: 80, top:'92%',  side:'right', offset:'-25px', color:'rgba(0,239,209,0.05)',  dur:24, delay:11},
+    ];
+
+    placements.forEach(p => {
+      const wrap = document.createElement('div');
+      wrap.className = 'bg-shape';
+      wrap.style.cssText = `
+        width:${p.size}px; height:${p.size}px;
+        top:${p.top};
+        ${p.side}:${p.offset};
+        color:${p.color};
+        animation-duration:${p.dur}s;
+        animation-delay:-${p.delay}s;
+        display:flex; align-items:center; justify-content:center;
+      `;
+      wrap.innerHTML = MOTO_SVGS[p.type];
+      container.appendChild(wrap);
+      setTimeout(() => wrap.classList.add('show'), 600);
+    });
+  }
+
+  createShapes();
+
+  // 5. Vehicle section reveal — triggered when a model is selected
+  function revealVehicleSection() {
+    const sec = document.getElementById('vehicle-section');
+    if (!sec.classList.contains('revealed')) {
+      sec.classList.add('revealed');
+      // Stagger the field-reveal items inside
+      sec.querySelectorAll('.field-reveal').forEach((el, i) => {
+        setTimeout(() => el.classList.add('visible'), 80 + i * 80);
+      });
+    }
+  }
+
+  // Attach scroll listener
+  window.addEventListener('scroll', () => {
+    updateProgress();
+    updateTracker();
+  }, { passive: true });
+
+  // Run once on load
+  updateProgress();
+  updateTracker();
+</script>
+
+</body>
+</html>
