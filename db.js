@@ -20,6 +20,146 @@ pool.on('error', (err) => {
   console.error('[DB] Unexpected pool error:', err.message);
 });
 
+// ── Auto-init: create all tables on startup if they don't exist ───────────────
+// This means the app is fully self-initialising on any fresh database.
+// CREATE TABLE IF NOT EXISTS is safe to run repeatedly — it never touches existing data.
+
+async function initDB() {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS settings (
+        key   TEXT PRIMARY KEY,
+        value JSONB NOT NULL
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS bookings (
+        id             SERIAL PRIMARY KEY,
+        ref            TEXT    UNIQUE NOT NULL,
+        name           TEXT    NOT NULL,
+        phone          TEXT    NOT NULL,
+        email          TEXT,
+        service_type   TEXT    NOT NULL,
+        date           TEXT,
+        time           TEXT,
+        model          TEXT    NOT NULL,
+        year           TEXT    NOT NULL,
+        plate          TEXT    NOT NULL,
+        km             TEXT,
+        notes          TEXT,
+        description    TEXT,
+        mechanic       INTEGER DEFAULT 1,
+        status         TEXT    NOT NULL DEFAULT 'pending',
+        contact_status TEXT,
+        reminder_sent  BOOLEAN DEFAULT FALSE,
+        service_km     TEXT,
+        service_reg_no TEXT,
+        completed_at   TIMESTAMPTZ,
+        updated_at     TIMESTAMPTZ DEFAULT NOW(),
+        created_at     TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS blocks (
+        id             SERIAL PRIMARY KEY,
+        date           TEXT NOT NULL,
+        start_time     TEXT NOT NULL,
+        end_time       TEXT NOT NULL,
+        reason         TEXT,
+        customer_name  TEXT,
+        customer_phone TEXT,
+        vehicle_model  TEXT,
+        notes          TEXT,
+        created_at     TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS vehicles (
+        reg_no       TEXT PRIMARY KEY,
+        frame_no     TEXT,
+        engine_no    TEXT,
+        model        TEXT,
+        manufacturer TEXT,
+        description  TEXT,
+        year         TEXT,
+        status       TEXT DEFAULT 'active',
+        updated_at   TIMESTAMPTZ DEFAULT NOW(),
+        created_at   TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS partners (
+        id            SERIAL PRIMARY KEY,
+        username      TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        workshop_name TEXT NOT NULL,
+        phone         TEXT,
+        active        BOOLEAN DEFAULT TRUE,
+        created_at    TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS service_history (
+        id             SERIAL PRIMARY KEY,
+        reg_no         TEXT NOT NULL,
+        date           TEXT NOT NULL,
+        km             TEXT,
+        items          JSONB DEFAULT '[]',
+        notes          TEXT,
+        partner_id     INTEGER,
+        partner_name   TEXT,
+        logged_by_admin BOOLEAN DEFAULT FALSE,
+        booking_ref    TEXT,
+        updated_at     TIMESTAMPTZ DEFAULT NOW(),
+        created_at     TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS warranty_claims (
+        id                 SERIAL PRIMARY KEY,
+        reg_no             TEXT NOT NULL,
+        frame_no           TEXT,
+        km                 TEXT,
+        sale_date          TEXT,
+        symptom            TEXT NOT NULL,
+        priority           TEXT DEFAULT 'normal',
+        engine_disassembly BOOLEAN DEFAULT FALSE,
+        defect_agreed      BOOLEAN DEFAULT FALSE,
+        courtesy_vehicle   BOOLEAN DEFAULT FALSE,
+        notes              TEXT,
+        photos             JSONB DEFAULT '[]',
+        media_types        JSONB DEFAULT '[]',
+        logged_by          TEXT,
+        logged_by_admin    BOOLEAN DEFAULT FALSE,
+        partner_id         INTEGER,
+        partner_name       TEXT,
+        status             TEXT DEFAULT 'open',
+        admin_notes        TEXT,
+        updated_at         TIMESTAMPTZ DEFAULT NOW(),
+        created_at         TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await client.query('COMMIT');
+    console.log('[DB] ✅ Database tables verified / created.');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('[DB] ❌ Failed to initialise database tables:', err.message);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 // ── Row mappers (DB snake_case → JS camelCase) ────────────────────────────────
 
 function rowToBooking(r) {
@@ -741,5 +881,6 @@ module.exports = {
   createPartner, getPartnerByUsername, getAllPartners, togglePartnerActive, updatePartnerPassword,
   createServiceEntry, updateServiceEntry, deleteServiceEntry, getServiceHistoryByPlate, DEFAULT_SERVICE_ITEMS,
   createWarrantyClaim, getWarrantyByPlate, getAllWarranties, updateWarrantyStatus,
-  cancelBookingByCustomer
+  cancelBookingByCustomer,
+  initDB
 };

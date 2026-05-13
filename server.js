@@ -827,10 +827,17 @@ app.post('/api/booking/cancel', bookingRateLimit, async (req, res) => {
 
 // ==================== START ====================
 
-startReminderCron();
-
-app.listen(PORT, () => {
-  console.log(`\n✅ Motowarehouse Service Portal running on http://localhost:${PORT}`);
-  console.log(`   Admin panel: http://localhost:${PORT}/admin`);
-  console.log(`   Partner portal: http://localhost:${PORT}/partner\n`);
-});
+// Initialise database tables, then start server
+db.initDB()
+  .then(() => {
+    startReminderCron();
+    app.listen(PORT, () => {
+      console.log(`\n✅ Motowarehouse Service Portal running on http://localhost:${PORT}`);
+      console.log(`   Admin panel: http://localhost:${PORT}/admin`);
+      console.log(`   Partner portal: http://localhost:${PORT}/partner\n`);
+    });
+  })
+  .catch(err => {
+    console.error('\n❌ Could not initialise database. Server will not start.', err.message);
+    process.exit(1);
+  });
