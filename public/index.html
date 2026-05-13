@@ -811,6 +811,111 @@
       100% { transform: translateY(0px) rotate(360deg); }
     }
 
+    /* ── HERO PULSE ── */
+    @keyframes heroPulse {
+      0%, 100% { opacity: 0.07; transform: translateX(-50%) scale(1); }
+      50%       { opacity: 0.14; transform: translateX(-50%) scale(1.1); }
+    }
+    .hero::before { animation: heroPulse 6s ease-in-out infinite; }
+
+    /* ── HERO TITLE SHIMMER ── */
+    @keyframes titleShimmer {
+      0%   { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    .hero h1 span {
+      background: linear-gradient(90deg,
+        var(--blue) 0%, var(--teal-light) 35%,
+        var(--blue) 55%, var(--teal-light) 80%, var(--blue) 100%);
+      background-size: 250% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: titleShimmer 3.5s linear infinite;
+    }
+
+    /* ── SERVICE CARD UPGRADE ── */
+    .service-card { overflow: hidden; }
+    .service-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 28px rgba(0,155,180,0.18);
+    }
+    .service-card.selected {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 28px rgba(0,155,180,0.25);
+    }
+    /* Ripple */
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(0,239,209,0.22);
+      transform: scale(0);
+      animation: rippleAnim 0.65s linear forwards;
+      pointer-events: none;
+    }
+    @keyframes rippleAnim {
+      to { transform: scale(5); opacity: 0; }
+    }
+
+    /* ── SUBMIT BUTTON SHIMMER ── */
+    .btn-submit { position: relative; overflow: hidden; }
+    .btn-submit::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(105deg,
+        transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%);
+      transform: translateX(-100%);
+    }
+    .btn-submit:hover:not(:disabled)::after {
+      transform: translateX(100%);
+      transition: transform 0.55s ease;
+    }
+
+    /* ── SUCCESS SCREEN ── */
+    @keyframes successEntrance {
+      0%   { opacity: 0; transform: scale(0.88) translateY(20px); }
+      60%  { transform: scale(1.03) translateY(-4px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .success-screen.show { animation: successEntrance 0.55s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+
+    /* SVG animated checkmark */
+    .success-svg { width: 84px; height: 84px; display: block; margin: 0 auto 24px; }
+    .success-svg .circle-bg { fill: rgba(0,200,150,0.08); }
+    .success-svg .circle-stroke {
+      fill: none; stroke: var(--success); stroke-width: 3;
+      stroke-dasharray: 283; stroke-dashoffset: 283;
+      animation: circleDraw 0.55s ease forwards 0.1s;
+    }
+    .success-svg .check-stroke {
+      fill: none; stroke: var(--success); stroke-width: 3.5;
+      stroke-linecap: round; stroke-linejoin: round;
+      stroke-dasharray: 55; stroke-dashoffset: 55;
+      animation: checkDraw 0.38s ease forwards 0.62s;
+    }
+    @keyframes circleDraw { to { stroke-dashoffset: 0; } }
+    @keyframes checkDraw  { to { stroke-dashoffset: 0; } }
+
+    /* Confetti canvas */
+    #confetti-canvas {
+      position: fixed; inset: 0;
+      pointer-events: none;
+      z-index: 9000;
+    }
+
+    /* ── SLOT STAGGER ── */
+    .slot-btn {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    .slot-btn.slot-in {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.28s ease, transform 0.28s ease,
+                  border-color 0.2s, color 0.2s, background 0.2s;
+    }
+
     /* scroll progress bar at top */
     .scroll-progress {
       position: fixed;
@@ -887,19 +992,19 @@
   <div class="step-title reveal-left" style="transition-delay:0.07s">Select Service Type</div>
 
   <div class="service-cards stagger-children" id="service-cards-wrap">
-    <div class="service-card" data-value="small-service" onclick="selectService(this)">
+    <div class="service-card" data-value="small-service" onclick="selectService(this,event)">
       <span class="service-icon">🔧</span>
       <div class="service-name">Small Service</div>
       <div class="service-time">~1 hour</div>
       <div class="service-desc">Oil &amp; filter change, fluid checks, and basic safety inspection.</div>
     </div>
-    <div class="service-card" data-value="full-service" onclick="selectService(this)">
+    <div class="service-card" data-value="full-service" onclick="selectService(this,event)">
       <span class="service-icon">⚙️</span>
       <div class="service-name">Full Service</div>
       <div class="service-time">~2.5 hours</div>
       <div class="service-desc">Complete service including plugs, brake inspection, chain, belt, and all consumables.</div>
     </div>
-    <div class="service-card service-card--other" data-value="other" onclick="selectService(this)">
+    <div class="service-card service-card--other" data-value="other" onclick="selectService(this,event)">
       <span class="service-icon">💬</span>
       <div class="service-name">Other</div>
       <div class="service-time">By appointment</div>
@@ -1136,7 +1241,11 @@
 
   <!-- SUCCESS -->
   <div class="success-screen" id="success-screen">
-    <div class="success-icon">✓</div>
+    <svg class="success-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle class="circle-bg" cx="50" cy="50" r="46"/>
+      <circle class="circle-stroke" cx="50" cy="50" r="44"/>
+      <path class="check-stroke" d="M28 50 L43 65 L72 35"/>
+    </svg>
     <h2 style="font-size:28px;font-weight:900;margin-bottom:8px;">Booking Received</h2>
     <p style="color:var(--grey);margin-bottom:4px;">Your reference number is:</p>
     <div class="success-ref" id="success-ref">MW00001</div>
@@ -1150,6 +1259,9 @@
   </div>
 
 </div>
+
+<!-- CONFETTI CANVAS -->
+<canvas id="confetti-canvas"></canvas>
 
 <!-- FOOTER -->
 <footer>
@@ -1199,10 +1311,20 @@
   }
 
   // ── Service selection ─────────────────────────────────────────────
-  function selectService(el) {
+  function selectService(el, event) {
     document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
     selectedService = el.dataset.value;
+    // Ripple
+    if (event) {
+      const r = document.createElement('span');
+      r.className = 'ripple';
+      const rect = el.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      r.style.cssText = `width:${size}px;height:${size}px;left:${event.clientX - rect.left - size/2}px;top:${event.clientY - rect.top - size/2}px;`;
+      el.appendChild(r);
+      r.addEventListener('animationend', () => r.remove());
+    }
     const isOther = selectedService === 'other';
     // Show/hide date-time step (step 2)
     document.getElementById('step2-anchor').style.display     = isOther ? 'none' : '';
@@ -1333,13 +1455,15 @@
         return;
       }
       grid.innerHTML = '';
-      data.slots.forEach(slot => {
+      data.slots.forEach((slot, i) => {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'slot-btn';
         btn.textContent = slot;
         btn.onclick = () => selectSlot(btn, slot);
         grid.appendChild(btn);
+        // Stagger entrance
+        setTimeout(() => btn.classList.add('slot-in'), 40 + i * 45);
       });
     } catch {
       grid.innerHTML = '<div class="slots-msg" style="color:var(--red);">Could not load slots. Please try again.</div>';
@@ -1412,8 +1536,9 @@
 
       // Show success screen
       document.getElementById('booking-section').querySelectorAll('.step-label, .step-title, .service-cards, .sym-note, .form-card, #other-desc-panel').forEach(el => el.style.display = 'none');
-      document.getElementById('success-ref').textContent = data.ref;
       document.getElementById('success-screen').classList.add('show');
+      countUpRef(data.ref);
+      setTimeout(launchConfetti, 300);
 
     } catch {
       showError('Network error. Please check your connection and try again.');
@@ -1585,54 +1710,67 @@
 
   document.querySelectorAll('.form-card').forEach(card => formCardObserver.observe(card));
 
-  // Trigger hero elements immediately (already in view on load)
-  setTimeout(() => {
-    document.querySelectorAll('.hero .reveal').forEach(el => el.classList.add('visible'));
-  }, 80);
-
-  // 3. Side step tracker
-  const tracker = document.getElementById('step-tracker');
-  const stepAnchors = [
-    document.getElementById('step1-anchor'),
-    document.getElementById('step2-anchor'),
-    document.getElementById('step3-anchor'),
-  ];
-  const trackerItems = [
-    document.getElementById('tracker-1'),
-    document.getElementById('tracker-2'),
-    document.getElementById('tracker-3'),
-  ];
-
-  function scrollToStep(n) {
-    const anchor = stepAnchors[n - 1];
-    if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // ── CONFETTI ───────────────────────────────────────────────────────
+  function launchConfetti() {
+    const canvas = document.getElementById('confetti-canvas');
+    if (!canvas) return;
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const ctx = canvas.getContext('2d');
+    const COLORS = ['#009BB4','#00EFD1','#ffffff','#00c896','#E50052'];
+    const pieces = Array.from({ length: 120 }, () => ({
+      x:  Math.random() * canvas.width,
+      y: -20 - Math.random() * 100,
+      w:  6 + Math.random() * 8,
+      h:  3 + Math.random() * 5,
+      r:  Math.random() * Math.PI * 2,
+      vx: (Math.random() - 0.5) * 4,
+      vy: 2.5 + Math.random() * 3.5,
+      vr: (Math.random() - 0.5) * 0.2,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      alpha: 1
+    }));
+    let frame;
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let alive = false;
+      pieces.forEach(p => {
+        p.x  += p.vx;
+        p.y  += p.vy;
+        p.r  += p.vr;
+        p.vy += 0.08;
+        if (p.y > canvas.height * 0.7) p.alpha -= 0.025;
+        if (p.alpha <= 0) return;
+        alive = true;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.r);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      });
+      if (alive) frame = requestAnimationFrame(draw);
+      else ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    draw();
+    setTimeout(() => { cancelAnimationFrame(frame); ctx.clearRect(0, 0, canvas.width, canvas.height); }, 4000);
   }
 
-  function updateTracker() {
-    const scrollY = window.scrollY + window.innerHeight * 0.4;
-
-    // Show tracker after hero
-    const heroBottom = document.querySelector('.hero').getBoundingClientRect().bottom + window.scrollY;
-    if (window.scrollY > heroBottom - 100) {
-      tracker.classList.add('visible');
-    } else {
-      tracker.classList.remove('visible');
-    }
-
-    // Figure out which step is in view
-    let activeStep = -1;
-    stepAnchors.forEach((anchor, i) => {
-      if (anchor) {
-        const top = anchor.getBoundingClientRect().top + window.scrollY;
-        if (scrollY >= top) activeStep = i;
-      }
-    });
-
-    trackerItems.forEach((item, i) => {
-      item.classList.remove('active', 'done');
-      if (i === activeStep) item.classList.add('active');
-      else if (i < activeStep) item.classList.add('done');
-    });
+  // ── REF COUNT-UP ──────────────────────────────────────────────────
+  function countUpRef(ref) {
+    const el = document.getElementById('success-ref');
+    if (!el) return;
+    const prefix = ref.replace(/[0-9]+$/, '');
+    const target = parseInt(ref.replace(/[^0-9]/g, ''), 10) || 0;
+    let current = 0;
+    const steps = 30;
+    const inc = Math.max(1, Math.floor(target / steps));
+    const timer = setInterval(() => {
+      current = Math.min(current + inc, target);
+      el.textContent = prefix + String(current).padStart(ref.length - prefix.length, '0');
+      if (current >= target) { el.textContent = ref; clearInterval(timer); }
+    }, 35);
   }
 
   // 4. Motorcycle-themed floating background SVGs
@@ -1647,7 +1785,6 @@
                C32,19 36,18 40,17 Z M50,35 A15,15 0 1,0 50,65 A15,15 0 1,0 50,35Z"
             fill="none" stroke="currentColor" stroke-width="3"/>
     </svg>`,
-
     wheel: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="3"/>
       <circle cx="50" cy="50" r="8"  fill="none" stroke="currentColor" stroke-width="2.5"/>
@@ -1661,7 +1798,6 @@
       <line x1="82" y1="18" x2="56" y2="44" stroke="currentColor" stroke-width="1.5"/>
       <line x1="44" y1="56" x2="18" y2="82" stroke="currentColor" stroke-width="1.5"/>
     </svg>`,
-
     wrench: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <path d="M72,8 C58,8 47,19 47,33 C47,37 48,40 50,43 L12,81
                C9,84 9,89 12,92 C15,95 20,95 23,92 L61,54
@@ -1669,7 +1805,6 @@
                L80,35 L70,35 L65,25 L79,11 C77,9 75,8 72,8 Z"
             fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round"/>
     </svg>`,
-
     chain: `<svg viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg">
       <rect x="2"  y="8"  width="28" height="24" rx="12" fill="none" stroke="currentColor" stroke-width="3"/>
       <rect x="22" y="12" width="20" height="16" rx="4"  fill="none" stroke="currentColor" stroke-width="2"/>
@@ -1677,22 +1812,17 @@
       <rect x="54" y="12" width="20" height="16" rx="4"  fill="none" stroke="currentColor" stroke-width="2"/>
       <rect x="66" y="8"  width="28" height="24" rx="12" fill="none" stroke="currentColor" stroke-width="3"/>
       <rect x="86" y="12" width="20" height="16" rx="4"  fill="none" stroke="currentColor" stroke-width="2"/>
-      <rect x="98" y="8"  width="20" height="24" rx="10" fill="none" stroke="currentColor" stroke-width="3"/>
     </svg>`,
-
-    piston: `<svg viewBox="0 0 60 110" xmlns="http://www.w3.org/2000/svg">
-      <rect x="8"  y="2"  width="44" height="50" rx="6" fill="none" stroke="currentColor" stroke-width="3"/>
-      <rect x="2"  y="18" width="4"  height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
-      <rect x="54" y="18" width="4"  height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
-      <rect x="16" y="52" width="28" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2.5"/>
-      <rect x="22" y="62" width="16" height="44" rx="4" fill="none" stroke="currentColor" stroke-width="2.5"/>
-      <line x1="8"  y1="30" x2="52" y2="30" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 4"/>
-    </svg>`,
+    piston: `<svg viewBox="0 0 60 100" xmlns="http://www.w3.org/2000/svg">
+      <rect x="8"  y="10" width="44" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="3"/>
+      <rect x="18" y="40" width="24" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2.5"/>
+      <line x1="30" y1="50" x2="30" y2="75" stroke="currentColor" stroke-width="3"/>
+      <rect x="12" y="75" width="36" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="3"/>
+    </svg>`
   };
 
   function createShapes() {
     const container = document.getElementById('bg-shapes');
-
     const placements = [
       { type:'wheel',  size:160, top:'8%',   side:'left',  offset:'-55px', color:'rgba(0,155,180,0.07)',  dur:22, delay:0 },
       { type:'gear',   size:130, top:'30%',  side:'right', offset:'-45px', color:'rgba(0,239,209,0.065)', dur:28, delay:5 },
@@ -1701,7 +1831,6 @@
       { type:'piston', size: 90, top:'82%',  side:'left',  offset:'-28px', color:'rgba(0,155,180,0.065)', dur:20, delay:4 },
       { type:'gear',   size: 80, top:'92%',  side:'right', offset:'-25px', color:'rgba(0,239,209,0.05)',  dur:24, delay:11},
     ];
-
     placements.forEach(p => {
       const wrap = document.createElement('div');
       wrap.className = 'bg-shape';
@@ -1719,31 +1848,51 @@
       setTimeout(() => wrap.classList.add('show'), 600);
     });
   }
-
   createShapes();
 
-  // 5. Vehicle section reveal — triggered when a model is selected
+  // 5. Vehicle section reveal
   function revealVehicleSection() {
     const sec = document.getElementById('vehicle-section');
     if (!sec.classList.contains('revealed')) {
       sec.classList.add('revealed');
-      // Stagger the field-reveal items inside
       sec.querySelectorAll('.field-reveal').forEach((el, i) => {
         setTimeout(() => el.classList.add('visible'), 80 + i * 80);
       });
     }
   }
 
-  // Attach scroll listener
+  // ── 3D CARD TILT ──────────────────────────────────────────────────
+  document.querySelectorAll('.service-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width  - 0.5;
+      const y = (e.clientY - r.top)  / r.height - 0.5;
+      card.style.transform = `perspective(600px) rotateY(${x * 14}deg) rotateX(${-y * 10}deg) translateY(-3px) scale(1.02)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+    });
+  });
+
+  // ── HERO PARALLAX ─────────────────────────────────────────────────
   window.addEventListener('scroll', () => {
+    const hero = document.querySelector('.hero');
+    if (hero) {
+      const y = window.scrollY * 0.35;
+      hero.style.backgroundPositionY = `${y}px`;
+      const h1 = hero.querySelector('h1');
+      const sub = hero.querySelector('.hero-sub');
+      const lbl = hero.querySelector('.hero-label');
+      if (h1)  h1.style.transform  = `translateY(${y * 0.18}px)`;
+      if (sub) sub.style.transform = `translateY(${y * 0.12}px)`;
+      if (lbl) lbl.style.transform = `translateY(${y * 0.08}px)`;
+    }
     updateProgress();
     updateTracker();
   }, { passive: true });
 
-  // Run once on load
   updateProgress();
   updateTracker();
 </script>
-
 </body>
 </html>
