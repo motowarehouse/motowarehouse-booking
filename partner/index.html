@@ -317,14 +317,13 @@
       display: none;
     }
     /* OK state */
-    .check-chip.s-ok { border-color: var(--green); background: rgba(0,200,150,0.1); }
-    .check-chip.s-ok .cc-badge { display: inline-block; background: rgba(0,200,150,0.2); color: var(--green); }
+
     /* Replaced state */
     .check-chip.s-rep { border-color: var(--orange); background: rgba(229,144,0,0.1); }
     .check-chip.s-rep .cc-badge { display: inline-block; background: rgba(229,144,0,0.2); color: var(--orange); }
     /* N/A state */
-    .check-chip.s-na { border-color: rgba(138,155,160,0.15); background: transparent; opacity: 0.4; }
-    .check-chip.s-na .cc-badge { display: inline-block; background: rgba(138,155,160,0.15); color: var(--grey); }
+    .check-chip.s-soon { border-color: #E5B800; background: rgba(229,184,0,0.08); }
+    .check-chip.s-soon .cc-badge { display: inline-block; background: rgba(229,184,0,0.18); color: #E5B800; }
 
     /* ── SUCCESS SCREEN ── */
     .success-screen { text-align: center; padding: 16px 0; }
@@ -488,7 +487,11 @@
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
               <div>
                 <label style="font-size:13px;"><span data-gr="Ημερομηνία Σέρβις" data-en="Date of Service"></span></label>
-                <input type="date" id="log-date" style="font-size:14px;" max="">
+                <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(0,155,180,0.06);border:1px solid rgba(0,155,180,0.2);border-radius:8px;font-size:14px;font-weight:600;color:var(--white);">
+                  <span style="font-size:13px;opacity:0.5;">🔒</span>
+                  <span id="log-date-display">—</span>
+                </div>
+                <input type="hidden" id="log-date">
               </div>
               <div>
                 <label style="font-size:13px;"><span data-gr="Χιλιόμετρα *" data-en="Current KM *"></span></label>
@@ -521,15 +524,6 @@
                   <button class="yn-option" data-q="noise" data-v="no" onclick="selectYN(this)"><span data-gr="ΟΧΙ" data-en="NO"></span></button>
                 </div>
               </div>
-              <div class="yn-group" style="margin-bottom:0;">
-                <div class="yn-label" style="font-size:14px;">
-                  <span data-gr="Έγινε αλλαγή λαδιού;" data-en="Was an oil change carried out?"></span>
-                </div>
-                <div class="yn-options">
-                  <button class="yn-option" data-q="oilchange" data-v="yes" onclick="selectYN(this)"><span data-gr="ΝΑΙ" data-en="YES"></span></button>
-                  <button class="yn-option" data-q="oilchange" data-v="no" onclick="selectYN(this)"><span data-gr="ΟΧΙ" data-en="NO"></span></button>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -539,7 +533,7 @@
               <span data-gr="Λίστα Εργασιών" data-en="Service Checklist"></span>
             </div>
             <div style="font-size:12px;color:var(--grey);margin-bottom:14px;">
-              <span data-gr="Πατήστε για να κυκλώσετε: Εντάξει → Αντικαταστάθηκε → Δ/Ε → Άδειο" data-en="Tap to cycle: OK → Replaced → N/A → Clear"></span>
+              <span data-gr="Πατήστε για να κυκλώσετε: Αλλαχθηκε → Σύντομα → Άδειο" data-en="Tap to cycle: Changed → Check Soon → Clear"></span>
             </div>
             <div class="checklist-groups" id="checklist-container"></div>
           </div>
@@ -859,11 +853,10 @@
     document.getElementById('signout-btn').style.display = 'inline-flex';
     buildChecklist();
     setLang(currentLang); // re-apply translations
-    // Set today as default date and lock max to today (no future service dates)
+    // Set today as default date — field is locked, update display span
     const todayVal = new Date().toISOString().split('T')[0];
-    const logDateEl = document.getElementById('log-date');
-    logDateEl.value = todayVal;
-    logDateEl.max   = todayVal;
+    document.getElementById('log-date').value = todayVal;
+    document.getElementById('log-date-display').textContent = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   }
 
   // ── TABS ─────────────────────────────────────────────────────────────────────
@@ -895,10 +888,10 @@
     { en: 'TYRES',               el: 'ΕΛΑΣΤΙΚΑ',          idx: [22,23] },
   ];
 
-  const CHIP_CYCLE  = [null, 'ok', 'replace', 'na'];
+  const CHIP_CYCLE  = [null, 'replace', 'soon'];
   const BADGE_LABEL = {
-    el: { ok: '✓ ΕΝΤΆΞΕΙ', replace: '↺ ΑΝΤΙΚ.', na: '— Δ/Ε' },
-    en: { ok: '✓ OK',      replace: '↺ REPLACED', na: '— N/A' }
+    el: { replace: '↺ ΑΛΛΑΧΘΗΚΕ', soon: '⚑ ΣΥΝΤΟΜΑ' },
+    en: { replace: '↺ CHANGED',   soon: '⚑ CHECK SOON' }
   };
 
   function buildChecklist() {
@@ -984,7 +977,7 @@
     document.getElementById('log-notes').value = '';
     const td = new Date().toISOString().split('T')[0];
     document.getElementById('log-date').value = td;
-    document.getElementById('log-date').max   = td;
+    document.getElementById('log-date-display').textContent = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     // Reset checklist states
     itemStates.fill(null);
     buildChecklist();
@@ -1017,7 +1010,7 @@
     const items = [];
     itemStates.forEach((state, i) => {
       if (state === 'replace') items.push({ key: SERVICE_ITEMS[i].en, state: 'replaced', en: SERVICE_ITEMS[i].en, el: SERVICE_ITEMS[i].el });
-      else if (state === 'ok') items.push({ key: SERVICE_ITEMS[i].en, state: 'ok', en: SERVICE_ITEMS[i].en, el: SERVICE_ITEMS[i].el });
+      else if (state === 'soon') items.push({ key: SERVICE_ITEMS[i].en, state: 'soon', en: SERVICE_ITEMS[i].en, el: SERVICE_ITEMS[i].el });
     });
 
     // Append yn answers as notes prefix
@@ -1051,18 +1044,16 @@
   function formatYNAnswers() {
     const labels = {
       el: {
-        oil:       { q: 'Λάδι ανεφοδιάστηκε σε σωστό επίπεδο', yes: 'ΝΑΙ', no: 'ΟΧΙ' },
-        noise:     { q: 'Ασυνήθιστος θόρυβος κινητήρα', yes: 'ΝΑΙ', no: 'ΟΧΙ' },
-        oilchange: { q: 'Αλλαγή λαδιού', yes: 'ΝΑΙ', no: 'ΟΧΙ' }
+        oil:   { q: 'Λάδι ανεφοδιάστηκε σε σωστό επίπεδο', yes: 'ΝΑΙ', no: 'ΟΧΙ' },
+        noise: { q: 'Ασυνήθιστος θόρυβος κινητήρα', yes: 'ΝΑΙ', no: 'ΟΧΙ' }
       },
       en: {
-        oil:       { q: 'Oil topped up correctly', yes: 'YES', no: 'NO' },
-        noise:     { q: 'Abnormal engine noise', yes: 'YES', no: 'NO' },
-        oilchange: { q: 'Oil change carried out', yes: 'YES', no: 'NO' }
+        oil:   { q: 'Oil topped up correctly', yes: 'YES', no: 'NO' },
+        noise: { q: 'Abnormal engine noise', yes: 'YES', no: 'NO' }
       }
     };
     const l = labels[currentLang] || labels.en;
-    const parts = Object.keys(ynAnswers).filter(k => ['oil','noise','oilchange'].includes(k)).map(k => {
+    const parts = Object.keys(ynAnswers).filter(k => ['oil','noise'].includes(k)).map(k => {
       const v = ynAnswers[k];
       return `${l[k].q}: ${v === 'yes' ? l[k].yes : l[k].no}`;
     });
