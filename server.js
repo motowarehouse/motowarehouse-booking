@@ -4,11 +4,19 @@ const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
 const bcrypt = require('bcryptjs');
 const path = require('path');
+const multer = require('multer');
 const { Pool } = require('pg');
 const db = require('./db');
 const emailService = require('./emailService');
 const smsService = require('./smsService');
+const r2Service = require('./r2Service');
 const { startReminderCron } = require('./reminderCron');
+
+// Multer — memory storage, 100 MB per file, up to 20 files
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 100 * 1024 * 1024, files: 20 }
+});
 
 // Separate pool for the session store (connect-pg-simple manages its own connection)
 const sessionPool = new Pool({
@@ -864,6 +872,28 @@ app.post('/api/admin/partners/:id/reset-password', requireAdmin, async (req, res
 // Serve partner portal
 app.get('/partner', (req, res) => {
   res.sendFile(path.join(__dirname, 'partner', 'index.html'));
+});
+
+// ==================== MEDIA UPLOAD (Cloudflare R2) ====================
+
+// Upload a single file to R2 — returns { url, type }
+// Partners and admins only. Called once per file before submitting a warranty claim.
+app.post('/api/upload-media', requireAdminOrPartner, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file provided.' });
+
+    const allowed = ['image/jpeg','image/png','image/webp','image/gif','video/mp4','video/quicktime','video/webm'];
+    if (!allowed.includes(req.file.mimetype)) {
+      return res.status(400).json({ error: 'File type not allowed. Use JPG, PNG, MP4, or MOV.' });
+    }
+
+    const url = await r2Service.uploadToR2(req.file.buffer, req.file.originalname, req.file.mimetype);
+    const type = req.file.mimetype.startsWith('video') ? 'video' : 'image';
+    res.json({ url, type });
+  } catch (err) {
+    console.error('[R2 upload error]', err.message);
+    res.status(500).json({ error: 'Upload failed. Please try again.' });
+  }
 });
 
 // ==================== WARRANTY ====================

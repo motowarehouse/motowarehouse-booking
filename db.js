@@ -359,7 +359,7 @@ const SERVICE_DURATIONS = {
   '1000MT-X':             { small: 40, full: 360 },
   // CFMOTO ATVs
   'CFORCE 110':           { small: 30, full: 240 },
-  'CFORCE 450L':          { small: 40, full: 300 },
+  'CFORCE 450L':          { small: 40, full: 360 },
   'CFORCE 520L':          { small: 40, full: 360 },
   'CFORCE 625 TOURING':   { small: 40, full: 360 },
   'CFORCE 850 TOURING':   { small: 40, full: 360 },

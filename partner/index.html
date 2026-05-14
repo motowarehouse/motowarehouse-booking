@@ -642,11 +642,11 @@
           <!-- Section 3: Photos (was Section 4) -->
           <div style="margin-bottom:20px;">
             <div style="font-size:11px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;color:var(--orange);opacity:0.7;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(229,144,0,0.2);">
-              <span data-gr="Φωτογραφίες (έως 6)" data-en="Photos (up to 6)"></span>
+              <span data-gr="Φωτογραφίες / Βίντεο" data-en="Photos / Videos"></span>
             </div>
             <label id="w-upload-label" style="display:flex;align-items:center;gap:10px;cursor:pointer;background:rgba(229,144,0,0.07);border:1.5px dashed rgba(229,144,0,0.35);border-radius:8px;padding:14px 18px;font-size:14px;color:var(--orange);font-weight:600;" onclick="document.getElementById('w-photos-input').click()">
               📎 <span data-gr="Προσθήκη Αρχείων" data-en="Add Photos / Videos"></span>
-              <span style="font-size:12px;color:var(--grey);font-weight:400;margin-left:4px;" data-gr="(φωτογραφίες ή βίντεο — έως 6)" data-en="(photos or videos — up to 6)"></span>
+              <span style="font-size:12px;color:var(--grey);font-weight:400;margin-left:4px;" data-gr="(φωτογραφίες ή βίντεο)" data-en="(photos or videos)"></span>
             </label>
             <input type="file" id="w-photos-input" accept="image/*,video/*" multiple style="display:none;" onchange="handleWarrantyPhotos(this)">
             <div id="w-upload-progress" style="display:none;margin-top:10px;font-size:13px;color:var(--orange);"></div>
@@ -1243,23 +1243,19 @@
   // ── PHOTO HANDLING ────────────────────────────────────────────────────────
   let warrantyPhotos = [];
 
-  const CLOUDINARY_CLOUD   = 'daczjjuel';
-  const CLOUDINARY_PRESET  = 'vxscuzge';
-
-  async function uploadToCloudinary(file) {
+  async function uploadToR2(file) {
     const fd = new FormData();
     fd.append('file', file);
-    fd.append('upload_preset', CLOUDINARY_PRESET);
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`, {
-      method: 'POST', body: fd
-    });
-    if (!res.ok) throw new Error('Cloudinary upload failed');
-    const data = await res.json();
-    return { url: data.secure_url, type: data.resource_type }; // 'image' or 'video'
+    const res = await fetch('/api/upload-media', { method: 'POST', body: fd });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Upload failed');
+    }
+    return await res.json(); // { url, type }
   }
 
   async function handleWarrantyPhotos(input) {
-    const files = Array.from(input.files).slice(0, 6 - warrantyPhotos.length);
+    const files = Array.from(input.files);
     if (!files.length) return;
     const progress = document.getElementById('w-upload-progress');
     const label    = document.getElementById('w-upload-label');
@@ -1273,11 +1269,13 @@
         ? `Μεταφόρτωση ${i + 1} από ${files.length}…`
         : `Uploading ${i + 1} of ${files.length}…`;
       try {
-        const { url, type } = await uploadToCloudinary(file);
+        const { url, type } = await uploadToR2(file);
         warrantyPhotos.push({ url, type });
         renderMediaPreview();
-      } catch {
-        progress.textContent = currentLang === 'el' ? 'Σφάλμα μεταφόρτωσης — δοκιμάστε ξανά.' : 'Upload failed — please try again.';
+      } catch (e) {
+        progress.textContent = currentLang === 'el'
+          ? `Σφάλμα: ${e.message}`
+          : `Error: ${e.message}`;
       }
     }
 
@@ -1285,7 +1283,6 @@
     label.style.pointerEvents = '';
     label.style.opacity = '';
     input.value = '';
-    if (warrantyPhotos.length >= 6) label.style.display = 'none';
   }
 
   function renderMediaPreview() {
@@ -1313,7 +1310,7 @@
     warrantyPhotos.splice(idx, 1);
     renderMediaPreview();
     // Restore upload button if below limit
-    if (warrantyPhotos.length < 6) document.getElementById('w-upload-label').style.display = '';
+    document.getElementById('w-upload-label').style.display = '';
   }
 
   function removePhoto(idx) {
