@@ -57,6 +57,7 @@ async function initDB() {
         contact_status TEXT,
         reminder_sent  BOOLEAN DEFAULT FALSE,
         mechanic_notes TEXT,
+        duration_mins  INTEGER,
         service_km     TEXT,
         service_reg_no TEXT,
         completed_at   TIMESTAMPTZ,
@@ -67,6 +68,7 @@ async function initDB() {
 
     // Safe migration for existing production tables — ADD COLUMN IF NOT EXISTS is idempotent
     await client.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS mechanic_notes TEXT`);
+    await client.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS duration_mins INTEGER`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS blocks (
@@ -200,6 +202,7 @@ function rowToBooking(r) {
     contactStatus: r.contact_status,
     reminderSent:  r.reminder_sent,
     mechanicNotes: r.mechanic_notes,
+    durationMins:  r.duration_mins,
     serviceKm:     r.service_km,
     serviceRegNo:  r.service_reg_no,
     completedAt:   r.completed_at,
@@ -319,36 +322,144 @@ async function setSetting(key, value) {
 
 const MECHANIC_COUNT = 2; // Update this if you hire more mechanics
 
+// ── Service Durations (minutes) ────────────────────────────────────────────────
+// Keys are UPPERCASE model names (matched case-insensitively).
+// small = small service duration in minutes
+// full  = full service duration in minutes (worst-case end of any range)
+
+const SERVICE_DURATIONS = {
+  // CFMOTO Motorcycles
+  '125NK':                { small: 40, full: 180 },
+  'DUAL 250':             { small: 40, full: 240 },
+  '300NK':                { small: 40, full: 240 },
+  '300SR':                { small: 40, full: 240 },
+  '450NK':                { small: 40, full: 240 },
+  '450SR':                { small: 40, full: 240 },
+  '450MT':                { small: 40, full: 300 },
+  '450CL-C':              { small: 40, full: 300 },
+  '450CL-C BOBBER':       { small: 40, full: 300 },
+  '675NK':                { small: 40, full: 300 },
+  '675SR-R':              { small: 40, full: 300 },
+  '700CL-X SPORT':        { small: 40, full: 300 },
+  '700MT':                { small: 40, full: 300 },
+  '800NK':                { small: 40, full: 240 },
+  '800MT EXPLORE EDITION':{ small: 40, full: 300 },
+  '800MT-X':              { small: 40, full: 300 },
+  '1000MT-X':             { small: 40, full: 360 },
+  // CFMOTO ATVs
+  'CFORCE 110':           { small: 30, full: 240 },
+  'CFORCE 450L':          { small: 40, full: 300 },
+  'CFORCE 520L':          { small: 40, full: 360 },
+  'CFORCE 625 TOURING':   { small: 40, full: 360 },
+  'CFORCE 850 TOURING':   { small: 40, full: 360 },
+  'CFORCE 1000 TOURING':  { small: 40, full: 360 },
+  // CFMOTO Side-by-Side / UTV
+  'UFORCE 600':           { small: 60, full: 360 },
+  'U6 EV':                { small: 60, full: 360 },
+  'U10 PRO':              { small: 60, full: 360 },
+  'U10 PRO HIGHLAND':     { small: 60, full: 360 },
+  'U10 XL PRO':           { small: 60, full: 360 },
+  'ZFORCE 800 SPORT':     { small: 60, full: 360 },
+  'ZFORCE 950 SPORT':     { small: 60, full: 360 },
+  'ZFORCE 950 SPORT-4':   { small: 60, full: 360 },
+  'Z10':                  { small: 60, full: 420 },
+  'Z10-4':                { small: 60, full: 360 },
+  // SYM Scooters / Motorcycles
+  'MIO 50':               { small: 30, full: 120 },
+  'SR 125 CBS':           { small: 30, full: 180 },
+  'SR 125 ABS':           { small: 30, full: 180 },
+  'JET 14 EVO 125':       { small: 30, full: 180 },
+  'CARGO 125':            { small: 30, full: 180 },
+  'ADX 125':              { small: 30, full: 180 },
+  'JET X 125':            { small: 30, full: 180 },
+  'VF125':                { small: 30, full: 240 },
+  'VF185':                { small: 30, full: 240 },
+  'SYMPHONY 200':         { small: 30, full: 180 },
+  'ADX 300':              { small: 30, full: 240 },
+  'JOYRIDE 300 TCS':      { small: 30, full: 240 },
+  'ADXTG 400':            { small: 40, full: 240 },
+  'MAXSYM TL 508':        { small: 40, full: 300 },
+  'TTLBT':                { small: 40, full: 300 },
+};
+
+/**
+ * Return service duration in minutes for a given model + serviceType.
+ * Falls back to sensible defaults if the model isn't in the lookup.
+ */
+function getDurationMins(model, serviceType) {
+  if (!model || serviceType === 'other') return 60;
+  const key = model.trim().toUpperCase();
+  const entry = SERVICE_DURATIONS[key];
+  if (!entry) {
+    // Unknown model — use category defaults
+    return serviceType === 'full-service' ? 240 : 60;
+  }
+  return serviceType === 'full-service' ? entry.full : entry.small;
+}
+
 async function createBooking(data) {
-  // Auto-assign mechanic using round-robin per day (balances workload across the day,
-  // not just at the specific slot). Assign to whichever mechanic has fewer bookings today.
+  // Calculate service duration for this model + service type
+  const durationMins = getDurationMins(data.model, data.serviceType);
+
+  // Assign mechanic: prefer the one who is actually free at the requested
+  // time for the full duration. Tiebreak by fewest bookings today.
   let mechanic = 1;
-  if (data.date) {
+  if (data.date && data.time) {
+    const { rows: appts } = await pool.query(
+      `SELECT time, mechanic, COALESCE(duration_mins, 60) AS duration_mins
+       FROM bookings WHERE date = $1 AND status IN ('pending','accepted')`,
+      [data.date]
+    );
+
+    // Build per-mechanic busy sets
+    const mechBusy = {};
+    const dayCounts = {};
+    for (let m = 1; m <= MECHANIC_COUNT; m++) {
+      mechBusy[m] = buildBusySet(appts, m);
+      dayCounts[m] = 0;
+    }
+    appts.forEach(a => { dayCounts[parseInt(a.mechanic) || 1]++; });
+
+    // Sort mechanics: fewest bookings first (so ties favour less-busy)
+    const sorted = Object.keys(dayCounts).map(Number)
+      .sort((a, b) => dayCounts[a] - dayCounts[b]);
+
+    const newSlotCount = Math.ceil(durationMins / 30);
+    let assigned = sorted[0]; // fallback
+    for (const m of sorted) {
+      let free = true;
+      for (let i = 0; i < newSlotCount; i++) {
+        if (mechBusy[m].has(addMins(data.time, i * 30))) { free = false; break; }
+      }
+      if (free) { assigned = m; break; }
+    }
+    mechanic = assigned;
+  } else if (data.date) {
+    // 'other' type — no time yet; just pick the mechanic with fewer bookings
     const { rows: dayCounts } = await pool.query(
-      `SELECT mechanic, COUNT(*) as cnt FROM bookings
+      `SELECT mechanic, COUNT(*) AS cnt FROM bookings
        WHERE date = $1 AND status IN ('pending','accepted')
        GROUP BY mechanic`,
       [data.date]
     );
     const counts = {};
     for (let m = 1; m <= MECHANIC_COUNT; m++) counts[m] = 0;
-    dayCounts.forEach(r => { counts[r.mechanic] = parseInt(r.cnt); });
-    // Pick mechanic with lowest count (ties go to lower number)
-    mechanic = Object.entries(counts).sort((a,b) => a[1]-b[1])[0][0];
+    dayCounts.forEach(r => { counts[parseInt(r.mechanic)] = parseInt(r.cnt); });
+    mechanic = Object.entries(counts).sort((a, b) => a[1] - b[1])[0][0];
   }
 
   const { rows } = await pool.query(
     `INSERT INTO bookings
        (name, phone, email, service_type, date, time, model, year, plate, km,
-        notes, description, mechanic, status, contact_status, reminder_sent)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'pending',$14,false)
+        notes, description, mechanic, duration_mins, status, contact_status, reminder_sent)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'pending',$15,false)
      RETURNING *`,
     [
       data.name, data.phone, data.email || '', data.serviceType,
       data.date || '', data.time || '',
       data.model, data.year, data.plate, data.km,
       data.notes || '', data.description || '',
-      mechanic,
+      mechanic, durationMins,
       data.contactStatus || null
     ]
   );
@@ -437,32 +548,90 @@ async function getAcceptedBookingsDueForReminder() {
   });
 }
 
-async function getBookedSlots(date) {
+// Helper: convert "HH:MM" + offset in minutes → "HH:MM"
+function addMins(time, mins) {
+  const [h, m] = time.split(':').map(Number);
+  const total = h * 60 + m + mins;
+  return `${String(Math.floor(total / 60)).padStart(2,'0')}:${String(total % 60).padStart(2,'0')}`;
+}
+
+// Helper: build a Set of busy slot strings for one mechanic given their bookings
+function buildBusySet(appts, mechanicId) {
+  const busy = new Set();
+  appts
+    .filter(a => parseInt(a.mechanic) === mechanicId)
+    .forEach(a => {
+      const dur = parseInt(a.duration_mins) || 60;
+      const slots = Math.ceil(dur / 30);
+      for (let i = 0; i < slots; i++) {
+        busy.add(addMins(a.time, i * 30));
+      }
+    });
+  return busy;
+}
+
+/**
+ * Returns the list of starting slots that are NOT available on `date`
+ * for a new booking of `newDurationMins` minutes.
+ *
+ * A slot is unavailable if EVERY mechanic is occupied for at least one
+ * of the slots that the new job would need (start through start+duration-1).
+ * Manual blocks always occupy all mechanics.
+ */
+async function getBookedSlots(date, newDurationMins = 60) {
+  // Current bookings with their durations
   const { rows: appts } = await pool.query(
-    `SELECT time, mechanic FROM bookings
-     WHERE date = $1 AND status IN ('pending','accepted')`,
+    `SELECT time, mechanic, COALESCE(duration_mins, 60) AS duration_mins
+     FROM bookings WHERE date = $1 AND status IN ('pending','accepted')`,
     [date]
   );
-  const slotCounts = {};
-  appts.forEach(b => { slotCounts[b.time] = (slotCounts[b.time] || 0) + 1; });
-  const bookingSlots = Object.keys(slotCounts)
-    .filter(s => slotCounts[s] >= MECHANIC_COUNT);
 
+  // Per-mechanic busy-slot sets
+  const mechBusy = {};
+  for (let m = 1; m <= MECHANIC_COUNT; m++) {
+    mechBusy[m] = buildBusySet(appts, m);
+  }
+
+  // Manual blocks (block every mechanic for those slots)
   const { rows: blks } = await pool.query(
     'SELECT start_time, end_time FROM blocks WHERE date = $1', [date]
   );
-  const blockSlots = [];
+  const blockSet = new Set();
   blks.forEach(bl => {
     let [sh, sm] = bl.start_time.split(':').map(Number);
     const [eh, em] = bl.end_time.split(':').map(Number);
     while (sh * 60 + sm < eh * 60 + em) {
-      blockSlots.push(`${String(sh).padStart(2,'0')}:${String(sm).padStart(2,'0')}`);
+      const s = `${String(sh).padStart(2,'0')}:${String(sm).padStart(2,'0')}`;
+      blockSet.add(s);
       sm += 30;
       if (sm >= 60) { sh++; sm -= 60; }
     }
   });
 
-  return [...new Set([...bookingSlots, ...blockSlots])];
+  // Determine unavailable starting slots:
+  // A starting slot S is unavailable when no mechanic is free for ALL slots
+  // from S through S + ceil(newDurationMins/30) - 1.
+  const newSlotCount = Math.ceil(newDurationMins / 30);
+  const unavailable = new Set(blockSet);
+
+  // Scan every possible 30-min slot in the working day (06:00–20:00)
+  for (let totalMins = 6 * 60; totalMins < 20 * 60; totalMins += 30) {
+    const startSlot = `${String(Math.floor(totalMins / 60)).padStart(2,'0')}:${String(totalMins % 60).padStart(2,'0')}`;
+    if (unavailable.has(startSlot)) continue; // manual block already covers it
+
+    let anyMechFree = false;
+    for (let m = 1; m <= MECHANIC_COUNT; m++) {
+      let free = true;
+      for (let i = 0; i < newSlotCount; i++) {
+        const chk = addMins(startSlot, i * 30);
+        if (mechBusy[m].has(chk) || blockSet.has(chk)) { free = false; break; }
+      }
+      if (free) { anyMechFree = true; break; }
+    }
+    if (!anyMechFree) unavailable.add(startSlot);
+  }
+
+  return [...unavailable];
 }
 
 // ── Complete / No-Show ────────────────────────────────────────────────────────
@@ -923,5 +1092,6 @@ module.exports = {
   createWarrantyClaim, getWarrantyByPlate, getAllWarranties, updateWarrantyStatus,
   updateMechanicNotes,
   cancelBookingByCustomer,
+  getDurationMins,
   initDB
 };

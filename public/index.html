@@ -1437,6 +1437,8 @@
 
     checkSymNote();
     revealVehicleSection(); // slide in Year, Plate, KM fields
+    // Refresh slots if a date is already selected — duration may differ per model
+    if (document.getElementById('date')?.value) loadSlots();
   }
 
   // Close dropdown on outside click
@@ -1461,7 +1463,12 @@
     document.getElementById('time').value = '';
 
     try {
-      const res = await fetch(`/api/slots?date=${date}`);
+      const model   = (document.getElementById('model')?.value || '').trim();
+      const svcType = selectedService || 'small-service';
+      const params  = new URLSearchParams({ date });
+      if (model)   params.set('model', model);
+      if (svcType) params.set('serviceType', svcType);
+      const res = await fetch(`/api/slots?${params}`);
       const data = await res.json();
       if (data.closed) {
         grid.innerHTML = '<div class="slots-msg">We are closed on Sundays.</div>';

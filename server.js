@@ -88,9 +88,10 @@ function requireAdminOrPartner(req, res, next) {
 // ==================== PUBLIC API ====================
 
 // Get available time slots for a date
+// Accepts optional ?model=&serviceType= to do duration-aware slot filtering.
 app.get('/api/slots', async (req, res) => {
   try {
-    const { date } = req.query;
+    const { date, model, serviceType } = req.query;
     if (!date) return res.status(400).json({ error: 'date required' });
 
     const d = new Date(date + 'T12:00:00');
@@ -103,10 +104,16 @@ app.get('/api/slots', async (req, res) => {
       return res.json({ slots: [], closed: true });
     }
 
+    // Duration for this service type + model (defaults to 60 if not provided)
+    const durationMins = db.getDurationMins(model || '', serviceType || 'small-service');
+
+    // Latest closing time for the day (max across all ranges)
+    let lastClosingMins = 0;
     const slots = [];
     for (const [start, end] of dayConfig.ranges) {
       let [sh, sm] = start.split(':').map(Number);
       const [eh, em] = end.split(':').map(Number);
+      lastClosingMins = Math.max(lastClosingMins, eh * 60 + em);
       while (sh * 60 + sm < eh * 60 + em) {
         slots.push(`${String(sh).padStart(2,'0')}:${String(sm).padStart(2,'0')}`);
         sm += 30;
@@ -114,10 +121,16 @@ app.get('/api/slots', async (req, res) => {
       }
     }
 
-    const booked = await db.getBookedSlots(date);
+    const booked = await db.getBookedSlots(date, durationMins);
 
     const todayStr = new Date().toISOString().split('T')[0];
-    let available = slots.filter(s => !booked.includes(s));
+    let available = slots.filter(s => {
+      if (booked.includes(s)) return false;
+      // Don't offer a slot if the job can't finish before closing time
+      const [sh, sm] = s.split(':').map(Number);
+      return sh * 60 + sm + durationMins <= lastClosingMins;
+    });
+
     if (date === todayStr) {
       const nowCyprus = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Nicosia' }));
       const nowMins = nowCyprus.getHours() * 60 + nowCyprus.getMinutes() + 30;
@@ -127,7 +140,7 @@ app.get('/api/slots', async (req, res) => {
       });
     }
 
-    res.json({ slots: available, booked });
+    res.json({ slots: available, booked, durationMins });
   } catch (err) {
     console.error('[Slots error]', err);
     res.status(500).json({ error: 'Failed to load slots.' });
