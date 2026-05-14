@@ -1649,17 +1649,46 @@
         const modelInput   = document.getElementById('model');
         const modelDisplay = document.getElementById('model-display');
 
-        // Find matching option in the dropdown
+        // ── Model matching ──────────────────────────────────────────────
+        // Try exact match first, then fuzzy (handles CFMOTO internal codes
+        // like "CF400-8F" which differ from marketing names like "450NK").
         const allOptions = document.querySelectorAll('.cs-option');
         let matched = null;
+        const rawUpper = data.model.trim().toUpperCase();
+
+        // 1. Exact (case-insensitive)
         allOptions.forEach(opt => {
-          if (opt.textContent.trim().toUpperCase() === data.model.trim().toUpperCase()) matched = opt;
+          if (opt.textContent.trim().toUpperCase() === rawUpper) matched = opt;
         });
+
+        // 2. Strip "CF" prefix and try again (CFMOTO internal codes)
+        if (!matched) {
+          const stripped = rawUpper.startsWith('CF') ? rawUpper.slice(2) : rawUpper;
+          // Also remove trailing variant suffix like "-8F", "-C", "-A"
+          const base = stripped.replace(/-[A-Z0-9]+$/i, '');
+          allOptions.forEach(opt => {
+            const t = opt.textContent.trim().toUpperCase();
+            if (t === stripped || t === base) matched = opt;
+          });
+        }
+
+        // 3. Displacement substring match — e.g. "CF400" → look for "400" in option text
+        if (!matched) {
+          const numMatch = rawUpper.match(/\d+/);
+          if (numMatch) {
+            const cc = numMatch[0];
+            let bestLen = 0;
+            allOptions.forEach(opt => {
+              const t = opt.textContent.trim().toUpperCase();
+              if (t.includes(cc) && t.length > bestLen) { matched = opt; bestLen = t.length; }
+            });
+          }
+        }
 
         if (matched) {
           selectModel(matched);
         } else {
-          // Model not in dropdown list — set hidden field directly
+          // No match at all — set hidden field with raw code; slots will use displacement fallback
           if (modelInput) modelInput.value = data.model;
           if (modelDisplay) {
             modelDisplay.textContent = data.model;
@@ -1685,9 +1714,11 @@
           }
         }
 
-        // Show success hint
+        // Show success hint — note if the match was fuzzy so customer can verify
+        const exactMatch = rawUpper === (matched?.textContent.trim().toUpperCase() || rawUpper);
+        const hintModel = matched ? matched.textContent.trim() : data.model;
         lh.style.cssText = 'font-size:12px;margin-top:5px;display:block;padding:6px 10px;border-radius:6px;background:rgba(0,200,120,0.1);color:#00c878;border:1px solid rgba(0,200,120,0.3);';
-        lh.textContent = `✓ Found: ${data.model}${data.year ? ' (' + data.year + ')' : ''}`;
+        lh.textContent = `✓ Found: ${hintModel}${data.year ? ' (' + data.year + ')' : ''}${!exactMatch && matched ? ' — please confirm model above' : ''}`;
 
       } else {
         // Not found — soft warning, don't block

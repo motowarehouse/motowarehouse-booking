@@ -384,16 +384,47 @@ const SERVICE_DURATIONS = {
 
 /**
  * Return service duration in minutes for a given model + serviceType.
- * Falls back to sensible defaults if the model isn't in the lookup.
+ *
+ * Matching order:
+ *  1. Exact match (e.g. "675NK")
+ *  2. Strip CFMOTO internal prefix "CF" and try again (e.g. "CF650NK-C" → "650NK-C" → no match → step 3)
+ *  3. Displacement-based fallback — extract the first number from the model code and
+ *     pick a reasonable duration based on engine size category.
+ *     e.g. CF400-8F → 400cc → mid-size defaults.
  */
 function getDurationMins(model, serviceType) {
   if (!model || serviceType === 'other') return 60;
   const key = model.trim().toUpperCase();
-  const entry = SERVICE_DURATIONS[key];
-  if (!entry) {
-    // Unknown model — use category defaults
-    return serviceType === 'full-service' ? 240 : 60;
+
+  // 1. Exact match
+  let entry = SERVICE_DURATIONS[key];
+
+  // 2. Strip "CF" prefix (CFMOTO internal codes: CF650NK-C, CF400-8F, CF800-NK …)
+  if (!entry && key.startsWith('CF')) {
+    const stripped = key.slice(2); // e.g. "650NK-C"
+    // Try the stripped value and also without any trailing variant suffix (e.g. "-C", "-8F")
+    entry = SERVICE_DURATIONS[stripped]
+         || SERVICE_DURATIONS[stripped.replace(/-[^-]*$/, '')]; // remove last "-xxx"
   }
+
+  // 3. Displacement-based fallback
+  if (!entry) {
+    const numMatch = key.match(/\d+/);
+    const cc = numMatch ? parseInt(numMatch[0]) : 0;
+    if (serviceType === 'full-service') {
+      if (cc >= 900)  return 420; // Large UTVs / big bikes (Z10, 1000MT-X)
+      if (cc >= 700)  return 360; // 700–900cc (800NK, UTVs)
+      if (cc >= 400)  return 300; // 400–700cc (450–675 range)
+      if (cc >= 200)  return 240; // 200–400cc
+      if (cc >= 100)  return 180; // 100–200cc (125NK class)
+      return 240;                  // unknown — safe 4-hr default
+    }
+    // Small service displacement fallback
+    if (cc >= 600)  return 60;  // UTVs / large bikes
+    if (cc >= 100)  return 40;  // standard motorcycle/scooter
+    return 30;                   // sub-100cc
+  }
+
   return serviceType === 'full-service' ? entry.full : entry.small;
 }
 
