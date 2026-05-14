@@ -1312,7 +1312,7 @@
       </div>
       <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);font-size:12px;color:var(--grey);">
         If your preferred slot is unavailable, we'll contact you to reschedule.<br>
-        Questions? Call <strong style="color:var(--white);">22 328 788</strong> or email <strong style="color:var(--white);">info@motowarehouse.com.cy</strong>
+        Questions? Call <strong style="color:var(--white);">22 328 788</strong> or email <strong style="color:var(--white);">support@motowarehouse.com.cy</strong>
       </div>
     </div>
 
@@ -1588,10 +1588,8 @@
     if (!phone) return showError('Please enter your phone number.');
     const phoneDigits = phone.replace(/\D/g, '');
     if (phoneDigits.length < 7 || phoneDigits.length > 15) return showError('Please enter a valid phone number (7–15 digits).');
-    if (!isOther) {
-      if (!email) return showError('Please enter your email address.');
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError('Please enter a valid email address (e.g. name@email.com).');
-    }
+    if (!email) return showError('Please enter your email address.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError('Please enter a valid email address (e.g. name@email.com).');
     if (!model) return showError('Please select your vehicle model.');
     if (!year)  return showError('Please select the model year.');
     if (!plate) return showError('Please enter your license plate number.');

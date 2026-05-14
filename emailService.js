@@ -6,7 +6,7 @@ const SERVICE_LABELS = {
   'other':         'Service Request'
 };
 
-const SENDER    = { name: 'Motowarehouse', email: 'support@motowarehouse.com.cy' };
+const SENDER    = { name: 'Motowarehouse', email: 'motowarehouse.bookings@gmail.com' };
 const SITE_URL  = process.env.SITE_URL || '';
 
 // ── Core Brevo API call ───────────────────────────────────────────────────────
