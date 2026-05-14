@@ -206,7 +206,7 @@ app.get('/api/booking/vehicle-lookup', async (req, res) => {
     if (!plate) return res.status(400).json({ error: 'plate required' });
     const vehicle = await db.getVehicleByPlate(plate);
     if (!vehicle) return res.status(404).json({ found: false });
-    res.json({ found: true, model: vehicle.model, year: vehicle.year, manufacturer: vehicle.manufacturer });
+    res.json({ found: true, model: vehicle.model, year: vehicle.year, manufacturer: vehicle.manufacturer, description: vehicle.description || '' });
   } catch (err) {
     console.error('[Public vehicle lookup error]', err);
     res.status(500).json({ found: false });
