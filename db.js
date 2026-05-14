@@ -701,7 +701,7 @@ async function completeBooking(id, serviceData) {
       [
         entryId,
         regNo,
-        serviceData.date || b.date,
+        new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Nicosia' })).toISOString().split('T')[0],
         parseInt(serviceData.km) || 0,
         JSON.stringify(Array.isArray(serviceData.items) ? serviceData.items : []),
         serviceData.notes || '',
@@ -941,7 +941,7 @@ async function createServiceEntry(data) {
     [
       id,
       (data.regNo || '').toString().toUpperCase().replace(/\s/g, ''),
-      data.date || new Date().toISOString().split('T')[0],
+      new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Nicosia' })).toISOString().split('T')[0],
       parseInt(data.km) || 0,
       JSON.stringify(Array.isArray(data.items) ? data.items : []),
       data.notes || '',

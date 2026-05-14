@@ -213,6 +213,15 @@ app.get('/api/booking/vehicle-lookup', async (req, res) => {
   }
 });
 
+// Server time — used by partner/public portals so displayed date always matches what will be recorded
+app.get('/api/server-time', (req, res) => {
+  const cyprusDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Nicosia' }));
+  res.json({
+    date:        cyprusDate.toISOString().split('T')[0],          // "2026-05-14"
+    displayDate: cyprusDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) // "14 May 2026"
+  });
+});
+
 // ==================== ADMIN API ====================
 
 // Login

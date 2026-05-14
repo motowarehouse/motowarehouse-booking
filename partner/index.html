@@ -742,6 +742,23 @@
   // itemStates[i] = 'ok' | 'replace' | 'na' | null
   const itemStates = new Array(SERVICE_ITEMS.length).fill(null);
 
+  // ── SERVER DATE ──────────────────────────────────────────────────────────────
+  // Always fetch the server's date — never use the client's clock.
+  // This prevents partners from manipulating the service date by changing their PC time.
+  async function setServerDate() {
+    try {
+      const r = await fetch('/api/server-time');
+      const d = await r.json();
+      document.getElementById('log-date').value = d.date;
+      document.getElementById('log-date-display').textContent = d.displayDate;
+    } catch {
+      // Fallback to client date only if server is unreachable (shouldn't happen in practice)
+      const fb = new Date();
+      document.getElementById('log-date').value = fb.toISOString().split('T')[0];
+      document.getElementById('log-date-display').textContent = fb.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+  }
+
   // ── LANGUAGE ─────────────────────────────────────────────────────────────────
   function setLang(lang) {
     currentLang = lang;
@@ -853,10 +870,8 @@
     document.getElementById('signout-btn').style.display = 'inline-flex';
     buildChecklist();
     setLang(currentLang); // re-apply translations
-    // Set today as default date — field is locked, update display span
-    const todayVal = new Date().toISOString().split('T')[0];
-    document.getElementById('log-date').value = todayVal;
-    document.getElementById('log-date-display').textContent = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    // Set today's date from server — never trust client clock
+    setServerDate();
   }
 
   // ── TABS ─────────────────────────────────────────────────────────────────────
@@ -975,9 +990,7 @@
     // Service form
     document.getElementById('log-km').value = '';
     document.getElementById('log-notes').value = '';
-    const td = new Date().toISOString().split('T')[0];
-    document.getElementById('log-date').value = td;
-    document.getElementById('log-date-display').textContent = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    setServerDate();
     // Reset checklist states
     itemStates.fill(null);
     buildChecklist();
