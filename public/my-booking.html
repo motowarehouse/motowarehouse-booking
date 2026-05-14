@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Booking – Motowarehouse</title>
+  <link rel="icon" type="image/png" href="/assets/MWH_Logo_New.png">
+  <style>
+    @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Light.ttf'); font-weight:300; }
+    @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Regular.ttf'); font-weight:400; }
+    @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Bold.ttf'); font-weight:700; }
+
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    :root {
+      --blue:#009BB4; --blue-dark:#007a8f;
+      --dark:#0a1a1f; --dark2:#0f2429;
+      --grey:#8a9ba0; --white:#fff;
+      --red:#E50052; --success:#00c896;
+    }
+    body {
+      font-family:'SupremeLL',Arial,sans-serif;
+      background:var(--dark);
+      color:var(--white);
+      min-height:100vh;
+      font-weight:300;
+    }
+
+    /* HEADER */
+    header {
+      background:var(--dark2);
+      border-bottom:1px solid rgba(0,155,180,0.2);
+      padding:0 24px;
+      display:flex;
+      align-items:center;
+      gap:14px;
+      height:68px;
+    }
+    .logo-mark { height:44px; width:auto; border-radius:6px; object-fit:contain; }
+    .logo-name  { font-size:14px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; }
+    .logo-sub   { font-size:10px; color:var(--blue); letter-spacing:0.08em; text-transform:uppercase; }
+
+    /* MAIN */
+    .container {
+      max-width:540px;
+      margin:60px auto 80px;
+      padding:0 20px;
+    }
+
+    h1 {
+      font-size:28px;
+      font-weight:700;
+      margin-bottom:6px;
+    }
+    .subtitle {
+      color:var(--grey);
+      font-size:14px;
+      margin-bottom:36px;
+    }
+
+    .form-group { margin-bottom:20px; }
+    label {
+      display:block;
+      font-size:12px;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+      color:var(--grey);
+      margin-bottom:8px;
+    }
+    input {
+      width:100%;
+      padding:14px 16px;
+      background:#1a3540;
+      border:1px solid rgba(0,155,180,0.2);
+      border-radius:8px;
+      color:var(--white);
+      font-family:inherit;
+      font-size:15px;
+      font-weight:400;
+      outline:none;
+      transition:border-color 0.2s;
+    }
+    input:focus { border-color:var(--blue); }
+    input::placeholder { color:#4a6470; }
+
+    .btn {
+      width:100%;
+      padding:15px;
+      background:var(--blue);
+      color:var(--white);
+      border:none;
+      border-radius:8px;
+      font-family:inherit;
+      font-size:15px;
+      font-weight:700;
+      letter-spacing:0.05em;
+      cursor:pointer;
+      transition:background 0.2s, opacity 0.2s;
+      margin-top:8px;
+    }
+    .btn:hover:not(:disabled) { background:var(--blue-dark); }
+    .btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+    /* ERROR / RESULT */
+    .alert {
+      padding:14px 18px;
+      border-radius:8px;
+      font-size:14px;
+      margin-bottom:24px;
+      display:none;
+    }
+    .alert.error   { background:rgba(229,0,82,0.12); border:1px solid rgba(229,0,82,0.3); color:#ff6b99; }
+    .alert.show    { display:block; }
+
+    .result-card {
+      background:#0f2429;
+      border:1px solid rgba(0,155,180,0.2);
+      border-radius:12px;
+      padding:28px;
+      margin-top:28px;
+      display:none;
+    }
+    .result-card.show { display:block; }
+
+    .result-status {
+      display:inline-block;
+      padding:4px 14px;
+      border-radius:20px;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:0.06em;
+      text-transform:uppercase;
+      margin-bottom:20px;
+    }
+    .status-pending   { background:rgba(229,144,0,0.15);  color:#E59000; }
+    .status-accepted  { background:rgba(0,200,150,0.15);  color:#00c896; }
+    .status-cancelled { background:rgba(229,0,82,0.15);   color:#E50052; }
+    .status-completed { background:rgba(0,155,180,0.15);  color:#009BB4; }
+    .status-no-show   { background:rgba(120,120,120,0.15);color:#999; }
+
+    .result-row {
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      padding:10px 0;
+      border-bottom:1px solid rgba(0,155,180,0.1);
+      font-size:14px;
+      gap:12px;
+    }
+    .result-row:last-child { border-bottom:none; }
+    .result-row .lbl { color:var(--grey); flex-shrink:0; width:120px; }
+    .result-row .val { font-weight:500; text-align:right; }
+
+    .cancel-link {
+      display:block;
+      margin-top:20px;
+      text-align:center;
+      font-size:13px;
+      color:var(--grey);
+    }
+    .cancel-link a { color:var(--red); text-decoration:none; }
+    .cancel-link a:hover { text-decoration:underline; }
+
+    .back-link {
+      display:block;
+      text-align:center;
+      margin-top:28px;
+      font-size:13px;
+      color:var(--grey);
+    }
+    .back-link a { color:var(--blue); text-decoration:none; }
+
+    /* Spinner */
+    .spinner {
+      display:inline-block;
+      width:16px; height:16px;
+      border:2px solid rgba(255,255,255,0.3);
+      border-top-color:#fff;
+      border-radius:50%;
+      animation:spin 0.7s linear infinite;
+      vertical-align:middle;
+      margin-right:8px;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="/assets/MWH_Logo_New.png" class="logo-mark" alt="MW" onerror="this.style.display='none'">
+  <div>
+    <div class="logo-name">Motowarehouse</div>
+    <div class="logo-sub">Service Portal</div>
+  </div>
+</header>
+
+<div class="container">
+  <h1>My Booking</h1>
+  <p class="subtitle">Enter your booking reference and licence plate to check your appointment status.</p>
+
+  <div class="alert error" id="error-box"></div>
+
+  <div class="form-group">
+    <label for="ref">Booking Reference</label>
+    <input type="text" id="ref" placeholder="e.g. MW-1234567" autocomplete="off"
+           style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+  </div>
+
+  <div class="form-group">
+    <label for="plate">Licence Plate</label>
+    <input type="text" id="plate" placeholder="e.g. ABC 1234" autocomplete="off"
+           style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+  </div>
+
+  <button class="btn" id="lookup-btn" onclick="lookupBooking()">Check My Booking</button>
+
+  <!-- Result card -->
+  <div class="result-card" id="result-card">
+    <div id="status-badge" class="result-status"></div>
+    <div id="result-rows"></div>
+    <div class="cancel-link" id="cancel-link" style="display:none">
+      Need to cancel? <a id="cancel-href" href="#">Cancel this booking</a>
+    </div>
+  </div>
+
+  <div class="back-link">
+    <a href="/">← Back to Booking</a>
+  </div>
+</div>
+
+<script>
+  // Pre-fill ref from URL query string (e.g. /my-booking?ref=MW-123)
+  const urlRef = new URLSearchParams(window.location.search).get('ref');
+  if (urlRef) document.getElementById('ref').value = urlRef.toUpperCase();
+
+  function showError(msg) {
+    const el = document.getElementById('error-box');
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+
+  function hideError() {
+    document.getElementById('error-box').classList.remove('show');
+  }
+
+  const STATUS_LABELS = {
+    pending:   'Pending Confirmation',
+    accepted:  'Confirmed',
+    cancelled: 'Cancelled',
+    completed: 'Completed',
+    'no-show': 'No Show'
+  };
+  const STATUS_CLASSES = {
+    pending:   'status-pending',
+    accepted:  'status-accepted',
+    cancelled: 'status-cancelled',
+    completed: 'status-completed',
+    'no-show': 'status-no-show'
+  };
+
+  async function lookupBooking() {
+    hideError();
+    document.getElementById('result-card').classList.remove('show');
+
+    const ref   = document.getElementById('ref').value.trim().toUpperCase();
+    const plate = document.getElementById('plate').value.trim().toUpperCase();
+    const btn   = document.getElementById('lookup-btn');
+
+    if (!ref)   return showError('Please enter your booking reference.');
+    if (!plate) return showError('Please enter your licence plate number.');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Looking up…';
+
+    try {
+      const res  = await fetch(`/api/booking/lookup?ref=${encodeURIComponent(ref)}&plate=${encodeURIComponent(plate)}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        showError(data.error || 'Booking not found. Please check your reference and plate number.');
+        return;
+      }
+
+      // Populate result card
+      const badge = document.getElementById('status-badge');
+      badge.textContent = STATUS_LABELS[data.status] || data.status;
+      badge.className   = 'result-status ' + (STATUS_CLASSES[data.status] || 'status-pending');
+
+      const rows = [
+        { label: 'Reference',    value: data.ref },
+        { label: 'Name',         value: data.name },
+        { label: 'Service',      value: data.serviceType },
+        { label: 'Vehicle',      value: `${data.year} ${data.model}` },
+        { label: 'Plate',        value: data.plate },
+        { label: 'Date',         value: data.date || '—' },
+        { label: 'Time',         value: data.time || '—' }
+      ];
+
+      document.getElementById('result-rows').innerHTML = rows.map(r => `
+        <div class="result-row">
+          <span class="lbl">${r.label}</span>
+          <span class="val">${r.value || '—'}</span>
+        </div>
+      `).join('');
+
+      // Show cancel link only for active bookings
+      const cancelWrap = document.getElementById('cancel-link');
+      if (data.status === 'pending' || data.status === 'accepted') {
+        document.getElementById('cancel-href').href = `/cancel?ref=${data.ref}`;
+        cancelWrap.style.display = 'block';
+      } else {
+        cancelWrap.style.display = 'none';
+      }
+
+      document.getElementById('result-card').classList.add('show');
+
+    } catch (err) {
+      showError('Something went wrong. Please try again or call us on 22 328 788.');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Check My Booking';
+    }
+  }
+
+  // Allow Enter key to submit
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') lookupBooking();
+  });
+</script>
+
+</body>
+</html>

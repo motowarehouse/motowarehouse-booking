@@ -61,7 +61,9 @@ function sendBrevoSMS(to, content) {
 async function sendConfirmationSMS(booking) {
   // 'other' type bookings are handled by phone call, not auto-SMS
   if (booking.serviceType === 'other') return;
-  const msg = `Motowarehouse: Your ${SERVICE_LABELS[booking.serviceType]} is confirmed for ${booking.date} at ${booking.time}. Ref: ${booking.ref}. 40 Athinon Str, Strovolos. Tel: 22328788`;
+  const siteUrl = process.env.SITE_URL || '';
+  const cancelUrl = siteUrl ? ` Cancel: ${siteUrl}/cancel?ref=${booking.ref}` : '';
+  const msg = `Motowarehouse: Your ${SERVICE_LABELS[booking.serviceType]} is confirmed for ${booking.date} at ${booking.time}. Ref: ${booking.ref}. 40 Athinon Str, Strovolos. Tel: 22328788.${cancelUrl}`;
   await sendBrevoSMS(booking.phone, msg);
 }
 

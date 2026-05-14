@@ -569,6 +569,10 @@
                 <label>Phone (optional)</label>
                 <input type="text" class="admin-input" id="partner-phone" placeholder="e.g. 99 123 456">
               </div>
+              <div class="form-group">
+                <label>Email (optional — for warranty notifications)</label>
+                <input type="email" class="admin-input" id="partner-email" placeholder="e.g. workshop@example.com">
+              </div>
             </div>
             <div style="margin-top:14px;">
               <button class="btn-primary" onclick="createPartner()" style="width:auto;padding:10px 24px;">Create Partner</button>
@@ -610,6 +614,32 @@
             </div>
             <button onclick="workloadWeekOffset=0;renderWorkload()" style="background:rgba(0,155,180,0.1);border:1px solid rgba(0,155,180,0.3);border-radius:6px;color:var(--blue);cursor:pointer;font-family:'SupremeLL',Arial,sans-serif;font-size:12px;font-weight:700;padding:5px 14px;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.15s;">This Week</button>
           </div>
+
+          <!-- Mechanic Absence Toggle -->
+          <div class="panel-card" style="margin-bottom:20px;padding:18px;">
+            <div style="font-size:13px;font-weight:700;margin-bottom:4px;">Mechanic Availability</div>
+            <p style="font-size:12px;color:var(--grey);margin-bottom:16px;">Mark a mechanic as off for a specific date. The system will block all slots for them on that day and redistribute bookings to available mechanics.</p>
+            <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;">
+              <div>
+                <label style="font-size:11px;color:var(--grey);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:6px;">Date</label>
+                <input type="date" id="offday-date" class="admin-input" style="width:180px;">
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--grey);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:6px;">Mechanic</label>
+                <select id="offday-mechanic" class="admin-input" style="width:160px;">
+                  <option value="1">Mechanic 1</option>
+                  <option value="2">Mechanic 2</option>
+                </select>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button class="btn-primary" onclick="markMechanicOff()" style="padding:9px 18px;font-size:13px;">Mark as Off</button>
+                <button onclick="unmarkMechanicOff()" style="padding:9px 18px;font-size:13px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:var(--grey);cursor:pointer;font-family:inherit;">Restore</button>
+              </div>
+            </div>
+            <div id="offday-msg" style="margin-top:10px;font-size:13px;display:none;"></div>
+            <div id="offday-current" style="margin-top:14px;"></div>
+          </div>
+
           <div id="workload-grid-wrap"></div>
         </div>
 
@@ -2045,12 +2075,13 @@
     const username     = document.getElementById('partner-username').value.trim();
     const password     = document.getElementById('partner-password').value;
     const phone        = document.getElementById('partner-phone').value.trim();
+    const email        = document.getElementById('partner-email').value.trim();
     const msgEl        = document.getElementById('partner-create-msg');
     if (!workshopName || !username || !password) { showToast('Workshop name, username and password are required.', 'error'); return; }
     try {
       const res = await fetch('/api/admin/partners', {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ workshopName, username, password, phone })
+        body: JSON.stringify({ workshopName, username, password, phone, email })
       });
       const data = await res.json();
       if (res.ok) {
@@ -2060,6 +2091,7 @@
         document.getElementById('partner-username').value='';
         document.getElementById('partner-password').value='';
         document.getElementById('partner-phone').value='';
+        document.getElementById('partner-email').value='';
         loadPartners();
       } else {
         msgEl.style.color='var(--red)'; msgEl.textContent=data.error||'Failed to create partner.';
@@ -3205,7 +3237,75 @@
     if (w) { w.document.write(html); w.document.close(); }
   }
 
+  // ── MECHANIC OFF-DAYS ──────────────────────────────────────────────────
+  async function markMechanicOff() {
+    const date       = document.getElementById('offday-date').value;
+    const mechanicId = document.getElementById('offday-mechanic').value;
+    const msg        = document.getElementById('offday-msg');
+    if (!date) { msg.style.color='var(--red)'; msg.textContent='Please select a date.'; msg.style.display='block'; return; }
+    try {
+      const res = await fetch('/api/admin/mechanic-off-days', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ mechanicId: parseInt(mechanicId), date })
+      });
+      if (res.ok) {
+        msg.style.color='var(--green)'; msg.textContent=`Mechanic ${mechanicId} marked as off on ${date}.`;
+        msg.style.display='block';
+        loadOffDayStatus();
+        renderWorkload(); // refresh workload grid
+      } else {
+        const d = await res.json();
+        msg.style.color='var(--red)'; msg.textContent=d.error||'Failed.'; msg.style.display='block';
+      }
+    } catch(e) { msg.style.color='var(--red)'; msg.textContent='Connection error.'; msg.style.display='block'; }
+  }
+
+  async function unmarkMechanicOff() {
+    const date       = document.getElementById('offday-date').value;
+    const mechanicId = document.getElementById('offday-mechanic').value;
+    const msg        = document.getElementById('offday-msg');
+    if (!date) { msg.style.color='var(--red)'; msg.textContent='Please select a date.'; msg.style.display='block'; return; }
+    try {
+      const res = await fetch('/api/admin/mechanic-off-days', {
+        method:'DELETE', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ mechanicId: parseInt(mechanicId), date })
+      });
+      if (res.ok) {
+        msg.style.color='var(--green)'; msg.textContent=`Mechanic ${mechanicId} restored for ${date}.`;
+        msg.style.display='block';
+        loadOffDayStatus();
+        renderWorkload();
+      } else {
+        const d = await res.json();
+        msg.style.color='var(--red)'; msg.textContent=d.error||'Failed.'; msg.style.display='block';
+      }
+    } catch(e) { msg.style.color='var(--red)'; msg.textContent='Connection error.'; msg.style.display='block'; }
+  }
+
+  async function loadOffDayStatus() {
+    const date = document.getElementById('offday-date').value;
+    const el   = document.getElementById('offday-current');
+    if (!date) { el.innerHTML = ''; return; }
+    try {
+      const res  = await fetch(`/api/admin/mechanic-off-days?date=${date}`);
+      const data = await res.json();
+      const off  = data.offMechanics || [];
+      if (!off.length) {
+        el.innerHTML = `<span style="font-size:12px;color:var(--grey);">Both mechanics are available on ${date}.</span>`;
+      } else {
+        el.innerHTML = `<span style="font-size:12px;color:var(--orange);">⚠️ Off on ${date}: ${off.map(m=>'Mechanic '+m).join(', ')}</span>`;
+      }
+    } catch(e) { el.innerHTML = ''; }
+  }
+
+  // Auto-refresh off-day status when date changes
+  document.addEventListener('change', e => {
+    if (e.target && e.target.id === 'offday-date') loadOffDayStatus();
+  });
+
   // ── STATS DASHBOARD ───────────────────────────────────────────────────
+  let statsShowAllTime = false;
+
   function renderStatsView() {
     const el = document.getElementById('stats-view');
     if (!allBookings.length) {
@@ -3216,13 +3316,16 @@
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
 
-    // Last 30 days range
+    // Period selector — last 30 days or all time
+    const periodLabel = statsShowAllTime ? 'All Time' : 'Last 30 Days';
     const d30 = new Date(now); d30.setDate(d30.getDate() - 30);
-    const recent = allBookings.filter(b => new Date(b.createdAt) >= d30);
+    const recent = statsShowAllTime
+      ? allBookings
+      : allBookings.filter(b => new Date(b.createdAt) >= d30);
 
-    // Totals (all time, from loaded data)
+    // Totals (based on selected period)
     const totals = { pending:0, accepted:0, completed:0, cancelled:0, 'no-show':0 };
-    allBookings.forEach(b => { if (totals[b.status] !== undefined) totals[b.status]++; });
+    recent.forEach(b => { if (totals[b.status] !== undefined) totals[b.status]++; });
 
     // Service type breakdown (last 30 days)
     const svcBreak = {};
@@ -3258,12 +3361,27 @@
     const pendingCount = allBookings.filter(b => b.status === 'pending').length;
 
     el.innerHTML = `
+      <!-- Period toggle -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
+        <div style="font-size:15px;font-weight:700;">Dashboard — <span style="color:var(--blue);">${periodLabel}</span></div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="statsShowAllTime=false;renderStatsView()"
+            style="padding:7px 16px;border-radius:6px;border:1px solid rgba(0,155,180,${!statsShowAllTime?'0.7':'0.2'});background:${!statsShowAllTime?'rgba(0,155,180,0.15)':'transparent'};color:${!statsShowAllTime?'var(--blue)':'var(--grey)'};cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;">
+            Last 30 Days
+          </button>
+          <button onclick="statsShowAllTime=true;renderStatsView()"
+            style="padding:7px 16px;border-radius:6px;border:1px solid rgba(0,155,180,${statsShowAllTime?'0.7':'0.2'});background:${statsShowAllTime?'rgba(0,155,180,0.15)':'transparent'};color:${statsShowAllTime?'var(--blue)':'var(--grey)'};cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;">
+            All Time
+          </button>
+        </div>
+      </div>
+
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:24px;">
         <div class="stat-card"><div class="stat-label">Today</div><div class="stat-value" style="color:var(--blue);">${todayCount}</div><div style="font-size:11px;color:var(--grey);">accepted</div></div>
         <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value pending">${totals.pending}</div><div style="font-size:11px;color:var(--grey);">needs action</div></div>
-        <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="color:#00b882;">${totals.completed}</div><div style="font-size:11px;color:var(--grey);">all time</div></div>
-        <div class="stat-card"><div class="stat-label">No-shows</div><div class="stat-value" style="color:var(--grey);">${totals['no-show']}</div><div style="font-size:11px;color:var(--grey);">all time</div></div>
-        <div class="stat-card"><div class="stat-label">Cancelled</div><div class="stat-value cancelled">${totals.cancelled}</div><div style="font-size:11px;color:var(--grey);">all time</div></div>
+        <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="color:#00b882;">${totals.completed}</div><div style="font-size:11px;color:var(--grey);">${periodLabel.toLowerCase()}</div></div>
+        <div class="stat-card"><div class="stat-label">No-shows</div><div class="stat-value" style="color:var(--grey);">${totals['no-show']}</div><div style="font-size:11px;color:var(--grey);">${periodLabel.toLowerCase()}</div></div>
+        <div class="stat-card"><div class="stat-label">Cancelled</div><div class="stat-value cancelled">${totals.cancelled}</div><div style="font-size:11px;color:var(--grey);">${periodLabel.toLowerCase()}</div></div>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px;">
@@ -3283,7 +3401,7 @@
 
         <!-- Service type breakdown -->
         <div class="panel-card" style="padding:18px;">
-          <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--text);">Service Types (last 30 days)</div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--text);">Service Types (${periodLabel.toLowerCase()})</div>
           ${Object.keys(svcBreak).length === 0 ? `<div style="color:var(--grey);font-size:13px;">No data for this period.</div>` :
             Object.entries(svcBreak).sort((a,b) => b[1]-a[1]).map(([k,v]) => {
               const total30 = recent.length || 1;
@@ -3302,7 +3420,7 @@
 
       <!-- Busiest days -->
       <div class="panel-card" style="padding:18px;margin-bottom:18px;">
-        <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--text);">Busiest Days of the Week (last 30 days)</div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--text);">Busiest Days of the Week (${periodLabel.toLowerCase()})</div>
         <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;text-align:center;">
           ${dowCounts.map((c,i) => `
             <div>

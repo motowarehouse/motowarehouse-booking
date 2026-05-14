@@ -69,6 +69,16 @@ async function initDB() {
     // Safe migration for existing production tables — ADD COLUMN IF NOT EXISTS is idempotent
     await client.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS mechanic_notes TEXT`);
     await client.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS duration_mins INTEGER`);
+    await client.query(`ALTER TABLE partners  ADD COLUMN IF NOT EXISTS email TEXT`);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS mechanic_off_days (
+        mechanic_id INTEGER NOT NULL,
+        date        TEXT    NOT NULL,
+        created_at  TIMESTAMPTZ DEFAULT NOW(),
+        PRIMARY KEY (mechanic_id, date)
+      )
+    `);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS blocks (
@@ -251,6 +261,7 @@ function rowToPartner(r) {
     passwordHash: r.password_hash,
     workshopName: r.workshop_name,
     phone:        r.phone,
+    email:        r.email || '',
     active:       r.active,
     createdAt:    r.created_at
   };
@@ -523,6 +534,14 @@ async function getBookingById(id) {
   return rowToBooking(rows[0] || null);
 }
 
+async function getBookingByRef(ref) {
+  const { rows } = await pool.query(
+    'SELECT * FROM bookings WHERE ref = $1',
+    [(ref || '').toUpperCase().trim()]
+  );
+  return rowToBooking(rows[0] || null);
+}
+
 async function updateBookingStatus(id, status) {
   const extra = status === 'cancelled'
     ? `, contact_status = 'needs-contact'`
@@ -561,6 +580,24 @@ async function markReminderSent(id) {
   );
 }
 
+// ── DST-aware UTC conversion for Cyprus (Europe/Nicosia) ─────────────────────
+// Converts a local Cyprus date+time string to a UTC Date object.
+// Handles the switch between EET (UTC+2, winter) and EEST (UTC+3, summer).
+function appointmentToUTC(dateStr, timeStr) {
+  const wantH = parseInt(timeStr.split(':')[0], 10);
+  // Start with EET (+02:00) as a guess
+  const guess = new Date(`${dateStr}T${timeStr}:00+02:00`);
+  // Find what Cyprus local hour this UTC time actually corresponds to
+  const cyprusH = parseInt(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Europe/Nicosia', hour: 'numeric', hour12: false
+    }).format(guess),
+    10
+  );
+  // If Cyprus local hour differs from the wanted hour, Cyprus is at EEST (+03:00)
+  return cyprusH === wantH ? guess : new Date(`${dateStr}T${timeStr}:00+03:00`);
+}
+
 async function getAcceptedBookingsDueForReminder() {
   const { rows } = await pool.query(
     `SELECT * FROM bookings WHERE status = 'accepted' AND reminder_sent = false`
@@ -570,13 +607,45 @@ async function getAcceptedBookingsDueForReminder() {
   const twoHoursFromNow = new Date(now.getTime() + 2  * 60 * 60 * 1000);
   return rows.map(rowToBooking).filter(b => {
     if (!b.date || !b.time) return false;
-    // Append Cyprus timezone offset so JS parses the time correctly regardless of server timezone.
-    // Cyprus is EET (UTC+2) in winter and EEST (UTC+3) in summer.
-    // We always store local Cyprus time; using +02:00 is safe because the 1-hour DST
-    // difference only shifts the window by 30–60 min — well within the 30-min cron gap.
-    const apptTime = new Date(b.date + 'T' + b.time + ':00+02:00');
+    const apptTime = appointmentToUTC(b.date, b.time);
     return apptTime >= windowStart && apptTime <= twoHoursFromNow;
   });
+}
+
+// ── Check for existing active booking by plate ────────────────────────────────
+async function getActiveBookingByPlate(plate) {
+  const key = (plate || '').toUpperCase().replace(/\s/g, '');
+  const { rows } = await pool.query(
+    `SELECT * FROM bookings
+     WHERE UPPER(REPLACE(plate,' ','')) = $1
+       AND status IN ('pending','accepted')
+     LIMIT 1`,
+    [key]
+  );
+  return rows.length ? rowToBooking(rows[0]) : null;
+}
+
+// ── Mechanic off-day management ───────────────────────────────────────────────
+async function getMechanicOffDays(date) {
+  const { rows } = await pool.query(
+    'SELECT mechanic_id FROM mechanic_off_days WHERE date = $1', [date]
+  );
+  return rows.map(r => parseInt(r.mechanic_id));
+}
+
+async function addMechanicOffDay(mechanicId, date) {
+  await pool.query(
+    `INSERT INTO mechanic_off_days (mechanic_id, date)
+     VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+    [parseInt(mechanicId), date]
+  );
+}
+
+async function removeMechanicOffDay(mechanicId, date) {
+  await pool.query(
+    'DELETE FROM mechanic_off_days WHERE mechanic_id = $1 AND date = $2',
+    [parseInt(mechanicId), date]
+  );
 }
 
 // Helper: convert "HH:MM" + offset in minutes → "HH:MM"
@@ -617,10 +686,22 @@ async function getBookedSlots(date, newDurationMins = 60) {
     [date]
   );
 
+  // Mechanics who are off this day — treat as fully booked
+  const offMechanics = await getMechanicOffDays(date);
+
+  // Build all possible 30-min slot keys for a full working day (06:00–20:00)
+  function fullDaySlots() {
+    const s = new Set();
+    for (let m = 6 * 60; m < 20 * 60; m += 30) {
+      s.add(`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`);
+    }
+    return s;
+  }
+
   // Per-mechanic busy-slot sets
   const mechBusy = {};
   for (let m = 1; m <= MECHANIC_COUNT; m++) {
-    mechBusy[m] = buildBusySet(appts, m);
+    mechBusy[m] = offMechanics.includes(m) ? fullDaySlots() : buildBusySet(appts, m);
   }
 
   // Manual blocks (block every mechanic for those slots)
@@ -858,17 +939,25 @@ async function getAllVehicles() {
 async function createPartner(data) {
   const id = Date.now();
   const { rows } = await pool.query(
-    `INSERT INTO partners (id, username, password_hash, workshop_name, phone, active)
-     VALUES ($1,$2,$3,$4,$5,true) RETURNING *`,
+    `INSERT INTO partners (id, username, password_hash, workshop_name, phone, email, active)
+     VALUES ($1,$2,$3,$4,$5,$6,true) RETURNING *`,
     [
       id,
       data.username.toLowerCase().trim(),
       data.passwordHash,
       data.workshopName.trim(),
-      data.phone || ''
+      data.phone || '',
+      data.email || ''
     ]
   );
   return rowToPartner(rows[0]);
+}
+
+async function getPartnerById(id) {
+  const { rows } = await pool.query(
+    'SELECT * FROM partners WHERE id = $1', [parseInt(id)]
+  );
+  return rowToPartner(rows[0] || null);
 }
 
 async function getPartnerByUsername(username) {
@@ -963,8 +1052,6 @@ async function getServiceHistoryByPlate(regNo) {
   return rows.map(rowToServiceEntry);
 }
 
-const EDIT_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
-
 async function updateServiceEntry(id, data) {
   const { rows } = await pool.query(
     'SELECT * FROM service_history WHERE id = $1', [parseInt(id)]
@@ -972,11 +1059,6 @@ async function updateServiceEntry(id, data) {
   if (!rows.length) return { success: false, notFound: true };
 
   const entry = rowToServiceEntry(rows[0]);
-  const age = Date.now() - new Date(entry.createdAt).getTime();
-  if (age > EDIT_WINDOW_MS && !data.adminOverride) {
-    return { success: false, locked: true };
-  }
-
   const newKm    = parseInt(data.km) || entry.km;
   const newItems = Array.isArray(data.items) ? data.items : entry.items;
   const newNotes = data.notes !== undefined ? data.notes : entry.notes;
@@ -990,17 +1072,12 @@ async function updateServiceEntry(id, data) {
   return { success: true, entry: rowToServiceEntry(updated[0]) };
 }
 
-async function deleteServiceEntry(id, adminOverride) {
+// Delete is admin-only (enforced at server level); no time restriction.
+async function deleteServiceEntry(id) {
   const { rows } = await pool.query(
-    'SELECT created_at FROM service_history WHERE id = $1', [parseInt(id)]
+    'SELECT id FROM service_history WHERE id = $1', [parseInt(id)]
   );
   if (!rows.length) return { success: false, notFound: true };
-
-  const age = Date.now() - new Date(rows[0].created_at).getTime();
-  if (age > EDIT_WINDOW_MS && !adminOverride) {
-    return { success: false, locked: true };
-  }
-
   await pool.query('DELETE FROM service_history WHERE id = $1', [parseInt(id)]);
   return { success: true };
 }
@@ -1111,14 +1188,16 @@ async function cancelBookingByCustomer(ref, phone) {
 
 module.exports = {
   getSetting, setSetting,
-  createBooking, getAllBookings, getBookingById,
+  createBooking, getAllBookings, getBookingById, getBookingByRef,
   updateBookingStatus, rescheduleBooking, updateContactStatus,
   markReminderSent, getAcceptedBookingsDueForReminder, getBookedSlots,
+  getActiveBookingByPlate,
   completeBooking, markNoShow,
   createBlock, getAllBlocks, deleteBlock,
   getHours, saveHours, DEFAULT_HOURS,
   importVehicles, getVehicleByPlate, getAllVehicles,
-  createPartner, getPartnerByUsername, getAllPartners, togglePartnerActive, updatePartnerPassword,
+  createPartner, getPartnerByUsername, getPartnerById, getAllPartners, togglePartnerActive, updatePartnerPassword,
+  getMechanicOffDays, addMechanicOffDay, removeMechanicOffDay,
   createServiceEntry, updateServiceEntry, deleteServiceEntry, getServiceHistoryByPlate, DEFAULT_SERVICE_ITEMS,
   createWarrantyClaim, getWarrantyByPlate, getAllWarranties, updateWarrantyStatus,
   updateMechanicNotes,

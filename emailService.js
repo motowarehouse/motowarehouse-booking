@@ -6,7 +6,8 @@ const SERVICE_LABELS = {
   'other':         'Service Request'
 };
 
-const SENDER = { name: 'Motowarehouse', email: 'motowarehouse.bookings@gmail.com' };
+const SENDER    = { name: 'Motowarehouse', email: 'support@motowarehouse.com.cy' };
+const SITE_URL  = process.env.SITE_URL || '';
 
 // ── Core Brevo API call ───────────────────────────────────────────────────────
 function sendBrevoEmail({ to, subject, html }) {
@@ -78,7 +79,7 @@ async function sendSelfCancelAlert(booking) {
             <strong>Note:</strong> The slot for this booking is now free. No action required unless you want to follow up.
           </p>
           <div style="margin-top:20px;">
-            <a href="${process.env.SITE_URL || 'https://web-production-ad678.up.railway.app'}/admin"
+            <a href="${SITE_URL}/admin"
                style="background:#009BB4;color:white;padding:12px 24px;text-decoration:none;border-radius:4px;display:inline-block;">
               Open Admin Panel
             </a>
@@ -124,7 +125,7 @@ async function sendNewBookingAlert(booking) {
       </table>
       ${isOther ? `<p style="margin-top:16px;background:#fff3cd;padding:12px;border-radius:4px;color:#856404;font-family:Arial;"><strong>⚠️ Action required:</strong> This customer needs to be called to schedule a date and time.</p>` : ''}
       <p style="margin-top:20px;">
-        <a href="${process.env.SITE_URL || 'https://web-production-ad678.up.railway.app'}/admin"
+        <a href="${SITE_URL}/admin"
            style="background:#009BB4;color:white;padding:12px 24px;text-decoration:none;border-radius:4px;display:inline-block;">
           Open Admin Panel
         </a>
@@ -166,7 +167,7 @@ async function sendConfirmationToCustomer(booking) {
           <p>Please arrive a few minutes before your scheduled time. If you need to reschedule, please call us at <strong>22 328 788</strong>.</p>
           <div style="background:#fff8f8;border:1px solid #f0d0d0;border-radius:6px;padding:14px 18px;margin:20px 0;font-size:13px;color:#666;">
             Need to cancel? You can cancel your booking online using your reference number:<br>
-            <a href="${process.env.SITE_URL || 'https://web-production-ad678.up.railway.app'}/cancel?ref=${booking.ref}"
+            <a href="${SITE_URL}/cancel?ref=${booking.ref}"
                style="color:#E50052;word-break:break-all;">
               Cancel booking ${booking.ref}
             </a>
@@ -309,8 +310,52 @@ async function sendWarrantyAlert(claim) {
           </table>
           ${claim.photos && claim.photos.length ? `<p style="margin-top:16px;color:#666;font-size:13px;">${claim.photos.length} photo(s) attached — view in the admin panel.</p>` : ''}
           <div style="margin-top:24px;">
-            <a href="${process.env.SITE_URL || ''}/admin" style="background:#E59000;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:bold;">View in Admin Panel →</a>
+            <a href="${SITE_URL}/admin" style="background:#E59000;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:bold;">View in Admin Panel →</a>
           </div>
+        </div>
+        <div style="padding:16px 32px;background:#f5f5f5;font-size:12px;color:#999;">Motowarehouse Ltd · Warranty Management Portal</div>
+      </div>
+    `
+  });
+}
+
+// ── Notify partner of warranty claim status change ────────────────────────────
+async function sendWarrantyStatusToPartner(claim, partnerEmail, workshopName) {
+  if (!partnerEmail) return;
+
+  const statusLabels = {
+    open:     { label: 'Open',     color: '#009BB4', icon: '🔵' },
+    approved: { label: 'Approved', color: '#28a745', icon: '✅' },
+    rejected: { label: 'Rejected', color: '#E50052', icon: '❌' },
+    closed:   { label: 'Closed',   color: '#6c757d', icon: '🔒' }
+  };
+  const s = statusLabels[claim.status] || { label: claim.status, color: '#009BB4', icon: '📋' };
+
+  await sendBrevoEmail({
+    to:      partnerEmail,
+    subject: `Warranty Claim Update – ${claim.regNo} – ${s.label}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+        <div style="background:#001A21;padding:24px;text-align:center;">
+          <h1 style="color:#E59000;margin:0;font-size:22px;">🛡️ Warranty Claim Update</h1>
+        </div>
+        <div style="padding:32px;background:#fff;">
+          <p>Dear ${workshopName || 'Partner'},</p>
+          <p>Your warranty claim for <strong>${claim.regNo}</strong> has been updated.</p>
+          <div style="text-align:center;margin:24px 0;padding:20px;background:#f5f5f5;border-radius:8px;">
+            <div style="font-size:48px;">${s.icon}</div>
+            <div style="font-size:24px;font-weight:bold;color:${s.color};margin-top:8px;">${s.label}</div>
+          </div>
+          <table style="border-collapse:collapse;width:100%;font-size:14px;">
+            <tr><td style="padding:8px 0;color:#666;width:140px;">Registration</td><td style="padding:8px 0;font-weight:bold;">${claim.regNo}</td></tr>
+            <tr><td style="padding:8px 0;color:#666;">Fault Reported</td><td style="padding:8px 0;">${claim.symptom}</td></tr>
+            ${claim.adminNotes ? `<tr><td style="padding:8px 0;color:#666;vertical-align:top;">Admin Notes</td><td style="padding:8px 0;">${claim.adminNotes}</td></tr>` : ''}
+          </table>
+          <p style="margin-top:24px;font-size:13px;color:#666;">
+            If you have any questions, please contact Motowarehouse on <strong>22 328 788</strong>
+            or reply to this email at <strong>support@motowarehouse.com.cy</strong>.
+          </p>
+          <p>The Motowarehouse Team</p>
         </div>
         <div style="padding:16px 32px;background:#f5f5f5;font-size:12px;color:#999;">Motowarehouse Ltd · Warranty Management Portal</div>
       </div>
@@ -324,5 +369,6 @@ module.exports = {
   sendCancellationToCustomer,
   sendReminderToCustomer,
   sendRescheduleToCustomer,
-  sendWarrantyAlert
+  sendWarrantyAlert,
+  sendWarrantyStatusToPartner
 };

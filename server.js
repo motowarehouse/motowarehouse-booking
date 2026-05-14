@@ -21,29 +21,50 @@ const sessionPool = new Pool({
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// --- Simple in-memory rate limiter for public booking endpoint ---
-const bookingAttempts = new Map(); // ip → { count, resetAt }
-function bookingRateLimit(req, res, next) {
-  const ip = req.ip || req.connection.remoteAddress || 'unknown';
-  const now = Date.now();
-  const entry = bookingAttempts.get(ip);
-  if (!entry || now > entry.resetAt) {
-    bookingAttempts.set(ip, { count: 1, resetAt: now + 60 * 60 * 1000 }); // 1-hour window
-    return next();
-  }
-  if (entry.count >= 5) { // max 5 booking submissions per IP per hour
-    return res.status(429).json({ error: 'Too many booking attempts. Please try again later or call us on 22 328 788.' });
-  }
-  entry.count++;
-  next();
+// --- Generic in-memory rate limiter factory ---
+function makeRateLimiter(maxAttempts, windowMs, errorMsg) {
+  const attempts = new Map();
+  // Hourly cleanup
+  setInterval(() => {
+    const now = Date.now();
+    for (const [ip, entry] of attempts.entries()) {
+      if (now > entry.resetAt) attempts.delete(ip);
+    }
+  }, 60 * 60 * 1000);
+
+  return function rateLimit(req, res, next) {
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    const now = Date.now();
+    const entry = attempts.get(ip);
+    if (!entry || now > entry.resetAt) {
+      attempts.set(ip, { count: 1, resetAt: now + windowMs });
+      return next();
+    }
+    if (entry.count >= maxAttempts) {
+      return res.status(429).json({ error: errorMsg });
+    }
+    entry.count++;
+    next();
+  };
 }
-// Clean up old entries every hour to prevent memory leak
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, entry] of bookingAttempts.entries()) {
-    if (now > entry.resetAt) bookingAttempts.delete(ip);
-  }
-}, 60 * 60 * 1000);
+
+// Public booking: max 5 submissions / IP / hour
+const bookingRateLimit = makeRateLimiter(
+  5, 60 * 60 * 1000,
+  'Too many booking attempts. Please try again later or call us on 22 328 788.'
+);
+
+// Admin login: max 5 failed attempts / IP / hour (brute force protection)
+const adminLoginRateLimit = makeRateLimiter(
+  5, 60 * 60 * 1000,
+  'Too many login attempts. Please wait 1 hour or contact support.'
+);
+
+// Partner login: max 10 attempts / IP / hour (partners may share a device / café WiFi)
+const partnerLoginRateLimit = makeRateLimiter(
+  10, 60 * 60 * 1000,
+  'Too many login attempts. Please wait 1 hour.'
+);
 
 // --- Middleware ---
 app.set('trust proxy', 1); // Required for Railway/Heroku HTTPS proxy
@@ -162,6 +183,20 @@ app.post('/api/book', bookingRateLimit, async (req, res) => {
     return res.status(400).json({ error: 'Invalid service type.' });
   }
 
+  // Phone validation: 7–15 digits (after stripping spaces, +, -)
+  const phoneDigits = (phone || '').replace(/[\s\+\-]/g, '');
+  if (!/^\d{7,15}$/.test(phoneDigits)) {
+    return res.status(400).json({ error: 'Please enter a valid phone number (7–15 digits).' });
+  }
+
+  // Duplicate active booking check for this plate
+  const existingBooking = await db.getActiveBookingByPlate(plate);
+  if (existingBooking) {
+    return res.status(409).json({
+      error: `There is already an active booking for plate ${plate.toUpperCase()} (Ref: ${existingBooking.ref}). Please cancel it first or call us on 22 328 788.`
+    });
+  }
+
   if (isOther) {
     if (!description || !description.trim()) {
       return res.status(400).json({ error: 'Please describe what service you need.' });
@@ -170,7 +205,9 @@ app.post('/api/book', bookingRateLimit, async (req, res) => {
     if (!email || !date || !time) {
       return res.status(400).json({ error: 'All required fields must be filled.' });
     }
-    const booked = await db.getBookedSlots(date);
+    // Duration-aware slot double-check (same logic as the calendar uses)
+    const durationMins = db.getDurationMins(model, serviceType);
+    const booked = await db.getBookedSlots(date, durationMins);
     if (booked.includes(time)) {
       return res.status(409).json({ error: 'This time slot is no longer available. Please choose another.' });
     }
@@ -225,7 +262,7 @@ app.get('/api/server-time', (req, res) => {
 // ==================== ADMIN API ====================
 
 // Login
-app.post('/api/admin/login', async (req, res) => {
+app.post('/api/admin/login', adminLoginRateLimit, async (req, res) => {
   const { password } = req.body;
   const adminHash = process.env.ADMIN_PASSWORD_HASH;
 
@@ -501,6 +538,47 @@ app.post('/api/admin/test-email', requireAdmin, async (req, res) => {
   }
 });
 
+// ── Mechanic off-days ─────────────────────────────────────────────────────────
+
+// Get which mechanics are off on a given date
+app.get('/api/admin/mechanic-off-days', requireAdmin, async (req, res) => {
+  try {
+    const { date } = req.query;
+    if (!date) return res.status(400).json({ error: 'date required' });
+    const offMechanics = await db.getMechanicOffDays(date);
+    res.json({ date, offMechanics });
+  } catch (err) {
+    console.error('[Mechanic off-days GET error]', err);
+    res.status(500).json({ error: 'Failed to load mechanic availability.' });
+  }
+});
+
+// Mark a mechanic as off for a date
+app.post('/api/admin/mechanic-off-days', requireAdmin, async (req, res) => {
+  try {
+    const { mechanicId, date } = req.body;
+    if (!mechanicId || !date) return res.status(400).json({ error: 'mechanicId and date are required.' });
+    await db.addMechanicOffDay(mechanicId, date);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[Mechanic off-days POST error]', err);
+    res.status(500).json({ error: 'Failed to mark mechanic as off.' });
+  }
+});
+
+// Unmark a mechanic as off for a date (restore to available)
+app.delete('/api/admin/mechanic-off-days', requireAdmin, async (req, res) => {
+  try {
+    const { mechanicId, date } = req.body;
+    if (!mechanicId || !date) return res.status(400).json({ error: 'mechanicId and date are required.' });
+    await db.removeMechanicOffDay(mechanicId, date);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[Mechanic off-days DELETE error]', err);
+    res.status(500).json({ error: 'Failed to restore mechanic availability.' });
+  }
+});
+
 // Serve admin panel
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin', 'index.html'));
@@ -509,7 +587,7 @@ app.get('/admin', (req, res) => {
 // ==================== PARTNER API ====================
 
 // Partner login
-app.post('/api/partner/login', async (req, res) => {
+app.post('/api/partner/login', partnerLoginRateLimit, async (req, res) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: 'Username and password required.' });
@@ -608,17 +686,12 @@ app.post('/api/service-entry', requireAdminOrPartner, async (req, res) => {
   }
 });
 
-// Edit a service entry — allowed within 5 min, admin can override lock
+// Edit a service entry (partner or admin — no time restriction, UI shows confirmation dialog)
 app.put('/api/service-entry/:id', requireAdminOrPartner, async (req, res) => {
   try {
-    const { km, items, notes, adminOverride } = req.body;
-    const isAdmin = !!(req.session && req.session.admin);
-    const result = await db.updateServiceEntry(req.params.id, {
-      km, items, notes,
-      adminOverride: isAdmin && adminOverride
-    });
+    const { km, items, notes } = req.body;
+    const result = await db.updateServiceEntry(req.params.id, { km, items, notes });
     if (result.notFound) return res.status(404).json({ error: 'Entry not found.' });
-    if (result.locked)   return res.status(403).json({ error: 'Edit window has expired (5 minutes).', locked: true });
     res.json({ success: true, entry: result.entry });
   } catch (err) {
     console.error('[Update service entry error]', err);
@@ -626,14 +699,11 @@ app.put('/api/service-entry/:id', requireAdminOrPartner, async (req, res) => {
   }
 });
 
-// Delete a service entry — within 5 min or admin override
-app.delete('/api/service-entry/:id', requireAdminOrPartner, async (req, res) => {
+// Delete a service entry — admin only
+app.delete('/api/service-entry/:id', requireAdmin, async (req, res) => {
   try {
-    const isAdmin = !!(req.session && req.session.admin);
-    const adminOverride = isAdmin && req.query.force === 'true';
-    const result = await db.deleteServiceEntry(req.params.id, adminOverride);
+    const result = await db.deleteServiceEntry(req.params.id);
     if (result.notFound) return res.status(404).json({ error: 'Entry not found.' });
-    if (result.locked)   return res.status(403).json({ error: 'Edit window has expired.', locked: true });
     res.json({ success: true });
   } catch (err) {
     console.error('[Delete service entry error]', err);
@@ -719,7 +789,7 @@ app.get('/api/admin/partners', requireAdmin, async (req, res) => {
 // Create a partner
 app.post('/api/admin/partners', requireAdmin, async (req, res) => {
   try {
-    const { username, password, workshopName, phone } = req.body;
+    const { username, password, workshopName, phone, email } = req.body;
     if (!username || !password || !workshopName) {
       return res.status(400).json({ error: 'username, password, and workshopName are required.' });
     }
@@ -727,7 +797,7 @@ app.post('/api/admin/partners', requireAdmin, async (req, res) => {
       return res.status(409).json({ error: 'Username already exists.' });
     }
     const passwordHash = await bcrypt.hash(password, 10);
-    const partner = await db.createPartner({ username, passwordHash, workshopName, phone });
+    const partner = await db.createPartner({ username, passwordHash, workshopName, phone, email });
     res.json({ success: true, partner: { ...partner, passwordHash: undefined } });
   } catch (err) {
     console.error('[Create partner error]', err);
@@ -796,6 +866,19 @@ app.post('/api/warranty-claim', requireAdminOrPartner, async (req, res) => {
   }
 });
 
+// Get warranty claims submitted by the logged-in partner (own claims only)
+app.get('/api/partner/warranties', requirePartner, async (req, res) => {
+  try {
+    const partnerId = String(req.session.partner.id);
+    const all = await db.getAllWarranties();
+    const mine = all.filter(c => String(c.partnerId) === partnerId);
+    res.json(mine);
+  } catch (err) {
+    console.error('[Partner warranties error]', err);
+    res.status(500).json({ error: 'Failed to load claims.' });
+  }
+});
+
 // Get all warranty claims (admin inbox)
 app.get('/api/admin/warranties', requireAdmin, async (req, res) => {
   try {
@@ -806,7 +889,7 @@ app.get('/api/admin/warranties', requireAdmin, async (req, res) => {
   }
 });
 
-// Update warranty claim status
+// Update warranty claim status — also emails the partner if they have an email on file
 app.post('/api/admin/warranties/:id/status', requireAdmin, async (req, res) => {
   try {
     const { status, adminNotes } = req.body;
@@ -814,6 +897,20 @@ app.post('/api/admin/warranties/:id/status', requireAdmin, async (req, res) => {
     if (!valid.includes(status)) return res.status(400).json({ error: 'Invalid status.' });
     const claim = await db.updateWarrantyStatus(req.params.id, status, adminNotes);
     if (!claim) return res.status(404).json({ error: 'Claim not found.' });
+
+    // Notify partner by email if they submitted this claim and have an email address
+    if (claim.partnerId) {
+      try {
+        const partner = await db.getPartnerById(claim.partnerId);
+        if (partner && partner.email) {
+          await emailService.sendWarrantyStatusToPartner(claim, partner.email, partner.workshopName);
+          console.log(`[Email] Warranty status notification sent to ${partner.email}`);
+        }
+      } catch (e) {
+        console.error('[Email] Warranty partner notification FAILED:', e.message);
+      }
+    }
+
     res.json({ success: true, claim });
   } catch (err) {
     console.error('[Update warranty error]', err);
@@ -821,8 +918,8 @@ app.post('/api/admin/warranties/:id/status', requireAdmin, async (req, res) => {
   }
 });
 
-// Get service history by plate (partner + admin)
-app.get('/api/service-history', requireAdminOrPartner, async (req, res) => {
+// Get service history by plate (admin only — partners cannot browse service history)
+app.get('/api/service-history', requireAdmin, async (req, res) => {
   try {
     const { plate } = req.query;
     if (!plate) return res.status(400).json({ error: 'plate required' });
@@ -832,6 +929,56 @@ app.get('/api/service-history', requireAdminOrPartner, async (req, res) => {
     console.error('[Service history error]', err);
     res.status(500).json({ error: 'Failed to load service history.' });
   }
+});
+
+// ==================== CUSTOMER BOOKING LOOKUP ====================
+
+// Look up a booking by ref + plate — returns safe fields only (no admin-only info)
+app.get('/api/booking/lookup', async (req, res) => {
+  try {
+    const ref   = (req.query.ref   || '').toUpperCase().trim();
+    const plate = (req.query.plate || '').toUpperCase().replace(/\s/g, '');
+    if (!ref || !plate) {
+      return res.status(400).json({ error: 'Booking reference and licence plate are required.' });
+    }
+
+    const booking = await db.getBookingByRef(ref);
+    if (!booking) {
+      return res.status(404).json({ error: 'No booking found with that reference number.' });
+    }
+
+    // Verify the plate matches — prevents fishing for other people's bookings by ref
+    const storedPlate = (booking.plate || '').toUpperCase().replace(/\s/g, '');
+    if (storedPlate !== plate) {
+      return res.status(403).json({ error: 'Licence plate does not match this booking.' });
+    }
+
+    // Only expose what a customer needs to know
+    const serviceLabels = {
+      'small-service': 'Small Service',
+      'full-service':  'Full Service',
+      'other':         'Service Request'
+    };
+    res.json({
+      ref:         booking.ref,
+      name:        booking.name,
+      status:      booking.status,
+      serviceType: serviceLabels[booking.serviceType] || booking.serviceType,
+      date:        booking.date,
+      time:        booking.time,
+      model:       booking.model,
+      year:        booking.year,
+      plate:       booking.plate
+    });
+  } catch (err) {
+    console.error('[Booking lookup error]', err);
+    res.status(500).json({ error: 'Failed to look up booking.' });
+  }
+});
+
+// Serve the customer booking lookup page
+app.get('/my-booking', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'my-booking.html'));
 });
 
 // ==================== CUSTOMER SELF-CANCEL ====================

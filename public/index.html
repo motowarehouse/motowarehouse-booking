@@ -1311,12 +1311,25 @@
   let selectedModel = null;
   let selectedBrand = null;
 
-  // Date bounds
+  // Date bounds — use server time so customers can't bypass by changing their PC clock
   const dateInput = document.getElementById('date');
-  const today = new Date();
-  const maxDate = new Date(today); maxDate.setDate(today.getDate() + 60);
-  dateInput.min = today.toISOString().split('T')[0];
-  dateInput.max = maxDate.toISOString().split('T')[0];
+  (async () => {
+    try {
+      const st = await fetch('/api/server-time').then(r => r.json());
+      const todayStr = st.date; // "YYYY-MM-DD" from server
+      const maxD = new Date(todayStr + 'T12:00:00');
+      maxD.setDate(maxD.getDate() + 7);
+      const maxStr = maxD.toISOString().split('T')[0];
+      dateInput.min = todayStr;
+      dateInput.max = maxStr;
+    } catch {
+      // Fallback to client date if server unreachable
+      const fb = new Date();
+      const maxFb = new Date(fb); maxFb.setDate(fb.getDate() + 7);
+      dateInput.min = fb.toISOString().split('T')[0];
+      dateInput.max = maxFb.toISOString().split('T')[0];
+    }
+  })();
 
   // Year dropdown
   const yearSel = document.getElementById('year');
@@ -1526,7 +1539,8 @@
     }
     if (!name)  return showError('Please enter your full name.');
     if (!phone) return showError('Please enter your phone number.');
-    if (phone.replace(/\D/g,'').length < 7) return showError('Please enter a valid phone number.');
+    const phoneDigits = phone.replace(/\D/g, '');
+    if (phoneDigits.length < 7 || phoneDigits.length > 15) return showError('Please enter a valid phone number (7–15 digits).');
     if (!isOther) {
       if (!email) return showError('Please enter your email address.');
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError('Please enter a valid email address (e.g. name@email.com).');

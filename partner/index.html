@@ -259,6 +259,46 @@
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
 
+    /* ── CONFIRM MODAL ── */
+    .confirm-overlay {
+      position:fixed; inset:0; z-index:9000;
+      background:rgba(0,0,0,0.7); backdrop-filter:blur(4px);
+      display:flex; align-items:center; justify-content:center;
+      padding:20px; display:none;
+    }
+    .confirm-overlay.show { display:flex; }
+    .confirm-modal {
+      background:#0f2429; border:1px solid rgba(0,155,180,0.25);
+      border-radius:16px; padding:32px; max-width:420px; width:100%;
+    }
+    .confirm-modal h3 { font-size:17px; font-weight:700; margin-bottom:8px; }
+    .confirm-modal p  { color:var(--grey); font-size:14px; margin-bottom:24px; line-height:1.5; }
+    .confirm-modal .btn-row { display:flex; gap:12px; }
+    .confirm-modal .btn-row .btn { flex:1; padding:13px; font-size:14px; }
+    .btn-confirm { background:var(--blue)!important; color:#fff!important; }
+    .btn-cancel-modal { background:transparent!important; color:var(--grey)!important;
+      border:1px solid rgba(255,255,255,0.12)!important; }
+
+    /* ── MY CLAIMS ── */
+    .claims-list { display:flex; flex-direction:column; gap:12px; }
+    .claim-card {
+      background:#0a1a1f; border:1px solid rgba(0,155,180,0.15);
+      border-radius:10px; padding:16px;
+    }
+    .claim-card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+    .claim-status {
+      font-size:11px; font-weight:700; letter-spacing:0.07em;
+      text-transform:uppercase; padding:3px 10px; border-radius:12px;
+    }
+    .claim-st-open     { background:rgba(0,155,180,0.15);  color:#009BB4; }
+    .claim-st-approved { background:rgba(0,200,150,0.15);  color:#00c896; }
+    .claim-st-rejected { background:rgba(229,0,82,0.15);   color:#E50052; }
+    .claim-st-closed   { background:rgba(120,120,120,0.15);color:#999; }
+    .claim-reg  { font-size:18px; font-weight:700; }
+    .claim-sym  { font-size:13px; color:var(--grey); margin-top:4px; }
+    .claim-note { margin-top:10px; padding:10px 12px; background:rgba(0,155,180,0.06);
+      border-radius:6px; font-size:13px; color:var(--grey); }
+
     /* ── PARTNER HELP ── */
     .p-help-section { margin-bottom: 24px; }
     .p-help-title { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--blue); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(0,155,180,0.15); }
@@ -468,6 +508,9 @@
         <button class="tab-btn" id="tab-warranty-btn" onclick="switchTab('warranty')">
           <span data-gr="Εγγύηση" data-en="Warranty Claim"></span>
         </button>
+        <button class="tab-btn" id="tab-claims-btn" onclick="switchTab('claims')">
+          <span data-gr="Οι Δηλώσεις μου" data-en="My Claims"></span>
+        </button>
         <button class="tab-btn" id="tab-help-btn" onclick="switchTab('help')">
           <span data-gr="Οδηγίες" data-en="Help"></span>
         </button>
@@ -629,6 +672,25 @@
 
     </div><!-- /step-log -->
 
+    <!-- ─── MY CLAIMS TAB ─── -->
+    <div class="tab-pane" id="tab-claims">
+      <div class="card" style="max-width:680px;margin:0 auto;">
+        <div class="card-title" style="color:var(--orange);font-size:16px;margin-bottom:4px;">
+          <span data-gr="Οι Δηλώσεις Εγγύησής μου" data-en="My Warranty Claims"></span>
+        </div>
+        <p style="color:var(--grey);font-size:13px;margin-bottom:20px;">
+          <span data-gr="Δείτε την κατάσταση των δηλώσεων που έχετε υποβάλει." data-en="Track the status of all warranty claims you have submitted."></span>
+        </p>
+        <div id="claims-loading" style="color:var(--grey);font-size:14px;padding:20px 0;text-align:center;display:none;">
+          <span data-gr="Φόρτωση…" data-en="Loading…"></span>
+        </div>
+        <div id="claims-empty" style="color:var(--grey);font-size:14px;padding:20px 0;text-align:center;display:none;">
+          <span data-gr="Δεν έχετε υποβάλει δηλώσεις ακόμα." data-en="You haven't submitted any claims yet."></span>
+        </div>
+        <div class="claims-list" id="claims-list"></div>
+      </div>
+    </div><!-- /tab-claims -->
+
     <!-- ─── HELP TAB ─── -->
     <div class="tab-pane" id="tab-help">
       <div class="card" style="max-width:680px;margin:0 auto;">
@@ -705,6 +767,22 @@
 
   </div><!-- /page-wrap -->
 </div><!-- /section-main -->
+
+<!-- ── CONFIRMATION MODAL ───────────────────────────────────────────────────── -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-modal">
+    <h3 id="confirm-title">Are you sure?</h3>
+    <p id="confirm-body">Please verify that all information is correct before saving. This entry will be recorded in the vehicle's permanent service history.</p>
+    <div class="btn-row">
+      <button class="btn btn-cancel-modal" onclick="closeConfirm()">
+        <span data-gr="Άκυρο" data-en="Cancel"></span>
+      </button>
+      <button class="btn btn-confirm" id="confirm-ok-btn" onclick="confirmAction()">
+        <span data-gr="Αποθήκευση" data-en="Save Entry"></span>
+      </button>
+    </div>
+  </div>
+</div>
 
 <script>
   // ── DATA ─────────────────────────────────────────────────────────────────────
@@ -880,6 +958,60 @@
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
     document.getElementById('tab-' + tab + '-btn').classList.add('active');
     document.getElementById('tab-' + tab).classList.add('active');
+    if (tab === 'claims') loadMyClaims();
+  }
+
+  // ── MY WARRANTY CLAIMS ────────────────────────────────────────────────────
+  const STATUS_LABELS_CLAIMS = {
+    en: { open: 'Open', approved: 'Approved', rejected: 'Rejected', closed: 'Closed' },
+    el: { open: 'Ανοιχτή', approved: 'Εγκρίθηκε', rejected: 'Απορρίφθηκε', closed: 'Κλειστή' }
+  };
+  const CLAIM_ST_CLASS = { open:'claim-st-open', approved:'claim-st-approved', rejected:'claim-st-rejected', closed:'claim-st-closed' };
+  const PRIORITY_LABELS = { en:{ normal:'Normal', high:'High', urgent:'Urgent' }, el:{ normal:'Κανονική', high:'Υψηλή', urgent:'Επείγουσα' } };
+
+  async function loadMyClaims() {
+    const loading = document.getElementById('claims-loading');
+    const empty   = document.getElementById('claims-empty');
+    const list    = document.getElementById('claims-list');
+    loading.style.display = 'block';
+    empty.style.display   = 'none';
+    list.innerHTML        = '';
+
+    try {
+      const res  = await fetch('/api/partner/warranties');
+      if (!res.ok) throw new Error('Failed');
+      const claims = await res.json();
+      loading.style.display = 'none';
+
+      if (!claims.length) {
+        empty.style.display = 'block';
+        return;
+      }
+
+      const lang = currentLang || 'el';
+      list.innerHTML = claims.map(c => {
+        const statusLabel = (STATUS_LABELS_CLAIMS[lang] || STATUS_LABELS_CLAIMS.en)[c.status] || c.status;
+        const stClass     = CLAIM_ST_CLASS[c.status] || 'claim-st-open';
+        const priLabel    = (PRIORITY_LABELS[lang] || PRIORITY_LABELS.en)[c.priority] || c.priority || '';
+        const date        = c.createdAt ? new Date(c.createdAt).toLocaleDateString('el-GR') : '—';
+        return `
+          <div class="claim-card">
+            <div class="claim-card-header">
+              <span class="claim-reg">${c.regNo}</span>
+              <span class="claim-status ${stClass}">${statusLabel}</span>
+            </div>
+            <div class="claim-sym">${lang === 'el' ? 'Βλάβη' : 'Fault'}: ${c.symptom || '—'}</div>
+            <div class="claim-sym">${lang === 'el' ? 'Προτεραιότητα' : 'Priority'}: ${priLabel} &nbsp;·&nbsp; ${lang === 'el' ? 'Υποβλήθηκε' : 'Submitted'}: ${date}</div>
+            ${c.adminNotes ? `<div class="claim-note">
+              <strong>${lang === 'el' ? 'Σημειώσεις Motowarehouse:' : 'Motowarehouse Notes:'}</strong><br>${c.adminNotes}
+            </div>` : ''}
+          </div>
+        `;
+      }).join('');
+    } catch(e) {
+      loading.style.display = 'none';
+      list.innerHTML = `<p style="color:#ff6b6b;font-size:14px;">${currentLang === 'el' ? 'Σφάλμα φόρτωσης.' : 'Failed to load claims.'}</p>`;
+    }
   }
 
   // ── YES/NO ─────────────────────────────────────────────────────────────────
@@ -1007,7 +1139,9 @@
     clearMsg(document.getElementById('warranty-msg'));
   }
 
-  // ── SUBMIT SERVICE LOG ────────────────────────────────────────────────────
+  // ── SUBMIT SERVICE LOG (with confirmation dialog) ────────────────────────
+  let _pendingLogPayload = null; // stored while confirmation modal is open
+
   async function submitLog() {
     const km    = document.getElementById('log-km').value.trim();
     const notes = document.getElementById('log-notes').value.trim();
@@ -1035,22 +1169,55 @@
       return;
     }
 
+    // Show confirmation dialog — don't save yet
+    _pendingLogPayload = { regNo: currentPlate, km: parseInt(km), items, notes: finalNotes, date };
+    const el = document.getElementById('confirm-overlay');
+    const title = document.getElementById('confirm-title');
+    const body  = document.getElementById('confirm-body');
+    title.textContent = currentLang === 'el' ? 'Επιβεβαίωση Αποθήκευσης' : 'Confirm Save';
+    body.textContent  = currentLang === 'el'
+      ? `Είστε σίγουροι ότι όλες οι πληροφορίες είναι σωστές; Η καταχώρηση θα αποθηκευτεί μόνιμα στο ιστορικό σέρβις για ${currentPlate}.`
+      : `Are you sure all information is correct? This entry will be permanently saved to the service history for ${currentPlate}.`;
+    document.getElementById('confirm-ok-btn').querySelector('span').setAttribute('data-en', 'Save Entry');
+    document.getElementById('confirm-ok-btn').querySelector('span').setAttribute('data-gr', 'Αποθήκευση');
+    setLang(currentLang); // re-apply translations to modal
+    el.classList.add('show');
+  }
+
+  function closeConfirm() {
+    document.getElementById('confirm-overlay').classList.remove('show');
+    _pendingLogPayload = null;
+  }
+
+  async function confirmAction() {
+    if (!_pendingLogPayload) return;
+    const payload = _pendingLogPayload;
+    _pendingLogPayload = null;
+    closeConfirm();
+
+    const msg = document.getElementById('log-msg');
+    const btn = document.querySelector('.btn-primary[onclick="submitLog()"]') ||
+                document.querySelector('[onclick="submitLog()"]');
+    if (btn) { btn.disabled = true; }
+
     try {
       const res = await fetch('/api/service-entry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ regNo: currentPlate, km: parseInt(km), items, notes: finalNotes, date })
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (res.ok) {
         document.getElementById('step-log').style.display    = 'none';
         document.getElementById('step-success').style.display = 'block';
-        document.getElementById('success-detail').textContent = `${currentPlate} · ${Number(km).toLocaleString()} km`;
+        document.getElementById('success-detail').textContent = `${payload.regNo} · ${Number(payload.km).toLocaleString()} km`;
       } else {
         showMsg(msg, data.error || (currentLang === 'el' ? 'Αποτυχία αποθήκευσης.' : 'Failed to save.'), 'error');
       }
     } catch(e) {
       showMsg(msg, currentLang === 'el' ? 'Σφάλμα σύνδεσης.' : 'Connection error.', 'error');
+    } finally {
+      if (btn) btn.disabled = false;
     }
   }
 
