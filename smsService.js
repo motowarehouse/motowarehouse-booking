@@ -82,4 +82,9 @@ async function sendRescheduleSMS(booking) {
   await sendBrevoSMS(booking.phone, msg);
 }
 
-module.exports = { sendConfirmationSMS, sendCancellationSMS, sendReminderSMS, sendRescheduleSMS };
+async function sendVehicleReadySMS(booking) {
+  const msg = `Motowarehouse: Your ${SERVICE_LABELS[booking.serviceType] || 'service'} is complete. Your vehicle (${booking.plate}) is ready for collection. 40 Athinon Str, Strovolos. Tel: 22328788`;
+  await sendBrevoSMS(booking.phone, msg);
+}
+
+module.exports = { sendConfirmationSMS, sendCancellationSMS, sendReminderSMS, sendRescheduleSMS, sendVehicleReadySMS };

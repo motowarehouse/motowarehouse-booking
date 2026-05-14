@@ -431,6 +431,8 @@
                 Showing last 30 days
                 <button onclick="loadAllBookings()" style="background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline;padding:0;margin-left:6px;">Load all</button>
               </div>
+              <button onclick="exportBookingsExcel()" style="background:rgba(0,155,180,0.1);border:1px solid rgba(0,155,180,0.3);color:var(--blue);border-radius:6px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">⬇ Export Excel</button>
+              <button onclick="printDailySchedule()" style="background:rgba(0,155,180,0.1);border:1px solid rgba(0,155,180,0.3);color:var(--blue);border-radius:6px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">🖨 Print Schedule</button>
             </div>
           </div>
           <div class="bookings-list" id="bookings-list"></div>
@@ -2280,6 +2282,17 @@
     el.innerHTML = html;
   }
 
+  // ── XSS protection: escape all user-supplied content before rendering ────────
+  function escHtml(str) {
+    if (str == null) return '—';
+    return String(str)
+      .replace(/&/g,  '&amp;')
+      .replace(/</g,  '&lt;')
+      .replace(/>/g,  '&gt;')
+      .replace(/"/g,  '&quot;')
+      .replace(/'/g,  '&#x27;');
+  }
+
   // ── COMPLETED CARD ─────────────────────────────────────────────────────────
   function completedCard(b) {
     const isExpanded = expandedId === b.id;
@@ -2287,10 +2300,10 @@
     return `
       <div class="booking-card completed" id="card-${b.id}">
         <div class="booking-header" onclick="toggleExpand(${b.id})">
-          <div class="booking-ref">${b.ref}</div>
+          <div class="booking-ref">${escHtml(b.ref)}</div>
           <div class="booking-name-col">
-            <div class="booking-name">${regDisplay}</div>
-            <div class="booking-phone-row">${b.model} &nbsp;·&nbsp; ${b.phone}</div>
+            <div class="booking-name">${escHtml(regDisplay)}</div>
+            <div class="booking-phone-row">${escHtml(b.model)} &nbsp;·&nbsp; ${escHtml(b.phone)}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
             <span class="booking-service service-${b.serviceType}">${SVC[b.serviceType] || b.serviceType}</span>
@@ -2301,15 +2314,15 @@
         </div>
         <div class="booking-detail ${isExpanded ? 'open' : ''}" id="detail-${b.id}">
           <div class="detail-grid">
-            <div class="detail-item"><label>Plate</label><span>${regDisplay}</span></div>
-            <div class="detail-item"><label>Model</label><span>${b.model}</span></div>
-            <div class="detail-item"><label>Year</label><span>${b.year}</span></div>
+            <div class="detail-item"><label>Plate</label><span>${escHtml(regDisplay)}</span></div>
+            <div class="detail-item"><label>Model</label><span>${escHtml(b.model)}</span></div>
+            <div class="detail-item"><label>Year</label><span>${escHtml(b.year)}</span></div>
             <div class="detail-item"><label>KM at Service</label><span>${b.serviceKm ? Number(b.serviceKm).toLocaleString() + ' km' : '—'}</span></div>
             <div class="detail-item"><label>Completed</label><span>${b.completedAt ? new Date(b.completedAt).toLocaleString('en-GB') : '—'}</span></div>
           </div>
           <div style="background:rgba(0,180,130,0.07);border:1px solid rgba(0,180,130,0.2);border-radius:8px;padding:11px 14px;font-size:12px;color:#00b882;margin-top:8px;">
             ✔ Service logged to vehicle history.
-            <button onclick="loadVehicleDetail('${regDisplay}');setView('vehicles');" style="background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline;padding:0;margin-left:8px;">View History →</button>
+            <button onclick="loadVehicleDetail('${escHtml(regDisplay)}');setView('vehicles');" style="background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline;padding:0;margin-left:8px;">View History →</button>
           </div>
         </div>
       </div>`;
@@ -2321,10 +2334,10 @@
     return `
       <div class="booking-card no-show" id="card-${b.id}">
         <div class="booking-header" onclick="toggleExpand(${b.id})">
-          <div class="booking-ref">${b.ref}</div>
+          <div class="booking-ref">${escHtml(b.ref)}</div>
           <div class="booking-name-col">
-            <div class="booking-name">${b.plate}</div>
-            <div class="booking-phone-row">${b.model} &nbsp;·&nbsp; ${b.phone}</div>
+            <div class="booking-name">${escHtml(b.plate)}</div>
+            <div class="booking-phone-row">${escHtml(b.model)} &nbsp;·&nbsp; ${escHtml(b.phone)}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
             <span class="booking-service service-${b.serviceType}">${SVC[b.serviceType] || b.serviceType}</span>
@@ -2389,10 +2402,10 @@
     return `
       <div class="booking-card cancelled" id="card-${b.id}">
         <div class="booking-header" onclick="toggleExpand(${b.id})">
-          <div class="booking-ref">${b.ref}</div>
+          <div class="booking-ref">${escHtml(b.ref)}</div>
           <div class="booking-name-col">
-            <div class="booking-name">${b.plate}</div>
-            <div class="booking-phone-row">${b.model} &nbsp;·&nbsp; ${b.phone}</div>
+            <div class="booking-name">${escHtml(b.plate)}</div>
+            <div class="booking-phone-row">${escHtml(b.model)} &nbsp;·&nbsp; ${escHtml(b.phone)}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
             <span class="booking-service service-${b.serviceType}">${SVC[b.serviceType]}</span>
@@ -2492,10 +2505,10 @@
     return `
       <div class="booking-card ${b.status}${isNeedsCall ? '" style="border-left-color:#E59000;' : '"'}" id="card-${b.id}">
         <div class="booking-header" onclick="toggleExpand(${b.id})">
-          <div class="booking-ref">${b.ref}</div>
+          <div class="booking-ref">${escHtml(b.ref)}</div>
           <div class="booking-name-col">
-            <div class="booking-name">${b.plate}</div>
-            <div class="booking-phone-row">${b.model} &nbsp;·&nbsp; ${b.phone}</div>
+            <div class="booking-name">${escHtml(b.plate)}</div>
+            <div class="booking-phone-row">${escHtml(b.model)} &nbsp;·&nbsp; ${escHtml(b.phone)}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
             <span class="booking-service service-${b.serviceType}">${SVC[b.serviceType] || b.serviceType}</span>
@@ -2507,17 +2520,17 @@
         </div>
         <div class="booking-detail ${isExpanded ? 'open' : ''}" id="detail-${b.id}">
           <div class="detail-grid">
-            <div class="detail-item"><label>Name</label><span>${b.name}</span></div>
-            <div class="detail-item"><label>Phone</label><span>${b.phone}</span></div>
-            <div class="detail-item"><label>Email</label><span>${b.email || '—'}</span></div>
-            <div class="detail-item"><label>Plate</label><span>${b.plate}</span></div>
-            <div class="detail-item"><label>Model</label><span>${b.model}</span></div>
-            <div class="detail-item"><label>Year</label><span>${b.year}</span></div>
+            <div class="detail-item"><label>Name</label><span>${escHtml(b.name)}</span></div>
+            <div class="detail-item"><label>Phone</label><span>${escHtml(b.phone)}</span></div>
+            <div class="detail-item"><label>Email</label><span>${escHtml(b.email) || '—'}</span></div>
+            <div class="detail-item"><label>Plate</label><span>${escHtml(b.plate)}</span></div>
+            <div class="detail-item"><label>Model</label><span>${escHtml(b.model)}</span></div>
+            <div class="detail-item"><label>Year</label><span>${escHtml(b.year)}</span></div>
             <div class="detail-item"><label>KM</label><span>${b.km ? Number(b.km).toLocaleString() + ' km' : '—'}</span></div>
             <div class="detail-item"><label>Booked</label><span>${new Date(b.createdAt).toLocaleString('en-GB')}</span></div>
           </div>
-          ${b.description ? `<div class="detail-notes" style="border-left-color:#E59000;background:rgba(229,144,0,0.06);"><strong style="color:#E59000;">Customer request:</strong> ${b.description}</div>` : ''}
-          ${b.notes ? `<div class="detail-notes">${b.notes}</div>` : ''}
+          ${b.description ? `<div class="detail-notes" style="border-left-color:#E59000;background:rgba(229,144,0,0.06);"><strong style="color:#E59000;">Customer request:</strong> ${escHtml(b.description)}</div>` : ''}
+          ${b.notes ? `<div class="detail-notes">${escHtml(b.notes)}</div>` : ''}
           ${actions}
         </div>
       </div>`;
@@ -3433,6 +3446,76 @@
             </div>`).join('')}
         </div>
       </div>`;
+  }
+
+  // ── EXCEL EXPORT ─────────────────────────────────────────────────────────────
+  function exportBookingsExcel() {
+    if (!allBookings || !allBookings.length) return alert('No bookings to export.');
+    const SVC_LABELS = { 'small-service':'Small Service', 'full-service':'Full Service', 'other':'Service Request' };
+    const rows = allBookings.map(b => ({
+      'Reference':    b.ref,
+      'Status':       b.status,
+      'Service':      SVC_LABELS[b.serviceType] || b.serviceType,
+      'Date':         b.date || '—',
+      'Time':         b.time || '—',
+      'Plate':        b.plate,
+      'Model':        b.model,
+      'Year':         b.year,
+      'KM':           b.km || '',
+      'Name':         b.name,
+      'Phone':        b.phone,
+      'Email':        b.email || '',
+      'Notes':        b.notes || '',
+      'Description':  b.description || '',
+      'Booked At':    b.createdAt ? new Date(b.createdAt).toLocaleString('en-GB') : ''
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Bookings');
+    const today = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `Motowarehouse_Bookings_${today}.xlsx`);
+  }
+
+  // ── DAILY SCHEDULE PRINT ─────────────────────────────────────────────────────
+  function printDailySchedule() {
+    const today = new Date().toISOString().split('T')[0];
+    const todayBookings = (allBookings || [])
+      .filter(b => b.date === today && (b.status === 'pending' || b.status === 'accepted'))
+      .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+
+    const SVC_LABELS = { 'small-service':'Small Service', 'full-service':'Full Service', 'other':'Service Request' };
+    const rows = todayBookings.map(b =>
+      `<tr>
+        <td>${b.time || '—'}</td>
+        <td>${b.ref}</td>
+        <td>${b.plate}</td>
+        <td>${b.model} ${b.year}</td>
+        <td>${SVC_LABELS[b.serviceType] || b.serviceType}</td>
+        <td>${b.name}</td>
+        <td>${b.phone}</td>
+        <td>${b.status.toUpperCase()}</td>
+        <td style="width:120px;border-bottom:1px solid #ccc;"> </td>
+      </tr>`
+    ).join('');
+
+    const win = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html><html><head><title>Daily Schedule – ${today}</title>
+      <style>body{font-family:Arial,sans-serif;font-size:13px;margin:24px;}
+      h2{margin-bottom:4px;}p{color:#666;margin-bottom:16px;}
+      table{border-collapse:collapse;width:100%;}
+      th{background:#0a1a1f;color:#fff;padding:8px 10px;text-align:left;font-size:12px;}
+      td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:top;}
+      tr:nth-child(even)td{background:#f9f9f9;}
+      @media print{button{display:none;}}</style></head><body>
+      <h2>Motowarehouse – Daily Schedule</h2>
+      <p>${today} &nbsp;|&nbsp; ${todayBookings.length} appointment(s)</p>
+      <table><thead><tr>
+        <th>Time</th><th>Ref</th><th>Plate</th><th>Vehicle</th>
+        <th>Service</th><th>Name</th><th>Phone</th><th>Status</th><th>Mechanic ✓</th>
+      </tr></thead><tbody>${rows || '<tr><td colspan="9" style="color:#666;padding:20px;text-align:center;">No appointments for today.</td></tr>'}</tbody></table>
+      <br><button onclick="window.print()" style="padding:8px 18px;background:#009BB4;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;">Print</button>
+    </body></html>`);
+    win.document.close();
   }
 
   checkAuth();

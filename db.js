@@ -1072,6 +1072,13 @@ async function updateServiceEntry(id, data) {
   return { success: true, entry: rowToServiceEntry(updated[0]) };
 }
 
+async function getServiceEntryById(id) {
+  const { rows } = await pool.query(
+    'SELECT * FROM service_history WHERE id = $1', [parseInt(id)]
+  );
+  return rowToServiceEntry(rows[0] || null);
+}
+
 // Delete is admin-only (enforced at server level); no time restriction.
 async function deleteServiceEntry(id) {
   const { rows } = await pool.query(
@@ -1198,7 +1205,7 @@ module.exports = {
   importVehicles, getVehicleByPlate, getAllVehicles,
   createPartner, getPartnerByUsername, getPartnerById, getAllPartners, togglePartnerActive, updatePartnerPassword,
   getMechanicOffDays, addMechanicOffDay, removeMechanicOffDay,
-  createServiceEntry, updateServiceEntry, deleteServiceEntry, getServiceHistoryByPlate, DEFAULT_SERVICE_ITEMS,
+  createServiceEntry, getServiceEntryById, updateServiceEntry, deleteServiceEntry, getServiceHistoryByPlate, DEFAULT_SERVICE_ITEMS,
   createWarrantyClaim, getWarrantyByPlate, getAllWarranties, updateWarrantyStatus,
   updateMechanicNotes,
   cancelBookingByCustomer,

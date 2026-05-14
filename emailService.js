@@ -370,6 +370,79 @@ async function sendWarrantyStatusToPartner(claim, partnerEmail, workshopName) {
   });
 }
 
+// ── Acknowledgement for "other" service requests ──────────────────────────────
+async function sendOtherRequestAcknowledgement(booking) {
+  if (!booking.email) return;
+
+  await sendBrevoEmail({
+    to:      booking.email,
+    subject: `We received your service request – ${booking.ref}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+        <div style="background:#E59000;padding:24px;text-align:center;">
+          <h1 style="color:white;margin:0;font-size:22px;">Service Request Received</h1>
+        </div>
+        <div style="padding:32px;background:#fff;">
+          <p>Dear ${booking.name},</p>
+          <p>We have received your service request and a member of our team will call you shortly to arrange a suitable date and time.</p>
+          <table style="border-collapse:collapse;width:100%;margin:20px 0;font-size:14px;">
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Reference</td><td style="padding:10px;">${booking.ref}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${booking.year} ${booking.model} – ${booking.plate}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Your Request</td><td style="padding:10px;">${booking.description || '—'}</td></tr>
+          </table>
+          <div style="background:#f0fbfd;border-left:4px solid #009BB4;padding:16px;margin:20px 0;">
+            <strong>📞 22 328 788</strong> &nbsp;|&nbsp; support@motowarehouse.com.cy<br>
+            40 Athinon Str., Strovolos, Nicosia
+          </div>
+          <p style="font-size:13px;color:#666;">Please keep your reference number <strong>${booking.ref}</strong> handy when we call.</p>
+          <p>The Motowarehouse Team</p>
+        </div>
+        <div style="background:#1a1a1a;padding:16px;text-align:center;">
+          <p style="color:#999;font-size:12px;margin:0;">Motowarehouse Ltd – support@motowarehouse.com.cy</p>
+        </div>
+      </div>
+    `
+  });
+}
+
+// ── Vehicle ready for collection ──────────────────────────────────────────────
+async function sendVehicleReadyToCustomer(booking) {
+  if (!booking.email) return;
+
+  await sendBrevoEmail({
+    to:      booking.email,
+    subject: `Your vehicle is ready for collection – ${booking.ref}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+        <div style="background:#00c896;padding:24px;text-align:center;">
+          <h1 style="color:white;margin:0;font-size:24px;">✅ Your Vehicle is Ready</h1>
+        </div>
+        <div style="padding:32px;background:#fff;">
+          <p>Dear ${booking.name},</p>
+          <p>Your <strong>${SERVICE_LABELS[booking.serviceType] || 'service'}</strong> has been completed and your vehicle is ready for collection.</p>
+          <table style="border-collapse:collapse;width:100%;margin:20px 0;font-size:14px;">
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Booking Reference</td><td style="padding:10px;">${booking.ref}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${booking.year} ${booking.model}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Plate Number</td><td style="padding:10px;">${booking.plate}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Service</td><td style="padding:10px;">${SERVICE_LABELS[booking.serviceType] || booking.serviceType}</td></tr>
+          </table>
+          <div style="background:#f0fbfd;border-left:4px solid #00c896;padding:16px;margin:20px 0;">
+            <strong>📍 Motowarehouse</strong><br>
+            40 Athinon Str., Strovolos, Nicosia, Cyprus<br>
+            <strong>📞 22 328 788</strong>
+          </div>
+          <p style="font-size:13px;color:#666;">Opening hours: Mon–Tue–Thu–Fri 8:30–13:00 / 14:00–17:30 &nbsp;|&nbsp; Wed & Sat 8:30–13:00</p>
+          <p>Thank you for choosing Motowarehouse.</p>
+          <p>The Motowarehouse Team</p>
+        </div>
+        <div style="background:#1a1a1a;padding:16px;text-align:center;">
+          <p style="color:#999;font-size:12px;margin:0;">Motowarehouse Ltd – support@motowarehouse.com.cy</p>
+        </div>
+      </div>
+    `
+  });
+}
+
 module.exports = {
   sendNewBookingAlert,
   sendConfirmationToCustomer,
@@ -377,5 +450,7 @@ module.exports = {
   sendReminderToCustomer,
   sendRescheduleToCustomer,
   sendWarrantyAlert,
-  sendWarrantyStatusToPartner
+  sendWarrantyStatusToPartner,
+  sendOtherRequestAcknowledgement,
+  sendVehicleReadyToCustomer
 };

@@ -68,8 +68,8 @@ const partnerLoginRateLimit = makeRateLimiter(
 
 // --- Middleware ---
 app.set('trust proxy', 1); // Required for Railway/Heroku HTTPS proxy
-app.use(express.json({ limit: '20mb' }));
-app.use(express.urlencoded({ extended: true, limit: '20mb' }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 if (!process.env.SESSION_SECRET) {
   console.warn('\n⚠️  SESSION_SECRET is not set. Using insecure default. Set SESSION_SECRET in Railway environment variables.\n');
@@ -197,10 +197,16 @@ app.post('/api/book', bookingRateLimit, async (req, res) => {
     });
   }
 
+  // Word count helper — max 30 words for free-text fields
+  const wordCount = s => (s || '').trim().split(/\s+/).filter(Boolean).length;
+  if (wordCount(notes) > 30) return res.status(400).json({ error: 'Notes must be 30 words or fewer.' });
+
   if (isOther) {
+    if (!email) return res.status(400).json({ error: 'Email is required so we can confirm your request.' });
     if (!description || !description.trim()) {
       return res.status(400).json({ error: 'Please describe what service you need.' });
     }
+    if (wordCount(description) > 30) return res.status(400).json({ error: 'Description must be 30 words or fewer.' });
   } else {
     if (!email || !date || !time) {
       return res.status(400).json({ error: 'All required fields must be filled.' });
@@ -226,6 +232,7 @@ app.post('/api/book', bookingRateLimit, async (req, res) => {
     emailService.sendNewBookingAlert(booking).catch(e => console.error('[Email alert error]', e.message));
 
     if (isOther) {
+      emailService.sendOtherRequestAcknowledgement(booking).catch(e => console.error('[Email other ack error]', e.message));
       res.json({ success: true, ref: booking.ref, message: 'Request received. A member of our team will call you to arrange an appointment.' });
     } else {
       res.json({ success: true, ref: booking.ref, message: 'Booking received. We will confirm your appointment shortly.' });
@@ -421,7 +428,14 @@ app.post('/api/admin/bookings/:id/complete', requireAdmin, async (req, res) => {
     const result = await db.completeBooking(req.params.id, { regNo, km, items, notes, date });
     if (!result) return res.status(404).json({ error: 'Booking not found' });
 
-    res.json({ success: true, booking: result.booking, serviceEntry: result.serviceEntry });
+    // Notify customer their vehicle is ready
+    const booking = result.booking;
+    if (booking.email) {
+      emailService.sendVehicleReadyToCustomer(booking).catch(e => console.error('[Email ready error]', e.message));
+    }
+    smsService.sendVehicleReadySMS(booking).catch(e => console.error('[SMS ready error]', e.message));
+
+    res.json({ success: true, booking, serviceEntry: result.serviceEntry });
   } catch (err) {
     console.error('[Complete error]', err);
     res.status(500).json({ error: 'Failed to complete booking.' });
@@ -617,12 +631,17 @@ app.get('/api/partner/me', requirePartner, (req, res) => {
   res.json({ partner: req.session.partner });
 });
 
-// Partner changes own password
-app.post('/api/partner/change-password', async (req, res) => {
+// Partner changes own password — must be logged in, can only change their own
+app.post('/api/partner/change-password', requirePartner, async (req, res) => {
   try {
     const { username, currentPassword, newPassword } = req.body;
     if (!username || !currentPassword || !newPassword) return res.status(400).json({ error: 'All fields are required.' });
     if (newPassword.length < 6) return res.status(400).json({ error: 'New password must be at least 6 characters.' });
+
+    // Prevent a partner from changing another partner's password
+    if (username.toLowerCase().trim() !== req.session.partner.username.toLowerCase()) {
+      return res.status(403).json({ error: 'You can only change your own password.' });
+    }
 
     const partner = await db.getPartnerByUsername(username);
     if (!partner) return res.status(404).json({ error: 'Partner not found.' });
@@ -686,10 +705,20 @@ app.post('/api/service-entry', requireAdminOrPartner, async (req, res) => {
   }
 });
 
-// Edit a service entry (partner or admin — no time restriction, UI shows confirmation dialog)
+// Edit a service entry — partners can only edit their own entries; admin can edit any
 app.put('/api/service-entry/:id', requireAdminOrPartner, async (req, res) => {
   try {
     const { km, items, notes } = req.body;
+
+    // Ownership check for partners
+    if (req.session.partner && !req.session.admin) {
+      const entry = await db.getServiceEntryById(req.params.id);
+      if (!entry) return res.status(404).json({ error: 'Entry not found.' });
+      if (String(entry.partnerId) !== String(req.session.partner.id)) {
+        return res.status(403).json({ error: 'You can only edit your own service entries.' });
+      }
+    }
+
     const result = await db.updateServiceEntry(req.params.id, { km, items, notes });
     if (result.notFound) return res.status(404).json({ error: 'Entry not found.' });
     res.json({ success: true, entry: result.entry });
@@ -839,8 +868,8 @@ app.get('/partner', (req, res) => {
 
 // ==================== WARRANTY ====================
 
-// Log a warranty claim (partner or admin)
-app.post('/api/warranty-claim', requireAdminOrPartner, async (req, res) => {
+// Log a warranty claim (partner or admin) — higher body limit for photo uploads
+app.post('/api/warranty-claim', express.json({ limit: '10mb' }), requireAdminOrPartner, async (req, res) => {
   try {
     const { regNo, frameNo, km, symptom, priority, engineDisassembly, defectAgreed, courtesyVehicle, notes, photos, mediaTypes } = req.body;
     if (!regNo || !symptom) {
@@ -933,33 +962,25 @@ app.get('/api/service-history', requireAdmin, async (req, res) => {
 
 // ==================== CUSTOMER BOOKING LOOKUP ====================
 
-// Look up a booking by ref + plate — returns safe fields only (no admin-only info)
+// Look up a booking — two modes:
+//   Mode A: ref + plate  (customer has their reference)
+//   Mode B: phone + plate (customer lost their reference — phone must match)
 app.get('/api/booking/lookup', async (req, res) => {
   try {
     const ref   = (req.query.ref   || '').toUpperCase().trim();
     const plate = (req.query.plate || '').toUpperCase().replace(/\s/g, '');
-    if (!ref || !plate) {
-      return res.status(400).json({ error: 'Booking reference and licence plate are required.' });
-    }
+    const phone = (req.query.phone || '').replace(/[\s\+\-]/g, '');
 
-    const booking = await db.getBookingByRef(ref);
-    if (!booking) {
-      return res.status(404).json({ error: 'No booking found with that reference number.' });
-    }
+    if (!plate) return res.status(400).json({ error: 'Licence plate is required.' });
+    if (!ref && !phone) return res.status(400).json({ error: 'Booking reference or phone number is required.' });
 
-    // Verify the plate matches — prevents fishing for other people's bookings by ref
-    const storedPlate = (booking.plate || '').toUpperCase().replace(/\s/g, '');
-    if (storedPlate !== plate) {
-      return res.status(403).json({ error: 'Licence plate does not match this booking.' });
-    }
-
-    // Only expose what a customer needs to know
     const serviceLabels = {
       'small-service': 'Small Service',
       'full-service':  'Full Service',
       'other':         'Service Request'
     };
-    res.json({
+
+    const safeFields = (booking) => ({
       ref:         booking.ref,
       name:        booking.name,
       status:      booking.status,
@@ -970,6 +991,29 @@ app.get('/api/booking/lookup', async (req, res) => {
       year:        booking.year,
       plate:       booking.plate
     });
+
+    if (ref) {
+      // Mode A: ref + plate
+      const booking = await db.getBookingByRef(ref);
+      if (!booking) return res.status(404).json({ error: 'No booking found with that reference number.' });
+      const storedPlate = (booking.plate || '').toUpperCase().replace(/\s/g, '');
+      if (storedPlate !== plate) return res.status(403).json({ error: 'Licence plate does not match this booking.' });
+      return res.json(safeFields(booking));
+    }
+
+    // Mode B: phone + plate — find most recent booking matching both
+    const allBookings = await db.getAllBookings({});
+    const storedPhone = phone.startsWith('357') ? phone : phone; // normalised already
+    const match = allBookings.find(b => {
+      const bPlate = (b.plate || '').toUpperCase().replace(/\s/g, '');
+      const bPhone = (b.phone || '').replace(/[\s\+\-]/g, '').replace(/^00357/, '357').replace(/^357/, '');
+      const inputPhone = phone.replace(/^00357/, '357').replace(/^357/, '');
+      return bPlate === plate && (bPhone === inputPhone || bPhone.endsWith(inputPhone));
+    });
+
+    if (!match) return res.status(404).json({ error: 'No booking found matching that plate and phone number.' });
+    return res.json(safeFields(match));
+
   } catch (err) {
     console.error('[Booking lookup error]', err);
     res.status(500).json({ error: 'Failed to look up booking.' });

@@ -169,6 +169,16 @@
     }
     .back-link a { color:var(--blue); text-decoration:none; }
 
+    /* Mode toggle */
+    .mode-btn {
+      flex:1; padding:10px; background:transparent;
+      border:1px solid rgba(0,155,180,0.2); border-radius:8px;
+      color:var(--grey); font-family:inherit; font-size:13px;
+      cursor:pointer; transition:all 0.18s;
+    }
+    .mode-btn.active { border-color:var(--blue); color:var(--white); background:rgba(0,155,180,0.1); }
+    .mode-btn:hover:not(.active) { border-color:rgba(0,155,180,0.4); color:var(--white); }
+
     /* Spinner */
     .spinner {
       display:inline-block;
@@ -195,20 +205,41 @@
 
 <div class="container">
   <h1>My Booking</h1>
-  <p class="subtitle">Enter your booking reference and licence plate to check your appointment status.</p>
+  <p class="subtitle">Check your appointment status using your booking reference, or your phone number if you don't have it.</p>
 
   <div class="alert error" id="error-box"></div>
 
-  <div class="form-group">
-    <label for="ref">Booking Reference</label>
-    <input type="text" id="ref" placeholder="e.g. MW-1234567" autocomplete="off"
-           style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+  <!-- Mode toggle -->
+  <div style="display:flex;gap:8px;margin-bottom:24px;">
+    <button class="mode-btn active" id="mode-ref-btn" onclick="setMode('ref')">I have my reference</button>
+    <button class="mode-btn" id="mode-phone-btn" onclick="setMode('phone')">I don't have my reference</button>
   </div>
 
-  <div class="form-group">
-    <label for="plate">Licence Plate</label>
-    <input type="text" id="plate" placeholder="e.g. ABC 1234" autocomplete="off"
-           style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+  <!-- Mode A: ref + plate -->
+  <div id="mode-ref">
+    <div class="form-group">
+      <label for="ref">Booking Reference</label>
+      <input type="text" id="ref" placeholder="e.g. MW-1234567" autocomplete="off" maxlength="20"
+             style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+    </div>
+    <div class="form-group">
+      <label for="plate">Licence Plate</label>
+      <input type="text" id="plate" placeholder="e.g. ABC 1234" autocomplete="off" maxlength="15"
+             style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+    </div>
+  </div>
+
+  <!-- Mode B: phone + plate -->
+  <div id="mode-phone" style="display:none;">
+    <div class="form-group">
+      <label for="phone-alt">Phone Number (used when booking)</label>
+      <input type="tel" id="phone-alt" placeholder="e.g. 99 123456" autocomplete="off" maxlength="20">
+    </div>
+    <div class="form-group">
+      <label for="plate-alt">Licence Plate</label>
+      <input type="text" id="plate-alt" placeholder="e.g. ABC 1234" autocomplete="off" maxlength="15"
+             style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+    </div>
   </div>
 
   <button class="btn" id="lookup-btn" onclick="lookupBooking()">Check My Booking</button>
@@ -228,9 +259,21 @@
 </div>
 
 <script>
+  let currentMode = 'ref';
+
   // Pre-fill ref from URL query string (e.g. /my-booking?ref=MW-123)
   const urlRef = new URLSearchParams(window.location.search).get('ref');
   if (urlRef) document.getElementById('ref').value = urlRef.toUpperCase();
+
+  function setMode(mode) {
+    currentMode = mode;
+    document.getElementById('mode-ref').style.display  = mode === 'ref'   ? 'block' : 'none';
+    document.getElementById('mode-phone').style.display = mode === 'phone' ? 'block' : 'none';
+    document.getElementById('mode-ref-btn').classList.toggle('active', mode === 'ref');
+    document.getElementById('mode-phone-btn').classList.toggle('active', mode === 'phone');
+    hideError();
+    document.getElementById('result-card').classList.remove('show');
+  }
 
   function showError(msg) {
     const el = document.getElementById('error-box');
@@ -257,55 +300,67 @@
     'no-show': 'status-no-show'
   };
 
+  // Safe text renderer — prevents XSS from booking data
+  function esc(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
   async function lookupBooking() {
     hideError();
     document.getElementById('result-card').classList.remove('show');
+    const btn = document.getElementById('lookup-btn');
 
-    const ref   = document.getElementById('ref').value.trim().toUpperCase();
-    const plate = document.getElementById('plate').value.trim().toUpperCase();
-    const btn   = document.getElementById('lookup-btn');
-
-    if (!ref)   return showError('Please enter your booking reference.');
-    if (!plate) return showError('Please enter your licence plate number.');
+    let url;
+    if (currentMode === 'ref') {
+      const ref   = document.getElementById('ref').value.trim().toUpperCase();
+      const plate = document.getElementById('plate').value.trim().toUpperCase();
+      if (!ref)   return showError('Please enter your booking reference.');
+      if (!plate) return showError('Please enter your licence plate number.');
+      url = `/api/booking/lookup?ref=${encodeURIComponent(ref)}&plate=${encodeURIComponent(plate)}`;
+    } else {
+      const phone = document.getElementById('phone-alt').value.trim();
+      const plate = document.getElementById('plate-alt').value.trim().toUpperCase();
+      if (!phone) return showError('Please enter the phone number used when booking.');
+      if (!plate) return showError('Please enter your licence plate number.');
+      url = `/api/booking/lookup?phone=${encodeURIComponent(phone)}&plate=${encodeURIComponent(plate)}`;
+    }
 
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span>Looking up…';
 
     try {
-      const res  = await fetch(`/api/booking/lookup?ref=${encodeURIComponent(ref)}&plate=${encodeURIComponent(plate)}`);
+      const res  = await fetch(url);
       const data = await res.json();
 
       if (!res.ok) {
-        showError(data.error || 'Booking not found. Please check your reference and plate number.');
+        showError(data.error || 'Booking not found. Please check your details or call us on 22 328 788.');
         return;
       }
 
-      // Populate result card
       const badge = document.getElementById('status-badge');
       badge.textContent = STATUS_LABELS[data.status] || data.status;
       badge.className   = 'result-status ' + (STATUS_CLASSES[data.status] || 'status-pending');
 
       const rows = [
-        { label: 'Reference',    value: data.ref },
-        { label: 'Name',         value: data.name },
-        { label: 'Service',      value: data.serviceType },
-        { label: 'Vehicle',      value: `${data.year} ${data.model}` },
-        { label: 'Plate',        value: data.plate },
-        { label: 'Date',         value: data.date || '—' },
-        { label: 'Time',         value: data.time || '—' }
+        { label: 'Reference', value: data.ref },
+        { label: 'Name',      value: data.name },
+        { label: 'Service',   value: data.serviceType },
+        { label: 'Vehicle',   value: `${data.year} ${data.model}` },
+        { label: 'Plate',     value: data.plate },
+        { label: 'Date',      value: data.date || '—' },
+        { label: 'Time',      value: data.time || '—' }
       ];
 
       document.getElementById('result-rows').innerHTML = rows.map(r => `
         <div class="result-row">
-          <span class="lbl">${r.label}</span>
-          <span class="val">${r.value || '—'}</span>
+          <span class="lbl">${esc(r.label)}</span>
+          <span class="val">${esc(r.value) || '—'}</span>
         </div>
       `).join('');
 
-      // Show cancel link only for active bookings
       const cancelWrap = document.getElementById('cancel-link');
       if (data.status === 'pending' || data.status === 'accepted') {
-        document.getElementById('cancel-href').href = `/cancel?ref=${data.ref}`;
+        document.getElementById('cancel-href').href = `/cancel?ref=${esc(data.ref)}`;
         cancelWrap.style.display = 'block';
       } else {
         cancelWrap.style.display = 'none';
@@ -321,7 +376,6 @@
     }
   }
 
-  // Allow Enter key to submit
   document.addEventListener('keydown', e => {
     if (e.key === 'Enter') lookupBooking();
   });
