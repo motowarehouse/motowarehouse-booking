@@ -126,11 +126,55 @@
       text-transform: uppercase;
     }
 
-    .header-contact {
-      font-size: 13px;
-      color: var(--grey);
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
-    .header-contact a { color: var(--blue); text-decoration: none; font-weight: 500; }
+    .header-nav-link {
+      font-size: 12px;
+      font-weight: 500;
+      text-decoration: none;
+      padding: 7px 14px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      transition: all 0.18s;
+      white-space: nowrap;
+      letter-spacing: 0.03em;
+    }
+    .header-nav-link.ghost {
+      color: var(--grey);
+      border-color: rgba(255,255,255,0.1);
+    }
+    .header-nav-link.ghost:hover {
+      color: var(--white);
+      border-color: rgba(255,255,255,0.25);
+    }
+    .header-nav-link.cancel {
+      color: var(--red);
+      border-color: rgba(229,0,82,0.25);
+    }
+    .header-nav-link.cancel:hover {
+      background: rgba(229,0,82,0.08);
+      border-color: rgba(229,0,82,0.5);
+    }
+    .header-divider {
+      width: 1px;
+      height: 20px;
+      background: rgba(255,255,255,0.1);
+      margin: 0 4px;
+    }
+    .header-phone {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--blue);
+      text-decoration: none;
+      padding: 0 6px;
+    }
+    @media (max-width: 600px) {
+      .header-phone-label { display: none; }
+      .header-nav-link { padding: 7px 10px; font-size: 11px; }
+    }
 
     /* ── HERO ── */
     .hero {
@@ -966,8 +1010,11 @@
       <span class="brand-badge">SYM</span>
     </div>
   </div>
-  <div class="header-contact">
-    <a href="tel:22328788">22 328 788</a>
+  <div class="header-right">
+    <a href="/my-booking" class="header-nav-link ghost">My Booking</a>
+    <a href="/cancel" class="header-nav-link cancel">Cancel Booking</a>
+    <div class="header-divider"></div>
+    <a href="tel:22328788" class="header-phone">22 328 788</a>
   </div>
 </header>
 

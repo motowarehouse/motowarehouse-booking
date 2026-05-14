@@ -2289,8 +2289,8 @@
         <div class="booking-header" onclick="toggleExpand(${b.id})">
           <div class="booking-ref">${b.ref}</div>
           <div class="booking-name-col">
-            <div class="booking-name">${b.name}</div>
-            <div class="booking-phone-row">${b.phone}</div>
+            <div class="booking-name">${regDisplay}</div>
+            <div class="booking-phone-row">${b.model} &nbsp;·&nbsp; ${b.phone}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
             <span class="booking-service service-${b.serviceType}">${SVC[b.serviceType] || b.serviceType}</span>
@@ -2323,8 +2323,8 @@
         <div class="booking-header" onclick="toggleExpand(${b.id})">
           <div class="booking-ref">${b.ref}</div>
           <div class="booking-name-col">
-            <div class="booking-name">${b.name}</div>
-            <div class="booking-phone-row">${b.phone}</div>
+            <div class="booking-name">${b.plate}</div>
+            <div class="booking-phone-row">${b.model} &nbsp;·&nbsp; ${b.phone}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
             <span class="booking-service service-${b.serviceType}">${SVC[b.serviceType] || b.serviceType}</span>
@@ -2391,8 +2391,8 @@
         <div class="booking-header" onclick="toggleExpand(${b.id})">
           <div class="booking-ref">${b.ref}</div>
           <div class="booking-name-col">
-            <div class="booking-name">${b.name}</div>
-            <div class="booking-phone-row">${b.phone}</div>
+            <div class="booking-name">${b.plate}</div>
+            <div class="booking-phone-row">${b.model} &nbsp;·&nbsp; ${b.phone}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
             <span class="booking-service service-${b.serviceType}">${SVC[b.serviceType]}</span>
@@ -2494,8 +2494,8 @@
         <div class="booking-header" onclick="toggleExpand(${b.id})">
           <div class="booking-ref">${b.ref}</div>
           <div class="booking-name-col">
-            <div class="booking-name">${b.name}</div>
-            <div class="booking-phone-row">${b.phone}</div>
+            <div class="booking-name">${b.plate}</div>
+            <div class="booking-phone-row">${b.model} &nbsp;·&nbsp; ${b.phone}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;">
             <span class="booking-service service-${b.serviceType}">${SVC[b.serviceType] || b.serviceType}</span>
@@ -2507,6 +2507,7 @@
         </div>
         <div class="booking-detail ${isExpanded ? 'open' : ''}" id="detail-${b.id}">
           <div class="detail-grid">
+            <div class="detail-item"><label>Name</label><span>${b.name}</span></div>
             <div class="detail-item"><label>Phone</label><span>${b.phone}</span></div>
             <div class="detail-item"><label>Email</label><span>${b.email || '—'}</span></div>
             <div class="detail-item"><label>Plate</label><span>${b.plate}</span></div>

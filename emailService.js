@@ -165,6 +165,13 @@ async function sendConfirmationToCustomer(booking) {
             Tel: 22 328 788
           </div>
           <p>Please arrive a few minutes before your scheduled time. If you need to reschedule, please call us at <strong>22 328 788</strong>.</p>
+          <div style="background:#f0fbfd;border:1px solid #cce8ed;border-radius:6px;padding:14px 18px;margin:20px 0;font-size:13px;color:#444;">
+            <strong>Manage your booking online:</strong><br>
+            <a href="${SITE_URL}/my-booking?ref=${booking.ref}"
+               style="color:#009BB4;word-break:break-all;">
+              Check your booking status →
+            </a>
+          </div>
           <div style="background:#fff8f8;border:1px solid #f0d0d0;border-radius:6px;padding:14px 18px;margin:20px 0;font-size:13px;color:#666;">
             Need to cancel? You can cancel your booking online using your reference number:<br>
             <a href="${SITE_URL}/cancel?ref=${booking.ref}"
