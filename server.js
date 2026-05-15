@@ -12,6 +12,7 @@ const smsService = require('./smsService');
 const r2Service = require('./r2Service');
 const { startReminderCron } = require('./reminderCron');
 const { startBackupCron } = require('./backupCron');
+const pushService = require('./pushService');
 
 // Multer — memory storage, 100 MB per file, up to 20 files
 const upload = multer({
@@ -239,6 +240,7 @@ app.post('/api/book', bookingRateLimit, async (req, res) => {
     const booking = await db.createBooking(bookingData);
 
     emailService.sendNewBookingAlert(booking).catch(e => console.error('[Email alert error]', e.message));
+    pushService.sendPushToAll(pushService.newBookingPayload(booking)).catch(e => console.error('[Push alert error]', e.message));
 
     if (isOther) {
       emailService.sendOtherRequestAcknowledgement(booking).catch(e => console.error('[Email other ack error]', e.message));
@@ -558,6 +560,54 @@ app.post('/api/admin/test-email', requireAdmin, async (req, res) => {
   } catch (e) {
     console.error('[Email] Test FAILED:', e.message);
     res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// ── PWA Push Subscriptions ────────────────────────────────────────────────────
+
+// Save or update a push subscription (admin only)
+app.post('/api/push/subscribe', requireAdmin, async (req, res) => {
+  try {
+    const sub = req.body;
+    if (!sub || !sub.endpoint || !sub.keys) return res.status(400).json({ error: 'Invalid subscription object.' });
+    await pushService.saveSubscription(sub);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[Push] Subscribe error:', err.message);
+    res.status(500).json({ error: 'Failed to save subscription.' });
+  }
+});
+
+// Remove a push subscription
+app.post('/api/push/unsubscribe', requireAdmin, async (req, res) => {
+  try {
+    const { endpoint } = req.body;
+    if (!endpoint) return res.status(400).json({ error: 'endpoint required.' });
+    await pushService.removeSubscription(endpoint);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[Push] Unsubscribe error:', err.message);
+    res.status(500).json({ error: 'Failed to remove subscription.' });
+  }
+});
+
+// Return the VAPID public key so the browser can subscribe
+app.get('/api/push/vapid-key', requireAdmin, (req, res) => {
+  res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
+});
+
+// Test push notification
+app.post('/api/push/test', requireAdmin, async (req, res) => {
+  try {
+    await pushService.sendPushToAll({
+      title: '🔔 Test Notification',
+      body:  'Push notifications are working correctly!',
+      tag:   'test',
+      url:   '/admin/',
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -1073,57 +1123,4 @@ app.post('/api/booking/cancel', bookingRateLimit, async (req, res) => {
 
     const result = await db.cancelBookingByCustomer(ref, phone);
 
-    if (result.error === 'not-found') {
-      return res.status(404).json({ error: 'No active booking found with that reference number. It may have already been cancelled or completed.' });
-    }
-    if (result.error === 'phone-mismatch') {
-      return res.status(403).json({ error: 'The phone number does not match our records for this booking.' });
-    }
-
-    const booking = result.booking;
-    console.log(`[Self-Cancel] Booking ${booking.ref} cancelled by customer (phone verified)`);
-
-    // Send confirmation email to customer
-    if (booking.email) {
-      try {
-        await emailService.sendCancellationToCustomer(booking);
-        console.log('[Email] Self-cancel confirmation sent to ' + booking.email);
-      } catch (e) {
-        console.error('[Email] Self-cancel confirmation FAILED:', e.message);
-      }
-    }
-
-    // Notify admin
-    try {
-      await emailService.sendNewBookingAlert({
-        ...booking,
-        _selfCancelAlert: true
-      });
-    } catch (e) {
-      // Not critical — admin can see it in the panel
-    }
-
-    res.json({ success: true, ref: booking.ref, name: booking.name, date: booking.date, time: booking.time });
-  } catch (err) {
-    console.error('[Self-cancel error]', err);
-    res.status(500).json({ error: 'Something went wrong. Please call us on 22 328 788 to cancel.' });
-  }
-});
-
-// ==================== START ====================
-
-// Initialise database tables, then start server
-db.initDB()
-  .then(() => {
-    startReminderCron();
-    startBackupCron();
-    app.listen(PORT, () => {
-      console.log(`\n✅ Motowarehouse Service Portal running on http://localhost:${PORT}`);
-      console.log(`   Admin panel: http://localhost:${PORT}/admin`);
-      console.log(`   Partner portal: http://localhost:${PORT}/partner\n`);
-    });
-  })
-  .catch(err => {
-    console.error('\n❌ Could not initialise database. Server will not start.', err.message);
-    process.exit(1);
-  });
+    if (result.erro

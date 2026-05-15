@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin – Motowarehouse Bookings</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#009BB4">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MW Bookings">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Light.ttf'); font-weight:300; }
@@ -421,7 +427,13 @@
     <div class="main">
       <div class="topbar">
         <div class="topbar-title" id="topbar-title">All Bookings</div>
-        <div class="topbar-date" id="topbar-date"></div>
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div class="topbar-date" id="topbar-date"></div>
+          <button id="notif-btn" onclick="toggleNotifications()" title="Push Notifications"
+            style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:var(--grey);cursor:pointer;font-size:18px;line-height:1;padding:6px 10px;transition:all 0.2s;display:none;">
+            🔔
+          </button>
+        </div>
       </div>
       <div class="content">
 
@@ -1126,6 +1138,7 @@
   // ── INIT ──────────────────────────────────────────────────────────────
   function initApp() {
     document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    autoSubscribeIfGranted();
     document.getElementById('block-date').value = new Date().toISOString().split('T')[0];
     populateBlockTimes();
     const rd = document.getElementById('reschedule-date');
@@ -3516,45 +3529,4 @@
   function printDailySchedule() {
     const today = new Date().toISOString().split('T')[0];
     const todayBookings = (allBookings || [])
-      .filter(b => b.date === today && (b.status === 'pending' || b.status === 'accepted'))
-      .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
-
-    const SVC_LABELS = { 'small-service':'Small Service', 'full-service':'Full Service', 'other':'Service Request' };
-    const rows = todayBookings.map(b =>
-      `<tr>
-        <td>${b.time || '—'}</td>
-        <td>${b.ref}</td>
-        <td>${b.plate}</td>
-        <td>${b.model} ${b.year}</td>
-        <td>${SVC_LABELS[b.serviceType] || b.serviceType}</td>
-        <td>${b.name}</td>
-        <td>${b.phone}</td>
-        <td>${b.status.toUpperCase()}</td>
-        <td style="width:120px;border-bottom:1px solid #ccc;"> </td>
-      </tr>`
-    ).join('');
-
-    const win = window.open('', '_blank');
-    win.document.write(`<!DOCTYPE html><html><head><title>Daily Schedule – ${today}</title>
-      <style>body{font-family:Arial,sans-serif;font-size:13px;margin:24px;}
-      h2{margin-bottom:4px;}p{color:#666;margin-bottom:16px;}
-      table{border-collapse:collapse;width:100%;}
-      th{background:#0a1a1f;color:#fff;padding:8px 10px;text-align:left;font-size:12px;}
-      td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:top;}
-      tr:nth-child(even)td{background:#f9f9f9;}
-      @media print{button{display:none;}}</style></head><body>
-      <h2>Motowarehouse – Daily Schedule</h2>
-      <p>${today} &nbsp;|&nbsp; ${todayBookings.length} appointment(s)</p>
-      <table><thead><tr>
-        <th>Time</th><th>Ref</th><th>Plate</th><th>Vehicle</th>
-        <th>Service</th><th>Name</th><th>Phone</th><th>Status</th><th>Mechanic ✓</th>
-      </tr></thead><tbody>${rows || '<tr><td colspan="9" style="color:#666;padding:20px;text-align:center;">No appointments for today.</td></tr>'}</tbody></table>
-      <br><button onclick="window.print()" style="padding:8px 18px;background:#009BB4;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;">Print</button>
-    </body></html>`);
-    win.document.close();
-  }
-
-  checkAuth();
-</script>
-</body>
-</html>
+      .filter(b => b.date === today &&

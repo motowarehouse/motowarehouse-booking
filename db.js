@@ -177,6 +177,16 @@ async function initDB() {
       )
     `);
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS push_subscriptions (
+        id         SERIAL PRIMARY KEY,
+        endpoint   TEXT UNIQUE NOT NULL,
+        p256dh     TEXT NOT NULL,
+        auth       TEXT NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
     await client.query('COMMIT');
     console.log('[DB] ✅ Database tables verified / created.');
   } catch (err) {
@@ -1205,10 +1215,4 @@ module.exports = {
   importVehicles, getVehicleByPlate, getAllVehicles,
   createPartner, getPartnerByUsername, getPartnerById, getAllPartners, togglePartnerActive, updatePartnerPassword,
   getMechanicOffDays, addMechanicOffDay, removeMechanicOffDay,
-  createServiceEntry, getServiceEntryById, updateServiceEntry, deleteServiceEntry, getServiceHistoryByPlate, DEFAULT_SERVICE_ITEMS,
-  createWarrantyClaim, getWarrantyByPlate, getAllWarranties, updateWarrantyStatus,
-  updateMechanicNotes,
-  cancelBookingByCustomer,
-  getDurationMins,
-  initDB
-};
+  creat
