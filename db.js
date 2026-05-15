@@ -1171,6 +1171,21 @@ async function updateMechanicNotes(id, notes) {
   return rowToBooking(rows[0] || null);
 }
 
+async function updateBookingFields(id, { plate, km }) {
+  const sets = [];
+  const vals = [];
+  if (plate !== undefined) { sets.push(`plate = $${sets.length + 1}`); vals.push(plate ? plate.toUpperCase().trim() : null); }
+  if (km    !== undefined) { sets.push(`km = $${sets.length + 1}`);    vals.push(km ? parseInt(km) : null); }
+  if (!sets.length) return null;
+  sets.push(`updated_at = NOW()`);
+  vals.push(parseInt(id));
+  const { rows } = await pool.query(
+    `UPDATE bookings SET ${sets.join(', ')} WHERE id = $${vals.length} RETURNING *`,
+    vals
+  );
+  return rowToBooking(rows[0] || null);
+}
+
 // ── Customer Self-Cancel ──────────────────────────────────────────────────────
 
 async function cancelBookingByCustomer(ref, phone) {
@@ -1218,6 +1233,7 @@ module.exports = {
   createServiceEntry, getServiceEntryById, updateServiceEntry, deleteServiceEntry, getServiceHistoryByPlate, DEFAULT_SERVICE_ITEMS,
   createWarrantyClaim, getWarrantyByPlate, getAllWarranties, updateWarrantyStatus,
   updateMechanicNotes,
+  updateBookingFields,
   cancelBookingByCustomer,
   getDurationMins,
   initDB

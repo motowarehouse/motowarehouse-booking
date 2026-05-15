@@ -629,6 +629,19 @@ app.post('/api/admin/bookings/:id/mechanic-notes', requireAdmin, async (req, res
   }
 });
 
+// Admin: correct plate / KM on a booking
+app.post('/api/admin/bookings/:id/update-fields', requireAdmin, async (req, res) => {
+  try {
+    const { plate, km } = req.body;
+    const booking = await db.updateBookingFields(req.params.id, { plate, km });
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+    res.json({ success: true, booking });
+  } catch (err) {
+    console.error('[Update fields error]', err);
+    res.status(500).json({ error: 'Failed to update booking.' });
+  }
+});
+
 // Get all blocks
 app.get('/api/admin/blocks', requireAdmin, async (req, res) => {
   try {

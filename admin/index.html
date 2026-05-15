@@ -2801,10 +2801,40 @@
             <div class="detail-item"><label>Name</label><span>${escHtml(b.name)}</span></div>
             <div class="detail-item"><label>Phone</label><span>${escHtml(b.phone)}</span></div>
             <div class="detail-item"><label>Email</label><span>${escHtml(b.email) || '—'}</span></div>
-            <div class="detail-item"><label>Plate</label><span>${escHtml(b.plate)}</span></div>
+            <div class="detail-item">
+              <label>Plate
+                <button onclick="toggleFieldEdit(${b.id},'plate',event)" title="Edit plate" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:11px;padding:0 4px;opacity:0.7;">✏</button>
+              </label>
+              <span id="plate-display-${b.id}">${escHtml(b.plate)}</span>
+              <div id="plate-edit-${b.id}" style="display:none;display:none;margin-top:4px;">
+                <input type="text" id="plate-input-${b.id}" value="${escHtml(b.plate)}"
+                  style="background:rgba(255,255,255,0.07);border:1px solid var(--blue);border-radius:5px;color:var(--white);font-family:inherit;font-size:13px;padding:5px 9px;width:100%;text-transform:uppercase;"
+                  placeholder="Plate / Reg No"
+                  onkeydown="if(event.key==='Enter')saveBookingField(${b.id},'plate');if(event.key==='Escape')cancelFieldEdit(${b.id},'plate')">
+                <div style="display:flex;gap:6px;margin-top:5px;">
+                  <button onclick="saveBookingField(${b.id},'plate')" style="background:var(--blue);border:none;border-radius:5px;color:white;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;padding:4px 10px;">Save</button>
+                  <button onclick="cancelFieldEdit(${b.id},'plate')" style="background:none;border:1px solid rgba(255,255,255,0.12);border-radius:5px;color:var(--grey);cursor:pointer;font-family:inherit;font-size:11px;padding:4px 10px;">Cancel</button>
+                </div>
+              </div>
+            </div>
             <div class="detail-item"><label>Model</label><span>${escHtml(b.model)}</span></div>
             <div class="detail-item"><label>Year</label><span>${escHtml(b.year)}</span></div>
-            <div class="detail-item"><label>KM</label><span>${b.km ? Number(b.km).toLocaleString() + ' km' : '—'}</span></div>
+            <div class="detail-item">
+              <label>KM
+                <button onclick="toggleFieldEdit(${b.id},'km',event)" title="Edit KM" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:11px;padding:0 4px;opacity:0.7;">✏</button>
+              </label>
+              <span id="km-display-${b.id}">${b.km ? Number(b.km).toLocaleString() + ' km' : '—'}</span>
+              <div id="km-edit-${b.id}" style="display:none;margin-top:4px;">
+                <input type="number" id="km-input-${b.id}" value="${b.km || ''}"
+                  style="background:rgba(255,255,255,0.07);border:1px solid var(--blue);border-radius:5px;color:var(--white);font-family:inherit;font-size:13px;padding:5px 9px;width:100%;"
+                  placeholder="Odometer reading"
+                  onkeydown="if(event.key==='Enter')saveBookingField(${b.id},'km');if(event.key==='Escape')cancelFieldEdit(${b.id},'km')">
+                <div style="display:flex;gap:6px;margin-top:5px;">
+                  <button onclick="saveBookingField(${b.id},'km')" style="background:var(--blue);border:none;border-radius:5px;color:white;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;padding:4px 10px;">Save</button>
+                  <button onclick="cancelFieldEdit(${b.id},'km')" style="background:none;border:1px solid rgba(255,255,255,0.12);border-radius:5px;color:var(--grey);cursor:pointer;font-family:inherit;font-size:11px;padding:4px 10px;">Cancel</button>
+                </div>
+              </div>
+            </div>
             <div class="detail-item"><label>Booked</label><span>${new Date(b.createdAt).toLocaleString('en-GB')}</span></div>
           </div>
           ${b.description ? `<div class="customer-request-box"><div class="req-label">📋 Customer Request</div><div class="req-text">${escHtml(b.description)}</div></div>` : ''}
@@ -3101,6 +3131,65 @@
     } catch(err) {
       showToast('Connection error.', 'error');
       if (btn) { btn.disabled = false; btn.textContent = 'Save note'; }
+    }
+  }
+
+  // ── INLINE FIELD EDIT (Plate / KM) ───────────────────────────────────
+  function toggleFieldEdit(id, field, e) {
+    e.stopPropagation();
+    const editDiv   = document.getElementById(`${field}-edit-${id}`);
+    const displayEl = document.getElementById(`${field}-display-${id}`);
+    if (!editDiv) return;
+    const isOpen = editDiv.style.display !== 'none';
+    if (isOpen) {
+      editDiv.style.display = 'none';
+    } else {
+      editDiv.style.display = 'block';
+      displayEl.style.display = 'none';
+      const input = document.getElementById(`${field}-input-${id}`);
+      if (input) { setTimeout(() => input.focus(), 50); }
+    }
+  }
+
+  function cancelFieldEdit(id, field) {
+    const editDiv   = document.getElementById(`${field}-edit-${id}`);
+    const displayEl = document.getElementById(`${field}-display-${id}`);
+    if (editDiv)   editDiv.style.display = 'none';
+    if (displayEl) displayEl.style.display = '';
+  }
+
+  async function saveBookingField(id, field) {
+    const input = document.getElementById(`${field}-input-${id}`);
+    if (!input) return;
+    const value = input.value.trim();
+    const body = {};
+    body[field] = value || null;
+    try {
+      const res = await fetch(`/api/admin/bookings/${id}/update-fields`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        // Update in-memory
+        const b = allBookings.find(b => b.id === id);
+        if (b) {
+          if (field === 'plate') b.plate = data.booking.plate;
+          if (field === 'km')    b.km    = data.booking.km;
+        }
+        // Update display
+        const displayEl = document.getElementById(`${field}-display-${id}`);
+        if (displayEl) {
+          if (field === 'plate') displayEl.textContent = data.booking.plate || '—';
+          if (field === 'km')    displayEl.textContent = data.booking.km ? Number(data.booking.km).toLocaleString() + ' km' : '—';
+          displayEl.style.display = '';
+        }
+        cancelFieldEdit(id, field);
+        showToast(`${field === 'plate' ? 'Plate' : 'KM'} updated.`, 'success');
+      } else {
+        showToast('Error: ' + (data.error || 'Unknown'), 'error');
+      }
+    } catch(err) {
+      showToast('Connection error.', 'error');
     }
   }
 
