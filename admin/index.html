@@ -339,6 +339,42 @@
     .check-item-admin.sel::before { content:'✓ '; font-weight:900; }
     @media print { .sidebar,.topbar,.action-row,.logout-btn,.quick-actions { display:none !important; } .booking-detail { display:block !important; } body { background:white; color:black; } }
 
+    /* ── DAY SEPARATOR (All Bookings date headers) ── */
+    .day-separator { display:flex; align-items:center; gap:12px; padding:18px 0 10px; }
+    .day-separator-label { font-size:11px; font-weight:700; letter-spacing:0.13em; text-transform:uppercase; color:var(--blue); white-space:nowrap; }
+    .day-separator-line { flex:1; height:1px; background:rgba(0,155,180,0.18); }
+    .day-separator-count { font-size:10px; color:var(--grey); white-space:nowrap; font-weight:500; }
+
+    /* ── NEEDS CALL TAB ── */
+    .nc-card { background:var(--dark2); border:1px solid rgba(229,0,82,0.25); border-left:3px solid var(--red); border-radius:8px; margin-bottom:14px; overflow:hidden; }
+    .nc-header { display:flex; align-items:center; gap:14px; padding:16px 20px; cursor:pointer; }
+    .nc-phone-badge { background:rgba(229,0,82,0.12); border:1px solid rgba(229,0,82,0.35); border-radius:6px; color:var(--red); font-size:16px; font-weight:900; letter-spacing:0.01em; padding:7px 14px; white-space:nowrap; display:inline-flex; align-items:center; gap:7px; }
+    .nc-name { font-size:16px; font-weight:700; }
+    .nc-meta { font-size:12px; color:var(--grey); margin-top:3px; }
+    .nc-body { border-top:1px solid rgba(229,0,82,0.12); padding:16px 20px 20px; }
+    .nc-steps-label { font-size:10px; font-weight:700; letter-spacing:0.13em; text-transform:uppercase; color:var(--grey); margin-bottom:10px; }
+    .nc-steps { display:flex; flex-direction:column; gap:8px; }
+    .nc-step { display:flex; align-items:flex-start; gap:12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:7px; padding:10px 14px; cursor:pointer; transition:all 0.15s; user-select:none; }
+    .nc-step:hover { border-color:rgba(229,0,82,0.3); background:rgba(229,0,82,0.05); }
+    .nc-step.done { background:rgba(0,200,150,0.06); border-color:rgba(0,200,150,0.25); opacity:0.75; }
+    .nc-step-check { width:20px; height:20px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; font-size:11px; font-weight:900; transition:all 0.15s; }
+    .nc-step.done .nc-step-check { background:var(--green); border-color:var(--green); color:#001A21; }
+    .nc-step-text { font-size:13px; line-height:1.45; }
+    .nc-step.done .nc-step-text { text-decoration:line-through; color:var(--grey); }
+    .nc-step-num { font-size:10px; font-weight:700; color:var(--grey); margin-bottom:2px; letter-spacing:0.05em; text-transform:uppercase; }
+    .nc-actions { display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; align-items:center; }
+    .nc-dismiss-btn { background:none; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:var(--grey); cursor:pointer; font-family:inherit; font-size:12px; padding:7px 14px; transition:all 0.2s; }
+    .nc-dismiss-btn:hover { border-color:var(--red); color:var(--red); }
+    .nc-progress { font-size:11px; color:var(--grey); }
+
+    /* ── CALENDAR INLINE NOTES ── */
+    .cal-note-wrap { margin-top:10px; }
+    .cal-note-textarea { background:rgba(255,255,255,0.04); border:1px solid rgba(0,155,180,0.2); border-radius:6px; color:var(--white); font-family:'SupremeLL',Arial,sans-serif; font-size:13px; padding:9px 12px; width:100%; resize:vertical; min-height:60px; outline:none; transition:border-color 0.2s; }
+    .cal-note-textarea:focus { border-color:var(--blue); background:rgba(0,155,180,0.05); }
+    .cal-note-textarea::placeholder { color:var(--grey); opacity:0.6; }
+    .cal-note-save-btn { background:rgba(0,155,180,0.1); border:1px solid rgba(0,155,180,0.3); border-radius:6px; color:var(--blue); cursor:pointer; font-family:inherit; font-size:12px; font-weight:700; margin-top:6px; padding:6px 14px; transition:all 0.2s; }
+    .cal-note-save-btn:hover { background:rgba(0,155,180,0.2); }
+
     /* ── MOBILE RESPONSIVE ── */
     @media (max-width: 768px) {
       html, body { overflow-x: hidden; }
@@ -486,6 +522,10 @@
           <i class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg></i> Pending
           <span class="nav-badge orange" id="badge-pending">0</span>
         </div>
+        <div class="nav-item" id="nav-needs-call" onclick="setView('needs-call')">
+          <i class="nav-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.72a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></i> Needs Call
+          <span class="nav-badge red" id="badge-needs-call" style="display:none;">0</span>
+        </div>
         <div class="nav-item" id="nav-accepted" onclick="setView('accepted')">
           <i class="nav-icon"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></i> Accepted
         </div>
@@ -576,6 +616,9 @@
           </div>
           <div class="bookings-list" id="bookings-list"></div>
         </div>
+
+        <!-- Needs Call view -->
+        <div id="needs-call-view" style="display:none;"></div>
 
         <!-- Cancelled view -->
         <div id="cancelled-view" style="display:none;"></div>
@@ -1211,6 +1254,11 @@
     <span id="mob-badge-pending" class="mob-nav-badge hidden"></span>
     Pending
   </button>
+  <button class="mob-nav-item" id="mob-nav-calls" onclick="setView('needs-call')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.72a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+    <span id="mob-badge-calls" class="mob-nav-badge hidden" style="background:var(--red);"></span>
+    Calls
+  </button>
   <button class="mob-nav-item" id="mob-nav-calendar" onclick="setView('calendar')">
     <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="16" y1="14" x2="16" y2="14"/></svg>
     Calendar
@@ -1307,7 +1355,7 @@
     if (bRes.ok)  allBookings = await bRes.json();
     if (blRes.ok) allBlocks   = await blRes.json();
     updateStats();
-    if (['all','pending','accepted','today','calendar'].includes(currentView)) renderView();
+    if (['all','pending','accepted','today','calendar','needs-call'].includes(currentView)) renderView();
     if (currentView === 'cancelled') renderView();
   }
 
@@ -1333,14 +1381,19 @@
     document.getElementById('stat-cancelled').textContent  = cancelled;
     document.getElementById('stat-total').textContent      = allBookings.length + allBlocks.length;
     document.getElementById('badge-all').textContent      = allBookings.length + allBlocks.length;
-    document.getElementById('badge-pending').textContent  = pending + needsCall;
+    document.getElementById('badge-pending').textContent  = pending;
     const ncBadge = document.getElementById('badge-needs-contact');
     ncBadge.textContent = needsContact + needsCall;
     ncBadge.style.display = (needsContact + needsCall) > 0 ? 'inline' : 'none';
+    // Needs Call dedicated badge
+    const ncCallBadge = document.getElementById('badge-needs-call');
+    if (ncCallBadge) { ncCallBadge.textContent = needsCall; ncCallBadge.style.display = needsCall > 0 ? 'inline' : 'none'; }
     // Mobile bottom nav badges
-    const mobPending = pending + needsCall;
+    const mobPending = pending;
     const mobPendingEl = document.getElementById('mob-badge-pending');
     if (mobPendingEl) { mobPendingEl.textContent = mobPending; mobPendingEl.classList.toggle('hidden', mobPending === 0); }
+    const mobCallsEl = document.getElementById('mob-badge-calls');
+    if (mobCallsEl) { mobCallsEl.textContent = needsCall; mobCallsEl.classList.toggle('hidden', needsCall === 0); }
     const mobAllEl = document.getElementById('mob-badge-all');
     if (mobAllEl) { mobAllEl.textContent = allBookings.length; mobAllEl.classList.toggle('hidden', allBookings.length === 0); }
   }
@@ -1348,6 +1401,7 @@
   // ── VIEWS ──────────────────────────────────────────────────────────────
   const VIEW_TITLES = {
     all:'All Bookings', pending:'Pending', accepted:'Accepted',
+    'needs-call':'📞 Needs Call',
     cancelled:'Closed (Completed / No Show / Cancelled)', today:"Today's Schedule",
     calendar:'Calendar', schedule:'Block Time', hours:'Opening Hours',
     vehicles:'Vehicles', partners:'Partners', warranty:'Warranty Inbox',
@@ -1362,7 +1416,7 @@
     if (navEl) navEl.classList.add('active');
     // Mobile bottom nav
     document.querySelectorAll('.mob-nav-item').forEach(el => el.classList.remove('active'));
-    const mobMap = { today:'mob-nav-today', all:'mob-nav-all', pending:'mob-nav-pending', accepted:'mob-nav-all', calendar:'mob-nav-calendar', hours:'mob-nav-settings', blocks:'mob-nav-settings', partners:'mob-nav-settings', vehicles:'mob-nav-settings', warranty:'mob-nav-settings', stats:'mob-nav-settings', help:'mob-nav-settings', workload:'mob-nav-settings', schedule:'mob-nav-settings' };
+    const mobMap = { today:'mob-nav-today', all:'mob-nav-all', pending:'mob-nav-pending', 'needs-call':'mob-nav-calls', accepted:'mob-nav-all', calendar:'mob-nav-calendar', hours:'mob-nav-settings', blocks:'mob-nav-settings', partners:'mob-nav-settings', vehicles:'mob-nav-settings', warranty:'mob-nav-settings', stats:'mob-nav-settings', help:'mob-nav-settings', workload:'mob-nav-settings', schedule:'mob-nav-settings' };
     const mobEl = document.getElementById(mobMap[view]);
     if (mobEl) mobEl.classList.add('active');
     document.getElementById('topbar-title').textContent = VIEW_TITLES[view] || view;
@@ -1370,7 +1424,7 @@
   }
 
   function renderView() {
-    const ids = ['bookings-view','cancelled-view','stats-view','today-view','calendar-view','schedule-view','hours-view','vehicles-view','partners-view','warranty-view','help-view','workload-view'];
+    const ids = ['bookings-view','needs-call-view','cancelled-view','stats-view','today-view','calendar-view','schedule-view','hours-view','vehicles-view','partners-view','warranty-view','help-view','workload-view'];
     ids.forEach(id => document.getElementById(id).style.display = 'none');
     document.getElementById('stats-grid').style.display = 'none';
     // Show search bar only for booking list views
@@ -1379,7 +1433,11 @@
     searchWrap.style.display = showSearch ? 'block' : 'none';
     if (showSearch) { const s = document.getElementById('booking-search'); if(s) s.value = ''; }
 
-    if (currentView === 'stats') {
+    if (currentView === 'needs-call') {
+      document.getElementById('needs-call-view').style.display = 'block';
+      document.getElementById('stats-grid').style.display = 'grid';
+      renderNeedsCall();
+    } else if (currentView === 'stats') {
       document.getElementById('stats-view').style.display = 'block';
       renderStatsView();
     } else if (currentView === 'today') {
@@ -2404,6 +2462,32 @@
       list.innerHTML = `<div class="empty-state"><div class="icon" style="color:var(--grey);">—</div><p>No ${currentView === 'all' ? 'active' : currentView} bookings.</p></div>${toggleHtml}`;
       return;
     }
+
+    // In "all" view: insert date separators between day groups
+    if (currentView === 'all') {
+      let html = '';
+      let lastDate = null;
+      items.forEach(item => {
+        const itemDate = item._type === 'block' ? item.date : item.date;
+        if (itemDate && itemDate !== lastDate) {
+          if (lastDate !== null) html += ''; // already separated
+          const dayCount = items.filter(i => (i._type === 'block' ? i.date : i.date) === itemDate).length;
+          const dateLabel = itemDate
+            ? new Date(itemDate + 'T12:00:00').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
+            : 'No Date';
+          html += `<div class="day-separator">
+            <span class="day-separator-label">${dateLabel}</span>
+            <span class="day-separator-line"></span>
+            <span class="day-separator-count">${dayCount} job${dayCount !== 1 ? 's' : ''}</span>
+          </div>`;
+          lastDate = itemDate;
+        }
+        html += item._type === 'block' ? blockCard(item) : bookingCard(item);
+      });
+      list.innerHTML = html + toggleHtml;
+      return;
+    }
+
     list.innerHTML = items.map(item => item._type === 'block' ? blockCard(item) : bookingCard(item)).join('') + toggleHtml;
   }
 
@@ -2876,17 +2960,30 @@
       if (events.length === 0) {
         dayDetail = `<div class="cal-day-detail"><h4>${label}</h4><p style="font-size:13px;color:var(--grey);">No appointments on this day.</p></div>`;
       } else {
-        const rows = events.sort((a,b) => (a.sub||'').localeCompare(b.sub||'')).map(e => `
-          <div class="today-slot" style="border-left:3px solid var(--${e.type==='phone'?'purple':e.type==='accepted'?'green':e.type==='cancelled'?'red':'orange'});">
-            <div class="today-time" style="font-size:14px;color:var(--${e.type==='phone'?'purple':e.type==='accepted'?'green':e.type==='cancelled'?'red':'orange'});">${(e.sub||'').split(' · ')[1]||''}</div>
-            <div class="today-info">
-              <div class="today-name">${e.label}</div>
-              <div class="today-vehicle">${e.sub}</div>
+        const rows = events.sort((a,b) => (a.sub||'').localeCompare(b.sub||'')).map(e => {
+          const color = e.type==='phone'?'purple':e.type==='accepted'?'green':e.type==='cancelled'?'red':'orange';
+          const existingNote = e._b ? (e._b.mechanicNotes || '') : '';
+          const noteSection = e._b ? `
+            <div class="cal-note-wrap" onclick="event.stopPropagation()">
+              <textarea class="cal-note-textarea" id="cal-note-${e._b.id}"
+                placeholder="Add notes for this appointment…">${escHtml(existingNote)}</textarea>
+              <button class="cal-note-save-btn" onclick="saveCalendarNote(${e._b.id})">Save note</button>
+            </div>` : '';
+          return `
+          <div class="today-slot" style="border-left:3px solid var(--${color});flex-direction:column;align-items:stretch;">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div class="today-time" style="font-size:14px;color:var(--${color});">${(e.sub||'').split(' · ')[1]||''}</div>
+              <div class="today-info" style="flex:1;">
+                <div class="today-name">${e.label}</div>
+                <div class="today-vehicle">${e.sub}</div>
+              </div>
+              ${e._b ? `<div class="quick-actions">
+                <button class="btn-quick btn-quick-reschedule" title="Reschedule" onclick="openRescheduleModal(${e._b.id}, event)">↺</button>
+              </div>` : ''}
             </div>
-            ${e._b ? `<div class="quick-actions">
-              <button class="btn-quick btn-quick-reschedule" title="Reschedule" onclick="openRescheduleModal(${e._b.id}, event)">↺</button>
-            </div>` : ''}
-          </div>`).join('');
+            ${noteSection}
+          </div>`;
+        }).join('');
         dayDetail = `<div class="cal-day-detail"><h4>${label} — ${events.length} appointment${events.length>1?'s':''}</h4>${rows}</div>`;
       }
     }
@@ -2923,6 +3020,136 @@
   function selectCalDay(dateStr) {
     calSelectedDate = calSelectedDate === dateStr ? null : dateStr;
     renderCalendar();
+  }
+
+  // ── CALENDAR INLINE NOTES ─────────────────────────────────────────────
+  async function saveCalendarNote(id) {
+    const ta = document.getElementById('cal-note-' + id);
+    if (!ta) return;
+    const notes = ta.value;
+    const btn = ta.nextElementSibling;
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+    try {
+      const res = await fetch(`/api/admin/bookings/${id}/mechanic-notes`, {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ notes })
+      });
+      if (res.ok) {
+        showToast('Note saved!', 'success');
+        // Update in-memory booking so note persists on re-render
+        const b = allBookings.find(b => b.id === id);
+        if (b) b.mechanicNotes = notes;
+        if (btn) { btn.disabled = false; btn.textContent = '✓ Saved'; setTimeout(() => { if (btn) btn.textContent = 'Save note'; }, 2000); }
+      } else {
+        showToast('Failed to save note.', 'error');
+        if (btn) { btn.disabled = false; btn.textContent = 'Save note'; }
+      }
+    } catch(err) {
+      showToast('Connection error.', 'error');
+      if (btn) { btn.disabled = false; btn.textContent = 'Save note'; }
+    }
+  }
+
+  // ── NEEDS CALL TAB ────────────────────────────────────────────────────
+  const NC_STEPS = [
+    { id: 'call',     label: 'Call the customer',                  detail: 'Use the phone number shown below. Confirm they still need service.' },
+    { id: 'scope',    label: 'Agree on service scope',             detail: 'Clarify exactly what service/repair is needed and any parts required.' },
+    { id: 'schedule', label: 'Agree on date & time',               detail: 'Find a slot that works for the customer and check workshop availability.' },
+    { id: 'block',    label: 'Create a Block Time entry',          detail: 'Go to Block Time in the sidebar and reserve the agreed slot.' },
+    { id: 'confirm',  label: 'Confirm with the customer',          detail: 'Send a WhatsApp or call back to confirm the scheduled appointment.' },
+  ];
+
+  function ncStepKey(bookingId) { return `nc_steps_${bookingId}`; }
+
+  function getNcSteps(bookingId) {
+    try { return JSON.parse(localStorage.getItem(ncStepKey(bookingId)) || '{}'); } catch(e) { return {}; }
+  }
+
+  function toggleNcStep(bookingId, stepId) {
+    const steps = getNcSteps(bookingId);
+    steps[stepId] = !steps[stepId];
+    localStorage.setItem(ncStepKey(bookingId), JSON.stringify(steps));
+    renderNeedsCall();
+  }
+
+  function renderNeedsCall() {
+    const el = document.getElementById('needs-call-view');
+    const bookings = allBookings.filter(b => b.status === 'pending' && b.contactStatus === 'needs-call')
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    if (bookings.length === 0) {
+      el.innerHTML = `<div class="empty-state">
+        <div class="icon" style="color:var(--green);">✓</div>
+        <p style="font-size:15px;font-weight:700;margin-bottom:6px;">All clear!</p>
+        <p>No pending "Needs Call" requests right now.</p>
+      </div>`;
+      return;
+    }
+
+    const cards = bookings.map(b => {
+      const steps = getNcSteps(b.id);
+      const doneCount = NC_STEPS.filter(s => steps[s.id]).length;
+      const allDone = doneCount === NC_STEPS.length;
+      const phone = escHtml(b.phone || '—');
+      const stepRows = NC_STEPS.map((s, i) => `
+        <div class="nc-step${steps[s.id] ? ' done' : ''}" onclick="toggleNcStep(${b.id}, '${s.id}')">
+          <div class="nc-step-check">${steps[s.id] ? '✓' : ''}</div>
+          <div>
+            <div class="nc-step-num">Step ${i + 1}</div>
+            <div class="nc-step-text"><strong>${s.label}</strong> — ${s.detail}</div>
+          </div>
+        </div>`).join('');
+
+      return `
+      <div class="nc-card">
+        <div class="nc-header" onclick="toggleExpand(${b.id})">
+          <div style="flex:1;min-width:0;">
+            <div class="nc-name">${escHtml(b.name)}</div>
+            <div class="nc-meta">${escHtml(SVC[b.serviceType] || b.serviceType)} · ${escHtml(b.model || '')} ${escHtml(b.year || '')} · Plate: ${escHtml(b.plate || '—')}</div>
+            <div class="nc-meta" style="margin-top:4px;color:var(--grey);font-size:11px;">Submitted: ${new Date(b.createdAt).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;">
+            <a href="tel:${phone}" class="nc-phone-badge" onclick="event.stopPropagation()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.72a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              ${phone}
+            </a>
+            <div class="nc-progress">${doneCount} / ${NC_STEPS.length} steps done</div>
+          </div>
+        </div>
+        <div class="nc-body">
+          <div class="nc-steps-label">Manager Checklist</div>
+          <div class="nc-steps">${stepRows}</div>
+          <div class="nc-actions">
+            ${allDone
+              ? `<button class="btn-primary" style="font-size:12px;padding:8px 16px;" onclick="convertNcToBlock(${b.id})">Mark as Scheduled →</button>`
+              : ''}
+            <button class="nc-dismiss-btn" onclick="dismissNcBooking(${b.id})">Remove from list</button>
+            ${b.notes ? `<div style="font-size:12px;color:var(--grey);margin-left:4px;">Note: ${escHtml(b.notes)}</div>` : ''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    el.innerHTML = `
+      <div style="margin-bottom:16px;">
+        <div style="font-size:13px;color:var(--grey);">These customers submitted an <strong style="color:var(--white);">"Other Request"</strong> that requires a phone call to schedule. Work through the checklist for each client.</div>
+      </div>
+      ${cards}`;
+  }
+
+  async function dismissNcBooking(id) {
+    if (!confirm('Remove this booking from the Needs Call list? It will move back to regular Pending.')) return;
+    const res = await fetch(`/api/admin/bookings/${id}/contact-status`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ status: null })
+    });
+    if (res.ok) { showToast('Removed from Needs Call list.', 'success'); await loadBookings(); }
+    else { showToast('Error updating status.', 'error'); }
+  }
+
+  async function convertNcToBlock(id) {
+    if (!confirm('All steps done — move this booking to Block Time?\n\nThis will cancel the online booking request and you should have already created a Block Time entry.')) return;
+    const res = await fetch(`/api/admin/bookings/${id}/cancel`, { method:'POST' });
+    if (res.ok) { showToast('Booking closed. Remember to check your Block Time entry.', 'success'); await loadBookings(); }
+    else { showToast('Error.', 'error'); }
   }
 
   // ── BOOKING ACTIONS ────────────────────────────────────────────────────

@@ -1539,10 +1539,11 @@
     document.getElementById('otp-status').className = 'otp-status';
 
     try {
+      const email = (document.getElementById('email') || {}).value?.trim() || '';
       const res  = await fetch('/api/verify/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone })
+        body: JSON.stringify({ phone, email })
       });
       const data = await res.json();
 
@@ -1563,7 +1564,8 @@
       codeInput.disabled = false;
       codeInput.value = '';
       codeInput.focus();
-      setOTPStatus('Code sent! Check your SMS.', 'info');
+      const via = data.via === 'email' ? 'Code sent to your email — check your inbox.' : 'Code sent! Check your SMS.';
+      setOTPStatus(via, 'info');
       startOTPCountdown();
 
     } catch {

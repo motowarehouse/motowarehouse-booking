@@ -6,7 +6,7 @@ const SERVICE_LABELS = {
   'other':         'Service Request'
 };
 
-const SENDER    = { name: 'Motowarehouse', email: 'motowarehouse.bookings@gmail.com' };
+const SENDER    = { name: 'Motowarehouse', email: 'support@motowarehouse.com.cy' };
 const SITE_URL  = process.env.SITE_URL || '';
 
 // ── Core Brevo API call ───────────────────────────────────────────────────────
@@ -49,6 +49,30 @@ function sendBrevoEmail({ to, subject, html }) {
     req.on('error', reject);
     req.write(payload);
     req.end();
+  });
+}
+
+// ── OTP code fallback via email ───────────────────────────────────────────────
+async function sendOTPCodeEmail(to, code) {
+  await sendBrevoEmail({
+    to,
+    subject: 'Your Motowarehouse Verification Code',
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;">
+        <div style="background:#009BB4;padding:24px;text-align:center;">
+          <h1 style="color:white;margin:0;font-size:22px;">Verification Code</h1>
+        </div>
+        <div style="padding:32px;background:#fff;text-align:center;">
+          <p style="color:#444;margin-bottom:24px;">We couldn't send an SMS to your number, so we're sending your verification code by email.</p>
+          <div style="font-size:42px;font-weight:bold;letter-spacing:12px;color:#009BB4;background:#f0fbfd;padding:20px 32px;border-radius:8px;display:inline-block;">${code}</div>
+          <p style="color:#888;font-size:13px;margin-top:20px;">This code is valid for <strong>5 minutes</strong>. Do not share it with anyone.</p>
+          <p style="color:#888;font-size:12px;margin-top:8px;">If you did not request this code, please ignore this email.</p>
+        </div>
+        <div style="background:#1a1a1a;padding:16px;text-align:center;">
+          <p style="color:#999;font-size:12px;margin:0;">Motowarehouse Ltd – support@motowarehouse.com.cy</p>
+        </div>
+      </div>
+    `
   });
 }
 
@@ -444,6 +468,7 @@ async function sendVehicleReadyToCustomer(booking) {
 }
 
 module.exports = {
+  sendOTPCodeEmail,
   sendNewBookingAlert,
   sendConfirmationToCustomer,
   sendCancellationToCustomer,

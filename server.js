@@ -187,9 +187,16 @@ app.get('/api/slots', async (req, res) => {
     const todayStr = new Date().toISOString().split('T')[0];
     let available = slots.filter(s => {
       if (booked.includes(s)) return false;
-      // Don't offer a slot if the job can't finish before closing time
+      // A job must fit entirely within ONE continuous open range.
+      // This prevents booking a slot that spans across a closed period (e.g. lunch break).
       const [sh, sm] = s.split(':').map(Number);
-      return sh * 60 + sm + durationMins <= lastClosingMins;
+      const slotStart = sh * 60 + sm;
+      const slotEnd   = slotStart + durationMins;
+      return dayConfig.ranges.some(([rs, re]) => {
+        const [rsh, rsm] = rs.split(':').map(Number);
+        const [reh, rem] = re.split(':').map(Number);
+        return slotStart >= rsh * 60 + rsm && slotEnd <= reh * 60 + rem;
+      });
     });
 
     if (date === todayStr) {
@@ -210,7 +217,7 @@ app.get('/api/slots', async (req, res) => {
 
 // ── OTP: send verification code ──────────────────────────────────────────────
 app.post('/api/verify/send', async (req, res) => {
-  const { phone } = req.body;
+  const { phone, email } = req.body;
   if (!phone) return res.status(400).json({ error: 'Phone number required.' });
 
   const norm = normalisePhone(phone);
@@ -245,16 +252,30 @@ app.post('/api/verify/send', async (req, res) => {
                        : now
   });
 
+  // Try SMS first
   try {
     await smsService.sendBrevoSMS(norm, `Motowarehouse: Your verification code is ${code}. Valid for 5 minutes. Do not share this code.`);
-    console.log(`[OTP] Code sent to ${norm}`);
-    res.json({ success: true });
-  } catch (err) {
-    console.error('[OTP] SMS send failed:', err.message);
-    // Remove the entry so the user can retry without burning a send count
-    otpStore.delete(norm);
-    res.status(500).json({ error: 'Failed to send SMS. Please try again or call 22 328 788.' });
+    console.log(`[OTP] SMS sent to ${norm}`);
+    return res.json({ success: true, via: 'sms' });
+  } catch (smsErr) {
+    console.warn('[OTP] SMS failed:', smsErr.message);
   }
+
+  // SMS failed — try email fallback if email was provided
+  const cleanEmail = (email || '').trim();
+  if (cleanEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+    try {
+      await emailService.sendOTPCodeEmail(cleanEmail, code);
+      console.log(`[OTP] Email fallback sent to ${cleanEmail}`);
+      return res.json({ success: true, via: 'email' });
+    } catch (emailErr) {
+      console.error('[OTP] Email fallback also failed:', emailErr.message);
+    }
+  }
+
+  // Both failed — remove entry so the attempt doesn't count against rate limit
+  otpStore.delete(norm);
+  res.status(500).json({ error: 'Could not send your verification code. Please check your phone number or call us on 22 328 788 to book directly.' });
 });
 
 // ── OTP: confirm code ─────────────────────────────────────────────────────────
@@ -1261,6 +1282,30 @@ app.post('/api/booking/cancel', bookingRateLimit, async (req, res) => {
     }
 
     const booking = result.booking;
+
+    // ── 40-minute cancellation window ─────────────────────────────────────────
+    // Accepted bookings with a scheduled time cannot be cancelled within 40 minutes
+    if (booking.status === 'accepted' && booking.date && booking.time) {
+      const nowCyprus = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Nicosia' }));
+      const todayCyprus = nowCyprus.toISOString().split('T')[0];
+
+      // Appointment has already passed
+      if (booking.date < todayCyprus) {
+        return res.status(403).json({ error: 'This appointment has already passed and cannot be cancelled online.' });
+      }
+
+      // Appointment is today — check 40-minute window
+      if (booking.date === todayCyprus) {
+        const [ah, am] = booking.time.split(':').map(Number);
+        const apptMins = ah * 60 + am;
+        const nowMins  = nowCyprus.getHours() * 60 + nowCyprus.getMinutes();
+        if (apptMins - nowMins < 40) {
+          return res.status(403).json({
+            error: `Online cancellation is no longer available within 40 minutes of your appointment (${booking.time}). Please call us directly on 22 328 788.`
+          });
+        }
+      }
+    }
     console.log(`[Self-Cancel] Booking ${booking.ref} cancelled by customer (phone verified)`);
 
     // Send confirmation email to customer
