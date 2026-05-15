@@ -338,6 +338,118 @@
     .check-item-admin.sel { background:var(--blue);border-color:var(--blue);color:#001A21;font-weight:700; }
     .check-item-admin.sel::before { content:'✓ '; font-weight:900; }
     @media print { .sidebar,.topbar,.action-row,.logout-btn,.quick-actions { display:none !important; } .booking-detail { display:block !important; } body { background:white; color:black; } }
+
+    /* ── MOBILE RESPONSIVE ── */
+    @media (max-width: 768px) {
+      html, body { overflow-x: hidden; }
+
+      /* Hide desktop sidebar — replaced by bottom nav */
+      .sidebar { display: none; }
+
+      /* Main takes full width */
+      .layout { flex-direction: column; }
+      .main { width: 100%; min-height: 100vh; padding-bottom: 70px; /* room for bottom nav */ }
+
+      /* Compact topbar */
+      .topbar { padding: 12px 16px; gap: 10px; }
+      .topbar-title { font-size: 15px; }
+      .topbar-date { display: none; }
+
+      /* Content padding */
+      .content { padding: 14px 12px; }
+
+      /* Stats: 2-col on mobile */
+      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
+      .stat-card { padding: 12px; }
+      .stat-value { font-size: 24px; }
+      .stat-label { font-size: 10px; }
+
+      /* Booking cards — tighter on mobile */
+      .booking-header { padding: 14px 14px; gap: 10px; flex-wrap: nowrap; }
+      .booking-ref { min-width: 50px; font-size: 10px; }
+      .booking-name { font-size: 15px; }
+      .booking-meta-row { font-size: 12px; }
+      .booking-phone-row { font-size: 13px; }
+      .booking-badges-row { gap: 4px; margin-top: 6px; }
+      .booking-service { font-size: 10px; padding: 2px 7px; }
+      .status-badge { font-size: 9px; padding: 2px 5px; }
+      .mechanic-badge { font-size: 9px; }
+
+      /* Date chip — slightly smaller */
+      .booking-date-chip { min-width: 82px; padding: 8px 10px; }
+      .booking-date-chip .chip-date { font-size: 13px; }
+      .booking-date-chip .chip-time { font-size: 12px; }
+
+      /* Quick action buttons */
+      .btn-quick { width: 28px; height: 28px; font-size: 12px; }
+      .quick-actions { gap: 4px; }
+
+      /* Detail grid: 2-col on phone */
+      .detail-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .detail-item span { font-size: 14px; }
+      .booking-detail { padding: 12px 14px; }
+
+      /* Action buttons: stack on mobile */
+      .action-row { flex-direction: column; gap: 8px; }
+      .btn-accept, .btn-reschedule, .btn-cancel-booking, .btn-complete, .btn-no-show { width: 100%; justify-content: center; text-align: center; }
+
+      /* Modal */
+      .modal { padding: 20px 16px; }
+      .modal-form-grid { grid-template-columns: 1fr; }
+
+      /* Calendar */
+      .cal-cell { min-height: 48px; padding: 4px; }
+      .cal-day-num { font-size: 12px; }
+
+      /* Panel cards */
+      .panel-card { padding: 14px; }
+      .block-form-grid { grid-template-columns: 1fr; }
+
+      /* Today view */
+      .today-slot { flex-wrap: wrap; gap: 8px; padding: 10px 14px; }
+    }
+
+    /* ── MOBILE BOTTOM NAV ── */
+    .mobile-bottom-nav {
+      display: none;
+    }
+    @media (max-width: 768px) {
+      .mobile-bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--dark2);
+        border-top: 1px solid rgba(0,155,180,0.2);
+        z-index: 200;
+        height: 62px;
+        align-items: stretch;
+      }
+      .mob-nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        cursor: pointer;
+        color: var(--grey);
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 6px 4px;
+        border: none;
+        background: none;
+        transition: color 0.15s;
+        position: relative;
+      }
+      .mob-nav-item.active { color: var(--blue); }
+      .mob-nav-item svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .mob-nav-badge { position: absolute; top: 4px; right: calc(50% - 18px); background: var(--orange); border-radius: 8px; color: white; font-size: 9px; font-weight: 700; padding: 1px 5px; min-width: 16px; text-align: center; line-height: 14px; }
+      .mob-nav-badge.hidden { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -1083,6 +1195,32 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- MOBILE BOTTOM NAV (hidden on desktop, shown via JS after login) -->
+<nav class="mobile-bottom-nav" id="mobile-bottom-nav" style="display:none;">
+  <button class="mob-nav-item" id="mob-nav-today" onclick="setView('today')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Today
+  </button>
+  <button class="mob-nav-item" id="mob-nav-all" onclick="setView('all')">
+    <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="0.5" fill="currentColor"/><circle cx="3" cy="12" r="0.5" fill="currentColor"/><circle cx="3" cy="18" r="0.5" fill="currentColor"/></svg>
+    <span id="mob-badge-all" class="mob-nav-badge hidden"></span>
+    All
+  </button>
+  <button class="mob-nav-item" id="mob-nav-pending" onclick="setView('pending')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <span id="mob-badge-pending" class="mob-nav-badge hidden"></span>
+    Pending
+  </button>
+  <button class="mob-nav-item" id="mob-nav-calendar" onclick="setView('calendar')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="16" y1="14" x2="16" y2="14"/></svg>
+    Calendar
+  </button>
+  <button class="mob-nav-item" id="mob-nav-settings" onclick="setView('hours')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Settings
+  </button>
+</nav>
+
 <script>
   const SVC = { 'small-service':'Small Service', 'full-service':'Full Service', 'other':'Other Request' };
   const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -1138,6 +1276,11 @@
   // ── INIT ──────────────────────────────────────────────────────────────
   function initApp() {
     document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    // Show bottom nav on mobile after login
+    if (window.innerWidth <= 768) {
+      document.getElementById('mobile-bottom-nav').style.display = 'flex';
+      setView('today'); // Default to Today view on mobile
+    }
     autoSubscribeIfGranted();
     document.getElementById('block-date').value = new Date().toISOString().split('T')[0];
     populateBlockTimes();
@@ -1194,6 +1337,12 @@
     const ncBadge = document.getElementById('badge-needs-contact');
     ncBadge.textContent = needsContact + needsCall;
     ncBadge.style.display = (needsContact + needsCall) > 0 ? 'inline' : 'none';
+    // Mobile bottom nav badges
+    const mobPending = pending + needsCall;
+    const mobPendingEl = document.getElementById('mob-badge-pending');
+    if (mobPendingEl) { mobPendingEl.textContent = mobPending; mobPendingEl.classList.toggle('hidden', mobPending === 0); }
+    const mobAllEl = document.getElementById('mob-badge-all');
+    if (mobAllEl) { mobAllEl.textContent = allBookings.length; mobAllEl.classList.toggle('hidden', allBookings.length === 0); }
   }
 
   // ── VIEWS ──────────────────────────────────────────────────────────────
@@ -1207,9 +1356,15 @@
 
   function setView(view) {
     currentView = view;
+    // Desktop sidebar
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
     const navEl = document.getElementById('nav-' + view);
     if (navEl) navEl.classList.add('active');
+    // Mobile bottom nav
+    document.querySelectorAll('.mob-nav-item').forEach(el => el.classList.remove('active'));
+    const mobMap = { today:'mob-nav-today', all:'mob-nav-all', pending:'mob-nav-pending', accepted:'mob-nav-all', calendar:'mob-nav-calendar', hours:'mob-nav-settings', blocks:'mob-nav-settings', partners:'mob-nav-settings', vehicles:'mob-nav-settings', warranty:'mob-nav-settings', stats:'mob-nav-settings', help:'mob-nav-settings', workload:'mob-nav-settings', schedule:'mob-nav-settings' };
+    const mobEl = document.getElementById(mobMap[view]);
+    if (mobEl) mobEl.classList.add('active');
     document.getElementById('topbar-title').textContent = VIEW_TITLES[view] || view;
     renderView();
   }
@@ -3414,293 +3569,4 @@
         if (!b.date || !['accepted','completed'].includes(b.status)) return false;
         const bd = new Date(b.date+'T12:00:00');
         return bd >= wStart && bd <= wEnd;
-      }).length;
-      weeks.push({ label: wLabel, count: wCount });
-    }
-    const maxWeek = Math.max(...weeks.map(w => w.count), 1);
-
-    // Today quick stats
-    const todayCount = allBookings.filter(b => b.date === todayStr && b.status === 'accepted').length;
-    const pendingCount = allBookings.filter(b => b.status === 'pending').length;
-
-    el.innerHTML = `
-      <!-- Period toggle -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
-        <div style="font-size:15px;font-weight:700;">Dashboard — <span style="color:var(--blue);">${periodLabel}</span></div>
-        <div style="display:flex;gap:8px;">
-          <button onclick="statsShowAllTime=false;renderStatsView()"
-            style="padding:7px 16px;border-radius:6px;border:1px solid rgba(0,155,180,${!statsShowAllTime?'0.7':'0.2'});background:${!statsShowAllTime?'rgba(0,155,180,0.15)':'transparent'};color:${!statsShowAllTime?'var(--blue)':'var(--grey)'};cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;">
-            Last 30 Days
-          </button>
-          <button onclick="statsShowAllTime=true;renderStatsView()"
-            style="padding:7px 16px;border-radius:6px;border:1px solid rgba(0,155,180,${statsShowAllTime?'0.7':'0.2'});background:${statsShowAllTime?'rgba(0,155,180,0.15)':'transparent'};color:${statsShowAllTime?'var(--blue)':'var(--grey)'};cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;">
-            All Time
-          </button>
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:24px;">
-        <div class="stat-card"><div class="stat-label">Today</div><div class="stat-value" style="color:var(--blue);">${todayCount}</div><div style="font-size:11px;color:var(--grey);">accepted</div></div>
-        <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value pending">${totals.pending}</div><div style="font-size:11px;color:var(--grey);">needs action</div></div>
-        <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="color:#00b882;">${totals.completed}</div><div style="font-size:11px;color:var(--grey);">${periodLabel.toLowerCase()}</div></div>
-        <div class="stat-card"><div class="stat-label">No-shows</div><div class="stat-value" style="color:var(--grey);">${totals['no-show']}</div><div style="font-size:11px;color:var(--grey);">${periodLabel.toLowerCase()}</div></div>
-        <div class="stat-card"><div class="stat-label">Cancelled</div><div class="stat-value cancelled">${totals.cancelled}</div><div style="font-size:11px;color:var(--grey);">${periodLabel.toLowerCase()}</div></div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px;">
-
-        <!-- Weekly trend -->
-        <div class="panel-card" style="padding:18px;">
-          <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--text);">Weekly Bookings (last 4 weeks)</div>
-          ${weeks.map(w => `
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:9px;">
-              <div style="font-size:11px;color:var(--grey);width:58px;flex-shrink:0;">${w.label}</div>
-              <div style="flex:1;background:rgba(255,255,255,0.07);border-radius:4px;height:16px;overflow:hidden;">
-                <div style="height:100%;width:${w.count ? Math.max(6, Math.round(w.count/maxWeek*100)) : 0}%;background:var(--blue);border-radius:4px;transition:width 0.4s;"></div>
-              </div>
-              <div style="font-size:12px;font-weight:700;color:var(--text);width:20px;text-align:right;">${w.count}</div>
-            </div>`).join('')}
-        </div>
-
-        <!-- Service type breakdown -->
-        <div class="panel-card" style="padding:18px;">
-          <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--text);">Service Types (${periodLabel.toLowerCase()})</div>
-          ${Object.keys(svcBreak).length === 0 ? `<div style="color:var(--grey);font-size:13px;">No data for this period.</div>` :
-            Object.entries(svcBreak).sort((a,b) => b[1]-a[1]).map(([k,v]) => {
-              const total30 = recent.length || 1;
-              const pct = Math.round(v/total30*100);
-              return `
-              <div style="display:flex;align-items:center;gap:10px;margin-bottom:9px;">
-                <div style="font-size:11px;color:var(--grey);width:92px;flex-shrink:0;">${k}</div>
-                <div style="flex:1;background:rgba(255,255,255,0.07);border-radius:4px;height:16px;overflow:hidden;">
-                  <div style="height:100%;width:${Math.max(6,pct)}%;background:var(--blue);opacity:0.8;border-radius:4px;"></div>
-                </div>
-                <div style="font-size:12px;font-weight:700;color:var(--text);width:32px;text-align:right;">${v} <span style="font-weight:400;color:var(--grey);">(${pct}%)</span></div>
-              </div>`;
-            }).join('')}
-        </div>
-      </div>
-
-      <!-- Busiest days -->
-      <div class="panel-card" style="padding:18px;margin-bottom:18px;">
-        <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--text);">Busiest Days of the Week (${periodLabel.toLowerCase()})</div>
-        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;text-align:center;">
-          ${dowCounts.map((c,i) => `
-            <div>
-              <div style="font-size:11px;color:var(--grey);margin-bottom:6px;">${dayNames[i]}</div>
-              <div style="height:60px;display:flex;align-items:flex-end;justify-content:center;">
-                <div style="width:28px;background:var(--blue);opacity:${i===0||i===6?'0.35':'0.85'};border-radius:4px 4px 0 0;height:${c ? Math.max(6, Math.round(c/maxDow*60)) : 2}px;"></div>
-              </div>
-              <div style="font-size:13px;font-weight:700;color:var(--text);margin-top:4px;">${c}</div>
-            </div>`).join('')}
-        </div>
-      </div>`;
-  }
-
-  // ── EXCEL EXPORT ─────────────────────────────────────────────────────────────
-  function exportBookingsExcel() {
-    if (!allBookings || !allBookings.length) return alert('No bookings to export.');
-    const SVC_LABELS = { 'small-service':'Small Service', 'full-service':'Full Service', 'other':'Service Request' };
-    const rows = allBookings.map(b => ({
-      'Reference':    b.ref,
-      'Status':       b.status,
-      'Service':      SVC_LABELS[b.serviceType] || b.serviceType,
-      'Date':         b.date || '—',
-      'Time':         b.time || '—',
-      'Plate':        b.plate,
-      'Model':        b.model,
-      'Year':         b.year,
-      'KM':           b.km || '',
-      'Name':         b.name,
-      'Phone':        b.phone,
-      'Email':        b.email || '',
-      'Notes':        b.notes || '',
-      'Description':  b.description || '',
-      'Booked At':    b.createdAt ? new Date(b.createdAt).toLocaleString('en-GB') : ''
-    }));
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Bookings');
-    const today = new Date().toISOString().split('T')[0];
-    XLSX.writeFile(wb, `Motowarehouse_Bookings_${today}.xlsx`);
-  }
-
-  // ── DAILY SCHEDULE PRINT ─────────────────────────────────────────────────────
-  function printDailySchedule() {
-    const today = new Date().toISOString().split('T')[0];
-    const todayBookings = (allBookings || [])
-      .filter(b => b.date === today && (b.status === 'pending' || b.status === 'accepted'))
-      .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
-
-    const SVC_LABELS = { 'small-service':'Small Service', 'full-service':'Full Service', 'other':'Service Request' };
-    const rows = todayBookings.map(b =>
-      `<tr>
-        <td>${b.time || '—'}</td>
-        <td>${b.ref}</td>
-        <td>${b.plate}</td>
-        <td>${b.model} ${b.year}</td>
-        <td>${SVC_LABELS[b.serviceType] || b.serviceType}</td>
-        <td>${b.name}</td>
-        <td>${b.phone}</td>
-        <td>${b.status.toUpperCase()}</td>
-        <td style="width:120px;border-bottom:1px solid #ccc;"> </td>
-      </tr>`
-    ).join('');
-
-    const win = window.open('', '_blank');
-    win.document.write(`<!DOCTYPE html><html><head><title>Daily Schedule – ${today}</title>
-      <style>body{font-family:Arial,sans-serif;font-size:13px;margin:24px;}
-      h2{margin-bottom:4px;}p{color:#666;margin-bottom:16px;}
-      table{border-collapse:collapse;width:100%;}
-      th{background:#0a1a1f;color:#fff;padding:8px 10px;text-align:left;font-size:12px;}
-      td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:top;}
-      tr:nth-child(even)td{background:#f9f9f9;}
-      @media print{button{display:none;}}</style></head><body>
-      <h2>Motowarehouse – Daily Schedule</h2>
-      <p>${today} &nbsp;|&nbsp; ${todayBookings.length} appointment(s)</p>
-      <table><thead><tr>
-        <th>Time</th><th>Ref</th><th>Plate</th><th>Vehicle</th>
-        <th>Service</th><th>Name</th><th>Phone</th><th>Status</th><th>Mechanic ✓</th>
-      </tr></thead><tbody>${rows || '<tr><td colspan="9" style="color:#666;padding:20px;text-align:center;">No appointments for today.</td></tr>'}</tbody></table>
-      <br><button onclick="window.print()" style="padding:8px 18px;background:#009BB4;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;">Print</button>
-    </body></html>`);
-    win.document.close();
-  }
-
-  checkAuth();
-
-  // ── PWA: Service Worker + Push Notifications ────────────────────────────
-  let swRegistration = null;
-
-  async function initPWA() {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      console.log('[PWA] Push not supported in this browser.');
-      return;
-    }
-    try {
-      swRegistration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-      console.log('[PWA] Service worker registered.');
-      updateNotifBtn();
-      document.getElementById('notif-btn').style.display = 'block';
-    } catch (err) {
-      console.warn('[PWA] SW registration failed:', err);
-    }
-  }
-
-  function updateNotifBtn() {
-    const btn = document.getElementById('notif-btn');
-    if (!btn) return;
-    const perm = Notification.permission;
-    if (perm === 'granted') {
-      btn.textContent = '🔔';
-      btn.title = 'Notifications ON — click to disable';
-      btn.style.borderColor = 'rgba(0,200,150,0.4)';
-      btn.style.color = 'var(--green)';
-    } else if (perm === 'denied') {
-      btn.textContent = '🔕';
-      btn.title = 'Notifications blocked in browser settings';
-      btn.style.borderColor = 'rgba(229,0,82,0.4)';
-      btn.style.color = 'var(--red)';
-    } else {
-      btn.textContent = '🔔';
-      btn.title = 'Enable push notifications';
-      btn.style.borderColor = '';
-      btn.style.color = 'var(--grey)';
-    }
-  }
-
-  async function toggleNotifications() {
-    if (!swRegistration) return;
-    const perm = Notification.permission;
-
-    if (perm === 'denied') {
-      showToast('Notifications are blocked. Enable them in your browser/phone settings.', 'error');
-      return;
-    }
-
-    if (perm === 'granted') {
-      // Check if already subscribed — unsubscribe
-      const existing = await swRegistration.pushManager.getSubscription();
-      if (existing) {
-        await existing.unsubscribe();
-        await fetch('/api/push/unsubscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ endpoint: existing.endpoint })
-        });
-        showToast('Push notifications disabled.', '');
-        updateNotifBtn();
-      }
-      return;
-    }
-
-    // Request permission + subscribe
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-      showToast('Notification permission denied.', 'error');
-      updateNotifBtn();
-      return;
-    }
-
-    try {
-      // Get VAPID public key from server
-      const keyRes = await fetch('/api/push/vapid-key');
-      const { publicKey } = await keyRes.json();
-
-      const sub = await swRegistration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicKey)
-      });
-
-      await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sub)
-      });
-
-      showToast('🔔 Push notifications enabled!', 'success');
-      updateNotifBtn();
-    } catch (err) {
-      console.error('[Push] Subscribe failed:', err);
-      showToast('Failed to enable notifications: ' + err.message, 'error');
-    }
-  }
-
-  // Convert VAPID public key from base64url to Uint8Array (required by browser)
-  function urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-    const raw = atob(base64);
-    return new Uint8Array([...raw].map(c => c.charCodeAt(0)));
-  }
-
-  // Auto-subscribe silently after login if permission already granted
-  async function autoSubscribeIfGranted() {
-    if (!swRegistration) return;
-    if (Notification.permission !== 'granted') return;
-    const existing = await swRegistration.pushManager.getSubscription();
-    if (existing) return; // Already subscribed
-    // Re-subscribe (e.g. after browser update cleared subscription)
-    try {
-      const keyRes = await fetch('/api/push/vapid-key');
-      const { publicKey } = await keyRes.json();
-      const sub = await swRegistration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicKey)
-      });
-      await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sub)
-      });
-      console.log('[Push] Auto-resubscribed.');
-    } catch (e) {
-      console.warn('[Push] Auto-subscribe failed:', e.message);
-    }
-  }
-
-  // Kick off PWA init immediately (doesn't need login)
-  initPWA();
-</script>
-</body>
-</html>
+      
