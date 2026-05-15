@@ -2005,4 +2005,148 @@
     const sec = document.getElementById('vehicle-section');
     if (!sec.classList.contains('revealed')) {
       sec.classList.add('revealed');
-      sec.querySelectorAll('.field-reveal').forEach((el, i)
+      sec.querySelectorAll('.field-reveal').forEach((el, i) => {
+        setTimeout(() => el.classList.add('visible'), 80 + i * 80);
+      });
+    }
+  }
+
+  // ── 3D CARD TILT ──────────────────────────────────────────────────
+  document.querySelectorAll('.service-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width  - 0.5;
+      const y = (e.clientY - r.top)  / r.height - 0.5;
+      card.style.transform = `perspective(600px) rotateY(${x * 14}deg) rotateX(${-y * 10}deg) translateY(-3px) scale(1.02)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+    });
+  });
+
+  // ── HERO PARALLAX ─────────────────────────────────────────────────
+  window.addEventListener('scroll', () => {
+    const hero = document.querySelector('.hero');
+    if (hero) {
+      const y = window.scrollY * 0.35;
+      hero.style.backgroundPositionY = `${y}px`;
+      const h1 = hero.querySelector('h1');
+      const sub = hero.querySelector('.hero-sub');
+      const lbl = hero.querySelector('.hero-label');
+      if (h1)  h1.style.transform  = `translateY(${y * 0.18}px)`;
+      if (sub) sub.style.transform = `translateY(${y * 0.12}px)`;
+      if (lbl) lbl.style.transform = `translateY(${y * 0.08}px)`;
+    }
+    updateProgress();
+    updateTracker();
+  }, { passive: true });
+
+  updateProgress();
+  updateTracker();
+</script>
+
+<!-- ── PWA INSTALL BANNER ── -->
+<style>
+  #pwa-banner {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: #0f2429;
+    border-top: 1px solid rgba(0,155,180,0.35);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 9999;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.34,1.2,0.64,1);
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.5);
+  }
+  #pwa-banner.visible { transform: translateY(0); }
+  #pwa-banner-icon { width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0; object-fit: contain; background: #1a3540; }
+  #pwa-banner-text { flex: 1; min-width: 0; }
+  #pwa-banner-title { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 2px; }
+  #pwa-banner-sub { font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.4; }
+  #pwa-banner-ios-sub { font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.5; display: none; }
+  #pwa-banner-btns { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+  #pwa-install-btn {
+    background: #009BB4; border: none; border-radius: 6px;
+    color: #fff; font-size: 12px; font-weight: 700;
+    padding: 7px 14px; cursor: pointer; white-space: nowrap;
+    font-family: inherit;
+  }
+  #pwa-dismiss-btn {
+    background: none; border: none; color: rgba(255,255,255,0.4);
+    font-size: 11px; cursor: pointer; text-align: center;
+    font-family: inherit; padding: 2px;
+  }
+  #pwa-dismiss-btn:hover { color: rgba(255,255,255,0.7); }
+</style>
+
+<div id="pwa-banner">
+  <img id="pwa-banner-icon" src="/icons/icon-192.png" alt="">
+  <div id="pwa-banner-text">
+    <div id="pwa-banner-title">Add to Home Screen</div>
+    <div id="pwa-banner-sub">Install the booking app for quick access anytime.</div>
+    <div id="pwa-banner-ios-sub">Tap <strong style="color:#009BB4">Share</strong> then <strong style="color:#009BB4">Add to Home Screen</strong></div>
+  </div>
+  <div id="pwa-banner-btns">
+    <button id="pwa-install-btn">Install</button>
+    <button id="pwa-dismiss-btn">Not now</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  // Don't show if already installed (standalone mode) or already dismissed
+  if (window.matchMedia('(display-mode: standalone)').matches) return;
+  if (localStorage.getItem('pwa-dismissed')) return;
+
+  const banner      = document.getElementById('pwa-banner');
+  const installBtn  = document.getElementById('pwa-install-btn');
+  const dismissBtn  = document.getElementById('pwa-dismiss-btn');
+  const iosSub      = document.getElementById('pwa-banner-ios-sub');
+  const normalSub   = document.getElementById('pwa-banner-sub');
+
+  // Detect iOS Safari
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+  let deferredPrompt = null;
+
+  if (isIOS && isSafari) {
+    // iOS: show manual instructions, no install button
+    installBtn.style.display = 'none';
+    normalSub.style.display  = 'none';
+    iosSub.style.display     = 'block';
+    setTimeout(() => banner.classList.add('visible'), 2500);
+  } else {
+    // Android / Chrome: wait for beforeinstallprompt
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      setTimeout(() => banner.classList.add('visible'), 2000);
+    });
+  }
+
+  installBtn.addEventListener('click', async function() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    banner.classList.remove('visible');
+    if (outcome === 'accepted') localStorage.setItem('pwa-dismissed', '1');
+  });
+
+  dismissBtn.addEventListener('click', function() {
+    banner.classList.remove('visible');
+    localStorage.setItem('pwa-dismissed', '1');
+  });
+
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(function() {});
+  }
+})();
+</script>
+</body>
+</html>
