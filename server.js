@@ -1125,4 +1125,179 @@ app.get('/api/admin/warranties', requireAdmin, async (req, res) => {
     res.json(await db.getAllWarranties());
   } catch (err) {
     console.error('[Get warranties error]', err);
-    res.status(
+    res.status(500).json({ error: 'Failed to load warranties.' });
+  }
+});
+
+// Update warranty claim status — also emails the partner if they have an email on file
+app.post('/api/admin/warranties/:id/status', requireAdmin, async (req, res) => {
+  try {
+    const { status, adminNotes } = req.body;
+    const valid = ['open', 'approved', 'rejected', 'closed'];
+    if (!valid.includes(status)) return res.status(400).json({ error: 'Invalid status.' });
+    const claim = await db.updateWarrantyStatus(req.params.id, status, adminNotes);
+    if (!claim) return res.status(404).json({ error: 'Claim not found.' });
+
+    // Notify partner by email if they submitted this claim and have an email address
+    if (claim.partnerId) {
+      try {
+        const partner = await db.getPartnerById(claim.partnerId);
+        if (partner && partner.email) {
+          await emailService.sendWarrantyStatusToPartner(claim, partner.email, partner.workshopName);
+          console.log(`[Email] Warranty status notification sent to ${partner.email}`);
+        }
+      } catch (e) {
+        console.error('[Email] Warranty partner notification FAILED:', e.message);
+      }
+    }
+
+    res.json({ success: true, claim });
+  } catch (err) {
+    console.error('[Update warranty error]', err);
+    res.status(500).json({ error: 'Failed to update warranty.' });
+  }
+});
+
+// Get service history by plate (admin only — partners cannot browse service history)
+app.get('/api/service-history', requireAdmin, async (req, res) => {
+  try {
+    const { plate } = req.query;
+    if (!plate) return res.status(400).json({ error: 'plate required' });
+    const history = await db.getServiceHistoryByPlate(plate);
+    res.json(history);
+  } catch (err) {
+    console.error('[Service history error]', err);
+    res.status(500).json({ error: 'Failed to load service history.' });
+  }
+});
+
+// ==================== CUSTOMER BOOKING LOOKUP ====================
+
+// Look up a booking — two modes:
+//   Mode A: ref + plate  (customer has their reference)
+//   Mode B: phone + plate (customer lost their reference — phone must match)
+app.get('/api/booking/lookup', async (req, res) => {
+  try {
+    const ref   = (req.query.ref   || '').toUpperCase().trim();
+    const plate = (req.query.plate || '').toUpperCase().replace(/\s/g, '');
+    const phone = (req.query.phone || '').replace(/[\s\+\-]/g, '');
+
+    if (!plate) return res.status(400).json({ error: 'Licence plate is required.' });
+    if (!ref && !phone) return res.status(400).json({ error: 'Booking reference or phone number is required.' });
+
+    const serviceLabels = {
+      'small-service': 'Small Service',
+      'full-service':  'Full Service',
+      'other':         'Service Request'
+    };
+
+    const safeFields = (booking) => ({
+      ref:         booking.ref,
+      name:        booking.name,
+      status:      booking.status,
+      serviceType: serviceLabels[booking.serviceType] || booking.serviceType,
+      date:        booking.date,
+      time:        booking.time,
+      model:       booking.model,
+      year:        booking.year,
+      plate:       booking.plate
+    });
+
+    if (ref) {
+      // Mode A: ref + plate
+      const booking = await db.getBookingByRef(ref);
+      if (!booking) return res.status(404).json({ error: 'No booking found with that reference number.' });
+      const storedPlate = (booking.plate || '').toUpperCase().replace(/\s/g, '');
+      if (storedPlate !== plate) return res.status(403).json({ error: 'Licence plate does not match this booking.' });
+      return res.json(safeFields(booking));
+    }
+
+    // Mode B: phone + plate — find most recent booking matching both
+    const allBookings = await db.getAllBookings({});
+    const storedPhone = phone.startsWith('357') ? phone : phone; // normalised already
+    const match = allBookings.find(b => {
+      const bPlate = (b.plate || '').toUpperCase().replace(/\s/g, '');
+      const bPhone = (b.phone || '').replace(/[\s\+\-]/g, '').replace(/^00357/, '357').replace(/^357/, '');
+      const inputPhone = phone.replace(/^00357/, '357').replace(/^357/, '');
+      return bPlate === plate && (bPhone === inputPhone || bPhone.endsWith(inputPhone));
+    });
+
+    if (!match) return res.status(404).json({ error: 'No booking found matching that plate and phone number.' });
+    return res.json(safeFields(match));
+
+  } catch (err) {
+    console.error('[Booking lookup error]', err);
+    res.status(500).json({ error: 'Failed to look up booking.' });
+  }
+});
+
+// Serve the customer booking lookup page
+app.get('/my-booking', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'my-booking.html'));
+});
+
+// ==================== CUSTOMER SELF-CANCEL ====================
+
+// Serve the cancel page (pre-fills ref from query string in the HTML)
+app.get('/cancel', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'cancel.html'));
+});
+
+// Customer submits cancellation
+app.post('/api/booking/cancel', bookingRateLimit, async (req, res) => {
+  try {
+    const { ref, phone } = req.body;
+    if (!ref || !phone) {
+      return res.status(400).json({ error: 'Booking reference and phone number are required.' });
+    }
+
+    const result = await db.cancelBookingByCustomer(ref, phone);
+
+    if (result.error === 'not-found') {
+      return res.status(404).json({ error: 'No active booking found with that reference number. It may have already been cancelled or completed.' });
+    }
+    if (result.error === 'phone-mismatch') {
+      return res.status(403).json({ error: 'The phone number does not match our records for this booking.' });
+    }
+
+    const booking = result.booking;
+    console.log(`[Self-Cancel] Booking ${booking.ref} cancelled by customer (phone verified)`);
+
+    // Send confirmation email to customer
+    if (booking.email) {
+      try {
+        await emailService.sendCancellationToCustomer(booking);
+        console.log('[Email] Self-cancel confirmation sent to ' + booking.email);
+      } catch (e) {
+        console.error('[Email] Self-cancel confirmation FAILED:', e.message);
+      }
+    }
+
+    // Notify admin via email + push
+    emailService.sendNewBookingAlert({ ...booking, _selfCancelAlert: true }).catch(() => {});
+    pushService.sendPushToAll(pushService.selfCancelPayload(booking)).catch(e => console.error('[Push cancel error]', e.message));
+
+    res.json({ success: true, ref: booking.ref, name: booking.name, date: booking.date, time: booking.time });
+  } catch (err) {
+    console.error('[Self-cancel error]', err);
+    res.status(500).json({ error: 'Something went wrong. Please call us on 22 328 788 to cancel.' });
+  }
+});
+
+// ==================== START ====================
+
+// Initialise database tables, then start server
+db.initDB()
+  .then(() => {
+    startReminderCron();
+    startBackupCron();
+    app.listen(PORT, () => {
+      console.log(`\n✅ Motowarehouse Service Portal running on http://localhost:${PORT}`);
+      console.log(`   Admin panel: http://localhost:${PORT}/admin`);
+      console.log(`   Partner portal: http://localhost:${PORT}/partner\n`);
+    });
+  })
+  .catch(err => {
+    console.error('\n❌ Could not initialise database. Server will not start.', err.message);
+    process.exit(1);
+  });

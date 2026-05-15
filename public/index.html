@@ -2044,4 +2044,481 @@
         // 0a. CFMOTO description match — e.g. "E5 CFMOTO 450MT BLUE" → "450MT"
         if (!matched && data.description && !isSym) {
           const dm = descUp.match(/\bCF(?:MOTO)?\s*([A-Z0-9][\w-]*(?:\s+BOBBER)?)/);
-          if (dm
+          if (dm) {
+            const cand = dm[1].trim();
+            cfmotoOptions.forEach(opt => {
+              if (opt.textContent.trim().toUpperCase() === cand) matched = opt;
+            });
+            if (!matched) {
+              cfmotoOptions.forEach(opt => {
+                const t = opt.textContent.trim().toUpperCase();
+                if (t.startsWith(cand) && (!matched || t.length < matched.textContent.trim().length))
+                  matched = opt;
+              });
+            }
+            if (!matched) {
+              cfmotoOptions.forEach(opt => {
+                const firstToken = opt.textContent.trim().toUpperCase().split(/\s+/)[0];
+                if (firstToken.length >= 3 && cand.startsWith(firstToken)) matched = opt;
+              });
+            }
+            if (matched) descMatched = true;
+          }
+        }
+
+        // 0b. SYM description match — token-based so "SR 125 CBS" matches "SR 125I CBS WHITE"
+        // Numeric tokens do prefix matching to handle emission suffixes (125 matches 125I, 125E5, etc.)
+        if (!matched && data.description && isSym) {
+          let bestScore = 0;
+          symOptions.forEach(opt => {
+            const tokens = opt.textContent.trim().toUpperCase().split(/\s+/);
+            const score  = tokens.filter(tok => {
+              if (/^\d+$/.test(tok)) {
+                // number token: match any word in description that starts with this number
+                return descUp.split(/\s+/).some(w => w.startsWith(tok));
+              }
+              return descUp.includes(tok);
+            }).length;
+            if (score === tokens.length && score > bestScore) {
+              bestScore = score;
+              matched   = opt;
+            }
+          });
+          if (matched) descMatched = true;
+        }
+
+        // 1. Exact match on internal model code within scoped pane
+        if (!matched) {
+          scopedOptions.forEach(opt => {
+            if (opt.textContent.trim().toUpperCase() === rawUpper) matched = opt;
+          });
+        }
+
+        // 2. Strip "CF" prefix — CFMOTO internal codes only
+        if (!matched && !isSym) {
+          const stripped = rawUpper.startsWith('CF') ? rawUpper.slice(2) : rawUpper;
+          const base = stripped.replace(/-[A-Z0-9]+$/i, '');
+          cfmotoOptions.forEach(opt => {
+            const t = opt.textContent.trim().toUpperCase();
+            if (t === stripped || t === base) matched = opt;
+          });
+        }
+
+        // 3. Displacement fallback — last resort, strictly scoped to detected brand
+        // Only runs if brand was detected (prevents cross-brand mismatches entirely)
+        if (!matched && (isSym || isCfmoto)) {
+          const numMatch = rawUpper.match(/\d+/);
+          if (numMatch) {
+            const cc = numMatch[0];
+            let bestLen = 0;
+            scopedOptions.forEach(opt => {
+              const t = opt.textContent.trim().toUpperCase();
+              if (t.includes(cc) && t.length > bestLen) { matched = opt; bestLen = t.length; }
+            });
+          }
+        }
+
+        if (matched) {
+          selectModel(matched);
+        } else {
+          // No match at all — set hidden field with raw code; slots will use displacement fallback
+          if (modelInput) modelInput.value = data.model;
+          if (modelDisplay) {
+            modelDisplay.textContent = data.model;
+            modelDisplay.classList.remove('placeholder');
+          }
+          revealVehicleSection();
+        }
+
+        // Auto-fill year
+        if (data.year) {
+          const yearSel = document.getElementById('year');
+          if (yearSel) {
+            yearSel.value = data.year;
+            if (!yearSel.value) {
+              // Year not in list — add it dynamically
+              const opt = document.createElement('option');
+              opt.value = data.year;
+              opt.textContent = data.year;
+              yearSel.appendChild(opt);
+              yearSel.value = data.year;
+            }
+            animateYear(yearSel);
+          }
+        }
+
+        // Show success hint — description-matched records are trusted; others ask customer to confirm
+        const exactMatch = descMatched || rawUpper === (matched?.textContent.trim().toUpperCase() || rawUpper);
+        const hintModel = matched ? matched.textContent.trim() : data.model;
+        lh.style.cssText = 'font-size:12px;margin-top:5px;display:block;padding:6px 10px;border-radius:6px;background:rgba(0,200,120,0.1);color:#00c878;border:1px solid rgba(0,200,120,0.3);';
+        lh.textContent = `✓ Found: ${hintModel}${data.year ? ' (' + data.year + ')' : ''}${!exactMatch && matched ? ' — please confirm model above' : ''}`;
+
+      } else {
+        // Not found — soft warning, don't block
+        lh.style.cssText = 'font-size:12px;margin-top:5px;display:block;padding:6px 10px;border-radius:6px;background:rgba(229,184,0,0.1);color:#e5b800;border:1px solid rgba(229,184,0,0.3);';
+        lh.textContent = '⚠ Plate not found in our records. Please verify your plate number.';
+      }
+    } catch (e) {
+      // Silent fail — don't interrupt the booking
+    }
+  }
+
+  // ── SCROLL ANIMATIONS ──────────────────────────────────────────────
+
+  // 1. Scroll progress bar
+  const progressBar = document.getElementById('scroll-progress');
+  function updateProgress() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    progressBar.style.width = pct + '%';
+  }
+
+  // 2. Reveal elements on scroll (Intersection Observer)
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.reveal, .reveal-left, .stagger-children').forEach(el => {
+    revealObserver.observe(el);
+  });
+
+  // Field-reveal: observe the form card; when it enters view, stagger-reveal its fields
+  const formCardObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        // Animate only non-vehicle-section field-reveals (those are handled by selectModel)
+        const fields = entry.target.querySelectorAll('.field-reveal:not(#vehicle-section .field-reveal)');
+        fields.forEach((el, i) => {
+          setTimeout(() => el.classList.add('visible'), 60 + i * 80);
+        });
+        formCardObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08 });
+
+  document.querySelectorAll('.form-card').forEach(card => formCardObserver.observe(card));
+
+  // ── REF COUNT-UP ──────────────────────────────────────────────────
+  function countUpRef(ref) {
+    const el = document.getElementById('success-ref');
+    if (!el) return;
+    const prefix = ref.replace(/[0-9]+$/, '');
+    const target = parseInt(ref.replace(/[^0-9]/g, ''), 10) || 0;
+    let current = 0;
+    const steps = 30;
+    const inc = Math.max(1, Math.floor(target / steps));
+    const timer = setInterval(() => {
+      current = Math.min(current + inc, target);
+      el.textContent = prefix + String(current).padStart(ref.length - prefix.length, '0');
+      if (current >= target) { el.textContent = ref; clearInterval(timer); }
+    }, 35);
+  }
+
+  // 4. Motorcycle-themed floating background SVGs
+  const MOTO_SVGS = {
+    gear: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <path d="M43,2 L57,2 L60,18 C64,19 68,21 71,24 L87,18 L96,30 L84,42
+               C86,46 87,50 87,54 L103,57 L103,71 L87,74 C86,78 84,82 81,85
+               L87,101 L75,110 L63,98 C59,100 55,101 51,101 L48,117 L34,117
+               L31,101 C27,100 23,98 20,95 L4,101 L-5,89 L7,77
+               C5,73 4,69 4,65 L-12,62 L-12,48 L4,45
+               C5,41 7,37 10,34 L4,18 L16,9 L28,21
+               C32,19 36,18 40,17 Z M50,35 A15,15 0 1,0 50,65 A15,15 0 1,0 50,35Z"
+            fill="none" stroke="currentColor" stroke-width="3"/>
+    </svg>`,
+    wheel: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="3"/>
+      <circle cx="50" cy="50" r="8"  fill="none" stroke="currentColor" stroke-width="2.5"/>
+      <circle cx="50" cy="50" r="32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 6"/>
+      <line x1="50" y1="4"  x2="50" y2="42" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="50" y1="58" x2="50" y2="96" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="4"  y1="50" x2="42" y2="50" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="58" y1="50" x2="96" y2="50" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="18" y1="18" x2="44" y2="44" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="56" y1="56" x2="82" y2="82" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="82" y1="18" x2="56" y2="44" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="44" y1="56" x2="18" y2="82" stroke="currentColor" stroke-width="1.5"/>
+    </svg>`,
+    wrench: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <path d="M72,8 C58,8 47,19 47,33 C47,37 48,40 50,43 L12,81
+               C9,84 9,89 12,92 C15,95 20,95 23,92 L61,54
+               C64,56 68,57 72,57 C86,57 97,46 97,32 C97,28 96,24 94,21
+               L80,35 L70,35 L65,25 L79,11 C77,9 75,8 72,8 Z"
+            fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round"/>
+    </svg>`,
+    chain: `<svg viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2"  y="8"  width="28" height="24" rx="12" fill="none" stroke="currentColor" stroke-width="3"/>
+      <rect x="22" y="12" width="20" height="16" rx="4"  fill="none" stroke="currentColor" stroke-width="2"/>
+      <rect x="34" y="8"  width="28" height="24" rx="12" fill="none" stroke="currentColor" stroke-width="3"/>
+      <rect x="54" y="12" width="20" height="16" rx="4"  fill="none" stroke="currentColor" stroke-width="2"/>
+      <rect x="66" y="8"  width="28" height="24" rx="12" fill="none" stroke="currentColor" stroke-width="3"/>
+      <rect x="86" y="12" width="20" height="16" rx="4"  fill="none" stroke="currentColor" stroke-width="2"/>
+    </svg>`,
+    piston: `<svg viewBox="0 0 60 100" xmlns="http://www.w3.org/2000/svg">
+      <rect x="8"  y="10" width="44" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="3"/>
+      <rect x="18" y="40" width="24" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2.5"/>
+      <line x1="30" y1="50" x2="30" y2="75" stroke="currentColor" stroke-width="3"/>
+      <rect x="12" y="75" width="36" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="3"/>
+    </svg>`
+  };
+
+  function createShapes() {
+    const container = document.getElementById('bg-shapes');
+    const placements = [
+      { type:'wheel',  size:160, top:'8%',   side:'left',  offset:'-55px', color:'rgba(0,155,180,0.07)',  dur:22, delay:0 },
+      { type:'gear',   size:130, top:'30%',  side:'right', offset:'-45px', color:'rgba(0,239,209,0.065)', dur:28, delay:5 },
+      { type:'wrench', size:110, top:'52%',  side:'left',  offset:'-36px', color:'rgba(0,155,180,0.06)',  dur:18, delay:2 },
+      { type:'chain',  size:160, top:'68%',  side:'right', offset:'-60px', color:'rgba(0,239,209,0.055)', dur:32, delay:8 },
+      { type:'piston', size: 90, top:'82%',  side:'left',  offset:'-28px', color:'rgba(0,155,180,0.065)', dur:20, delay:4 },
+      { type:'gear',   size: 80, top:'92%',  side:'right', offset:'-25px', color:'rgba(0,239,209,0.05)',  dur:24, delay:11},
+    ];
+    placements.forEach(p => {
+      const wrap = document.createElement('div');
+      wrap.className = 'bg-shape';
+      wrap.style.cssText = `
+        width:${p.size}px; height:${p.size}px;
+        top:${p.top};
+        ${p.side}:${p.offset};
+        color:${p.color};
+        animation-duration:${p.dur}s;
+        animation-delay:-${p.delay}s;
+        display:flex; align-items:center; justify-content:center;
+      `;
+      wrap.innerHTML = MOTO_SVGS[p.type];
+      container.appendChild(wrap);
+      setTimeout(() => wrap.classList.add('show'), 600);
+    });
+  }
+  createShapes();
+
+  // 5. Vehicle section reveal
+  function revealVehicleSection() {
+    const sec = document.getElementById('vehicle-section');
+    if (!sec.classList.contains('revealed')) {
+      sec.classList.add('revealed');
+      sec.querySelectorAll('.field-reveal').forEach((el, i) => {
+        setTimeout(() => el.classList.add('visible'), 80 + i * 80);
+      });
+    }
+  }
+
+  // ── 3D CARD TILT ──────────────────────────────────────────────────
+  document.querySelectorAll('.service-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width  - 0.5;
+      const y = (e.clientY - r.top)  / r.height - 0.5;
+      card.style.transform = `perspective(600px) rotateY(${x * 14}deg) rotateX(${-y * 10}deg) translateY(-3px) scale(1.02)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+    });
+  });
+
+  // ── HERO PARALLAX ─────────────────────────────────────────────────
+  window.addEventListener('scroll', () => {
+    const hero = document.querySelector('.hero');
+    if (hero) {
+      const y = window.scrollY * 0.35;
+      hero.style.backgroundPositionY = `${y}px`;
+      const h1 = hero.querySelector('h1');
+      const sub = hero.querySelector('.hero-sub');
+      const lbl = hero.querySelector('.hero-label');
+      if (h1)  h1.style.transform  = `translateY(${y * 0.18}px)`;
+      if (sub) sub.style.transform = `translateY(${y * 0.12}px)`;
+      if (lbl) lbl.style.transform = `translateY(${y * 0.08}px)`;
+    }
+    updateProgress();
+    updateTracker();
+  }, { passive: true });
+
+  updateProgress();
+  updateTracker();
+</script>
+
+<!-- ── PWA INSTALL BANNER ── -->
+<style>
+  #pwa-banner {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: #0f2429;
+    border-top: 1px solid rgba(0,155,180,0.35);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 9999;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.34,1.2,0.64,1);
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.5);
+  }
+  #pwa-banner.visible { transform: translateY(0); }
+  #pwa-banner-icon { width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0; object-fit: contain; background: #1a3540; }
+  #pwa-banner-text { flex: 1; min-width: 0; }
+  #pwa-banner-title { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 2px; }
+  #pwa-banner-sub { font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.4; }
+  #pwa-banner-ios-sub { font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.5; display: none; }
+  #pwa-banner-btns { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+  #pwa-install-btn {
+    background: #009BB4; border: none; border-radius: 6px;
+    color: #fff; font-size: 12px; font-weight: 700;
+    padding: 7px 14px; cursor: pointer; white-space: nowrap;
+    font-family: inherit;
+  }
+  #pwa-dismiss-btn {
+    background: none; border: none; color: rgba(255,255,255,0.4);
+    font-size: 11px; cursor: pointer; text-align: center;
+    font-family: inherit; padding: 2px;
+  }
+  #pwa-dismiss-btn:hover { color: rgba(255,255,255,0.7); }
+
+  /* iOS share arrow */
+  #pwa-ios-arrow {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    z-index: 10000;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  #pwa-ios-arrow.visible { opacity: 1; }
+  #pwa-ios-arrow.fading  { opacity: 0; }
+  #pwa-ios-arrow-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #009BB4;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.8);
+  }
+  #pwa-ios-arrow-chevrons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    animation: arrowBounce 1s ease-in-out infinite;
+  }
+  #pwa-ios-arrow-chevrons span {
+    display: block;
+    width: 18px;
+    height: 10px;
+    border-right: 3px solid #009BB4;
+    border-bottom: 3px solid #009BB4;
+    transform: rotate(45deg);
+    border-radius: 1px;
+  }
+  #pwa-ios-arrow-chevrons span:nth-child(1) { opacity: 0.4; }
+  #pwa-ios-arrow-chevrons span:nth-child(2) { opacity: 0.7; }
+  #pwa-ios-arrow-chevrons span:nth-child(3) { opacity: 1.0; }
+  @keyframes arrowBounce {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(6px); }
+  }
+</style>
+
+<div id="pwa-banner">
+  <img id="pwa-banner-icon" src="/icons/icon-192.png" alt="">
+  <div id="pwa-banner-text">
+    <div id="pwa-banner-title">Add to Home Screen</div>
+    <div id="pwa-banner-sub">Install the booking app for quick access anytime.</div>
+    <div id="pwa-banner-ios-sub">Tap <strong style="color:#009BB4">Share</strong> then <strong style="color:#009BB4">Add to Home Screen</strong></div>
+  </div>
+  <div id="pwa-banner-btns">
+    <button id="pwa-install-btn">Install</button>
+    <button id="pwa-dismiss-btn">Not now</button>
+  </div>
+</div>
+
+<!-- iOS share arrow -->
+<div id="pwa-ios-arrow">
+  <div id="pwa-ios-arrow-label">Tap Share</div>
+  <div id="pwa-ios-arrow-chevrons">
+    <span></span><span></span><span></span>
+  </div>
+</div>
+
+<script>
+(function() {
+  // Don't show if already installed (standalone mode) or already dismissed
+  if (window.matchMedia('(display-mode: standalone)').matches) return;
+  if (localStorage.getItem('pwa-dismissed')) return;
+
+  const banner      = document.getElementById('pwa-banner');
+  const installBtn  = document.getElementById('pwa-install-btn');
+  const dismissBtn  = document.getElementById('pwa-dismiss-btn');
+  const iosSub      = document.getElementById('pwa-banner-ios-sub');
+  const normalSub   = document.getElementById('pwa-banner-sub');
+
+  // Detect iOS Safari
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+  let deferredPrompt = null;
+
+  const iosArrow = document.getElementById('pwa-ios-arrow');
+
+  function dismissArrow() {
+    if (!iosArrow) return;
+    iosArrow.classList.add('fading');
+    setTimeout(() => { iosArrow.classList.remove('visible', 'fading'); }, 400);
+  }
+
+  if (isIOS && isSafari) {
+    // iOS: show manual instructions + bouncing arrow, no install button
+    installBtn.style.display = 'none';
+    normalSub.style.display  = 'none';
+    iosSub.style.display     = 'block';
+    setTimeout(() => {
+      banner.classList.add('visible');
+      // Show arrow 0.5s after banner appears
+      setTimeout(() => {
+        if (iosArrow) iosArrow.classList.add('visible');
+        // Auto-fade after 3 seconds
+        setTimeout(dismissArrow, 3000);
+      }, 500);
+    }, 2500);
+  } else {
+    // Android / Chrome: wait for beforeinstallprompt
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      setTimeout(() => banner.classList.add('visible'), 2000);
+    });
+  }
+
+  installBtn.addEventListener('click', async function() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    banner.classList.remove('visible');
+    if (outcome === 'accepted') localStorage.setItem('pwa-dismissed', '1');
+  });
+
+  dismissBtn.addEventListener('click', function() {
+    banner.classList.remove('visible');
+    dismissArrow();
+    localStorage.setItem('pwa-dismissed', '1');
+  });
+
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(function() {});
+  }
+})();
+</script>
+</body>
+</html>

@@ -87,4 +87,4 @@ async function sendVehicleReadySMS(booking) {
   await sendBrevoSMS(booking.phone, msg);
 }
 
-module.exports = { sendConfirmationSMS, sendCancellationSMS, sendReminderSMS, sendRescheduleSMS, sendVehicleReadySMS, se
+module.exports = { sendConfirmationSMS, sendCancellationSMS, sendReminderSMS, sendRescheduleSMS, sendVehicleReadySMS, sendBrevoSMS };
