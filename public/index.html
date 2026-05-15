@@ -1747,42 +1747,41 @@
         const modelDisplay = document.getElementById('model-display');
 
         // ── Model matching ──────────────────────────────────────────────
-        // Tier 0: use the description field ("E5 CFMOTO 300NK ATHENS BLUE")
-        // which contains the marketing model name — far more reliable than
-        // the internal code ("CF300-BF", "CF400-8F", etc.).
-        // Tiers 1–3 are fallbacks for older/stock records with no description.
+        // Scope options by manufacturer so a SYM plate can never match a
+        // CFMOTO dropdown option and vice-versa.
+        const mfr = (data.manufacturer || '').toUpperCase();
         const allOptions = document.querySelectorAll('.cs-option');
+        const cfmotoOptions = document.querySelectorAll('#pane-cfmoto .cs-option');
+        const symOptions    = document.querySelectorAll('#pane-sym .cs-option');
+        // If manufacturer is known, restrict search to that brand's pane
+        const scopedOptions = mfr === 'SYM' ? symOptions
+                            : mfr === 'CFMOTO' ? cfmotoOptions
+                            : allOptions;
+
         let matched = null;
         let descMatched = false;
         const rawUpper = data.model.trim().toUpperCase();
 
-        // 0. Description-based match
-        if (!matched && data.description) {
+        // 0a. CFMOTO description-based match
+        // description field ("E5 CFMOTO 450MT BLUE") is far more reliable than
+        // the internal code ("CF400-8F", etc.)
+        if (!matched && data.description && mfr !== 'SYM') {
           const descUp = data.description.toUpperCase();
-          // Extract the token(s) immediately after "CF" or "CFMOTO"
-          // e.g. "E5 CFMOTO 450MT BLUE" → "450MT"
-          //      "E5 CF450CL-C BOB BLA" → "450CL-C"
-          //      "E5 CFMOTO 450CL-C BOBBER NEBULA BLACK" → "450CL-C BOBBER"
           const dm = descUp.match(/\bCF(?:MOTO)?\s*([A-Z0-9][\w-]*(?:\s+BOBBER)?)/);
           if (dm) {
             const cand = dm[1].trim();
-            // a) Exact match
-            allOptions.forEach(opt => {
+            cfmotoOptions.forEach(opt => {
               if (opt.textContent.trim().toUpperCase() === cand) matched = opt;
             });
-            // b) Dropdown option starts with candidate
-            //    e.g. "800MT" → "800MT Explore Edition"
             if (!matched) {
-              allOptions.forEach(opt => {
+              cfmotoOptions.forEach(opt => {
                 const t = opt.textContent.trim().toUpperCase();
                 if (t.startsWith(cand) && (!matched || t.length < matched.textContent.trim().length))
                   matched = opt;
               });
             }
-            // c) Candidate starts with the option's first token
-            //    e.g. cand "700CL-X" starts with option token "700CL-X"
             if (!matched) {
-              allOptions.forEach(opt => {
+              cfmotoOptions.forEach(opt => {
                 const firstToken = opt.textContent.trim().toUpperCase().split(/\s+/)[0];
                 if (firstToken.length >= 3 && cand.startsWith(firstToken)) matched = opt;
               });
@@ -1791,30 +1790,45 @@
           }
         }
 
-        // 1. Exact match on internal model code (case-insensitive)
+        // 0b. SYM description-based match
+        // description: "E5 SYM SYMPHONY SR 125I CBS WHITE"
+        // Try each SYM option text as a substring of the description (normalised)
+        if (!matched && data.description && mfr !== 'CFMOTO') {
+          const descNorm = data.description.toUpperCase().replace(/[^A-Z0-9\s]/g, ' ').replace(/\s+/g, ' ');
+          symOptions.forEach(opt => {
+            const t = opt.textContent.trim().toUpperCase().replace(/[^A-Z0-9\s]/g, ' ').replace(/\s+/g, ' ');
+            if (t.length >= 4 && descNorm.includes(t)) {
+              // Prefer longer (more specific) match
+              if (!matched || t.length > matched.textContent.trim().length) matched = opt;
+            }
+          });
+          if (matched) descMatched = true;
+        }
+
+        // 1. Exact match on internal model code within scoped options
         if (!matched) {
-          allOptions.forEach(opt => {
+          scopedOptions.forEach(opt => {
             if (opt.textContent.trim().toUpperCase() === rawUpper) matched = opt;
           });
         }
 
-        // 2. Strip "CF" prefix and try again (CFMOTO internal codes)
-        if (!matched) {
+        // 2. Strip "CF" prefix (CFMOTO internal codes)
+        if (!matched && mfr !== 'SYM') {
           const stripped = rawUpper.startsWith('CF') ? rawUpper.slice(2) : rawUpper;
           const base = stripped.replace(/-[A-Z0-9]+$/i, '');
-          allOptions.forEach(opt => {
+          cfmotoOptions.forEach(opt => {
             const t = opt.textContent.trim().toUpperCase();
             if (t === stripped || t === base) matched = opt;
           });
         }
 
-        // 3. Displacement substring match — last resort
+        // 3. Displacement substring match — last resort, scoped to manufacturer
         if (!matched) {
           const numMatch = rawUpper.match(/\d+/);
           if (numMatch) {
             const cc = numMatch[0];
             let bestLen = 0;
-            allOptions.forEach(opt => {
+            scopedOptions.forEach(opt => {
               const t = opt.textContent.trim().toUpperCase();
               if (t.includes(cc) && t.length > bestLen) { matched = opt; bestLen = t.length; }
             });
@@ -1984,244 +1998,3 @@
     placements.forEach(p => {
       const wrap = document.createElement('div');
       wrap.className = 'bg-shape';
-      wrap.style.cssText = `
-        width:${p.size}px; height:${p.size}px;
-        top:${p.top};
-        ${p.side}:${p.offset};
-        color:${p.color};
-        animation-duration:${p.dur}s;
-        animation-delay:-${p.delay}s;
-        display:flex; align-items:center; justify-content:center;
-      `;
-      wrap.innerHTML = MOTO_SVGS[p.type];
-      container.appendChild(wrap);
-      setTimeout(() => wrap.classList.add('show'), 600);
-    });
-  }
-  createShapes();
-
-  // 5. Vehicle section reveal
-  function revealVehicleSection() {
-    const sec = document.getElementById('vehicle-section');
-    if (!sec.classList.contains('revealed')) {
-      sec.classList.add('revealed');
-      sec.querySelectorAll('.field-reveal').forEach((el, i) => {
-        setTimeout(() => el.classList.add('visible'), 80 + i * 80);
-      });
-    }
-  }
-
-  // ── 3D CARD TILT ──────────────────────────────────────────────────
-  document.querySelectorAll('.service-card').forEach(card => {
-    card.addEventListener('mousemove', e => {
-      const r = card.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width  - 0.5;
-      const y = (e.clientY - r.top)  / r.height - 0.5;
-      card.style.transform = `perspective(600px) rotateY(${x * 14}deg) rotateX(${-y * 10}deg) translateY(-3px) scale(1.02)`;
-    });
-    card.addEventListener('mouseleave', () => {
-      card.style.transform = '';
-    });
-  });
-
-  // ── HERO PARALLAX ─────────────────────────────────────────────────
-  window.addEventListener('scroll', () => {
-    const hero = document.querySelector('.hero');
-    if (hero) {
-      const y = window.scrollY * 0.35;
-      hero.style.backgroundPositionY = `${y}px`;
-      const h1 = hero.querySelector('h1');
-      const sub = hero.querySelector('.hero-sub');
-      const lbl = hero.querySelector('.hero-label');
-      if (h1)  h1.style.transform  = `translateY(${y * 0.18}px)`;
-      if (sub) sub.style.transform = `translateY(${y * 0.12}px)`;
-      if (lbl) lbl.style.transform = `translateY(${y * 0.08}px)`;
-    }
-    updateProgress();
-    updateTracker();
-  }, { passive: true });
-
-  updateProgress();
-  updateTracker();
-</script>
-
-<!-- ── PWA INSTALL BANNER ── -->
-<style>
-  #pwa-banner {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    background: #0f2429;
-    border-top: 1px solid rgba(0,155,180,0.35);
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    z-index: 9999;
-    transform: translateY(100%);
-    transition: transform 0.4s cubic-bezier(0.34,1.2,0.64,1);
-    box-shadow: 0 -4px 24px rgba(0,0,0,0.5);
-  }
-  #pwa-banner.visible { transform: translateY(0); }
-  #pwa-banner-icon { width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0; object-fit: contain; background: #1a3540; }
-  #pwa-banner-text { flex: 1; min-width: 0; }
-  #pwa-banner-title { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 2px; }
-  #pwa-banner-sub { font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.4; }
-  #pwa-banner-ios-sub { font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.5; display: none; }
-  #pwa-banner-btns { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
-  #pwa-install-btn {
-    background: #009BB4; border: none; border-radius: 6px;
-    color: #fff; font-size: 12px; font-weight: 700;
-    padding: 7px 14px; cursor: pointer; white-space: nowrap;
-    font-family: inherit;
-  }
-  #pwa-dismiss-btn {
-    background: none; border: none; color: rgba(255,255,255,0.4);
-    font-size: 11px; cursor: pointer; text-align: center;
-    font-family: inherit; padding: 2px;
-  }
-  #pwa-dismiss-btn:hover { color: rgba(255,255,255,0.7); }
-
-  /* iOS share arrow */
-  #pwa-ios-arrow {
-    position: fixed;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    z-index: 10000;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.4s ease;
-  }
-  #pwa-ios-arrow.visible { opacity: 1; }
-  #pwa-ios-arrow.fading  { opacity: 0; }
-  #pwa-ios-arrow-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: #009BB4;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    text-shadow: 0 1px 6px rgba(0,0,0,0.8);
-  }
-  #pwa-ios-arrow-chevrons {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    animation: arrowBounce 1s ease-in-out infinite;
-  }
-  #pwa-ios-arrow-chevrons span {
-    display: block;
-    width: 18px;
-    height: 10px;
-    border-right: 3px solid #009BB4;
-    border-bottom: 3px solid #009BB4;
-    transform: rotate(45deg);
-    border-radius: 1px;
-  }
-  #pwa-ios-arrow-chevrons span:nth-child(1) { opacity: 0.4; }
-  #pwa-ios-arrow-chevrons span:nth-child(2) { opacity: 0.7; }
-  #pwa-ios-arrow-chevrons span:nth-child(3) { opacity: 1.0; }
-  @keyframes arrowBounce {
-    0%, 100% { transform: translateY(0); }
-    50%       { transform: translateY(6px); }
-  }
-</style>
-
-<div id="pwa-banner">
-  <img id="pwa-banner-icon" src="/icons/icon-192.png" alt="">
-  <div id="pwa-banner-text">
-    <div id="pwa-banner-title">Add to Home Screen</div>
-    <div id="pwa-banner-sub">Install the booking app for quick access anytime.</div>
-    <div id="pwa-banner-ios-sub">Tap <strong style="color:#009BB4">Share</strong> then <strong style="color:#009BB4">Add to Home Screen</strong></div>
-  </div>
-  <div id="pwa-banner-btns">
-    <button id="pwa-install-btn">Install</button>
-    <button id="pwa-dismiss-btn">Not now</button>
-  </div>
-</div>
-
-<!-- iOS share arrow -->
-<div id="pwa-ios-arrow">
-  <div id="pwa-ios-arrow-label">Tap Share</div>
-  <div id="pwa-ios-arrow-chevrons">
-    <span></span><span></span><span></span>
-  </div>
-</div>
-
-<script>
-(function() {
-  // Don't show if already installed (standalone mode) or already dismissed
-  if (window.matchMedia('(display-mode: standalone)').matches) return;
-  if (localStorage.getItem('pwa-dismissed')) return;
-
-  const banner      = document.getElementById('pwa-banner');
-  const installBtn  = document.getElementById('pwa-install-btn');
-  const dismissBtn  = document.getElementById('pwa-dismiss-btn');
-  const iosSub      = document.getElementById('pwa-banner-ios-sub');
-  const normalSub   = document.getElementById('pwa-banner-sub');
-
-  // Detect iOS Safari
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-
-  let deferredPrompt = null;
-
-  const iosArrow = document.getElementById('pwa-ios-arrow');
-
-  function dismissArrow() {
-    if (!iosArrow) return;
-    iosArrow.classList.add('fading');
-    setTimeout(() => { iosArrow.classList.remove('visible', 'fading'); }, 400);
-  }
-
-  if (isIOS && isSafari) {
-    // iOS: show manual instructions + bouncing arrow, no install button
-    installBtn.style.display = 'none';
-    normalSub.style.display  = 'none';
-    iosSub.style.display     = 'block';
-    setTimeout(() => {
-      banner.classList.add('visible');
-      // Show arrow 0.5s after banner appears
-      setTimeout(() => {
-        if (iosArrow) iosArrow.classList.add('visible');
-        // Auto-fade after 3 seconds
-        setTimeout(dismissArrow, 3000);
-      }, 500);
-    }, 2500);
-  } else {
-    // Android / Chrome: wait for beforeinstallprompt
-    window.addEventListener('beforeinstallprompt', function(e) {
-      e.preventDefault();
-      deferredPrompt = e;
-      setTimeout(() => banner.classList.add('visible'), 2000);
-    });
-  }
-
-  installBtn.addEventListener('click', async function() {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    deferredPrompt = null;
-    banner.classList.remove('visible');
-    if (outcome === 'accepted') localStorage.setItem('pwa-dismissed', '1');
-  });
-
-  dismissBtn.addEventListener('click', function() {
-    banner.classList.remove('visible');
-    dismissArrow();
-    localStorage.setItem('pwa-dismissed', '1');
-  });
-
-  // Register service worker
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(function() {});
-  }
-})();
-</script>
-</body>
-</html>
