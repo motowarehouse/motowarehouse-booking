@@ -2516,8 +2516,11 @@
       actions = `<div style="font-size:12px;color:var(--grey);">Cancelled: ${b.updatedAt ? new Date(b.updatedAt).toLocaleString('en-GB') : '—'}</div>`;
     }
 
-    const todayISO = new Date().toISOString().split('T')[0];
-    const isOverdue = b.date && b.date < todayISO && (b.status === 'pending' || b.status === 'accepted');
+    const now = new Date();
+    const todayISO  = now.toISOString().split('T')[0];
+    const nowTime   = now.toTimeString().slice(0, 5); // "HH:MM"
+    const isOverdue = b.date && (b.status === 'pending' || b.status === 'accepted') &&
+      (b.date < todayISO || (b.date === todayISO && b.time && b.time < nowTime));
     const dateChip = (isOther && !b.date)
       ? `<div class="booking-date-chip chip-needs-call"><div class="chip-date">📞 Needs</div><div class="chip-time">Call</div></div>`
       : isOverdue
@@ -3533,25 +3536,4 @@
 
     const win = window.open('', '_blank');
     win.document.write(`<!DOCTYPE html><html><head><title>Daily Schedule – ${today}</title>
-      <style>body{font-family:Arial,sans-serif;font-size:13px;margin:24px;}
-      h2{margin-bottom:4px;}p{color:#666;margin-bottom:16px;}
-      table{border-collapse:collapse;width:100%;}
-      th{background:#0a1a1f;color:#fff;padding:8px 10px;text-align:left;font-size:12px;}
-      td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:top;}
-      tr:nth-child(even)td{background:#f9f9f9;}
-      @media print{button{display:none;}}</style></head><body>
-      <h2>Motowarehouse – Daily Schedule</h2>
-      <p>${today} &nbsp;|&nbsp; ${todayBookings.length} appointment(s)</p>
-      <table><thead><tr>
-        <th>Time</th><th>Ref</th><th>Plate</th><th>Vehicle</th>
-        <th>Service</th><th>Name</th><th>Phone</th><th>Status</th><th>Mechanic ✓</th>
-      </tr></thead><tbody>${rows || '<tr><td colspan="9" style="color:#666;padding:20px;text-align:center;">No appointments for today.</td></tr>'}</tbody></table>
-      <br><button onclick="window.print()" style="padding:8px 18px;background:#009BB4;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;">Print</button>
-    </body></html>`);
-    win.document.close();
-  }
-
-  checkAuth();
-</script>
-</body>
-</html>
+      
