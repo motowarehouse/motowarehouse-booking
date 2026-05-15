@@ -95,6 +95,10 @@
     .booking-date-chip.chip-needs-call { background:rgba(229,144,0,0.1); border-color:rgba(229,144,0,0.35); }
     .booking-date-chip.chip-needs-call .chip-date { color:#E59000; font-size:13px; }
     .booking-date-chip.chip-needs-call .chip-time { color:#E59000; font-size:12px; }
+    .booking-date-chip.chip-overdue { background:rgba(229,0,82,0.1); border-color:rgba(229,0,82,0.45); }
+    .booking-date-chip.chip-overdue .chip-date { color:var(--red); }
+    .booking-date-chip.chip-overdue .chip-time { color:rgba(229,0,82,0.75); }
+    .chip-overdue-label { font-size:9px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--red); margin-top:4px; }
     .quick-actions { display:flex; gap:5px; align-items:center; flex-shrink:0; }
     .btn-quick { width:30px; height:30px; border-radius:50%; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; transition:all 0.15s; flex-shrink:0; }
     .btn-quick-accept { background:rgba(0,200,150,0.15); color:var(--green); border:1px solid rgba(0,200,150,0.3); }
@@ -2322,7 +2326,7 @@
               <span class="status-badge status-completed">Completed</span>
             </div>
           </div>
-          <div class="booking-date-chip"><div class="chip-date">${b.date || '—'}</div><div class="chip-time">${b.time || '—'}</div></div>
+          <div class="booking-date-chip"><div class="chip-date">${fmtChipDate(b.date)}</div><div class="chip-time">${b.time || '—'}</div></div>
         </div>
         <div class="booking-detail ${isExpanded ? 'open' : ''}" id="detail-${b.id}">
           <div class="detail-grid">
@@ -2356,7 +2360,7 @@
               <span class="status-badge status-no-show">No Show</span>
             </div>
           </div>
-          <div class="booking-date-chip" style="opacity:0.6;"><div class="chip-date">${b.date || '—'}</div><div class="chip-time">${b.time || '—'}</div></div>
+          <div class="booking-date-chip" style="opacity:0.6;"><div class="chip-date">${fmtChipDate(b.date)}</div><div class="chip-time">${b.time || '—'}</div></div>
         </div>
         <div class="booking-detail ${isExpanded ? 'open' : ''}" id="detail-${b.id}">
           <div class="detail-grid">
@@ -2426,7 +2430,7 @@
               ${csBadge}
             </div>
           </div>
-          <div class="booking-date-chip" style="opacity:0.55;"><div class="chip-date">${b.date || '—'}</div><div class="chip-time">${b.time || '—'}</div></div>
+          <div class="booking-date-chip" style="opacity:0.55;"><div class="chip-date">${fmtChipDate(b.date)}</div><div class="chip-time">${b.time || '—'}</div></div>
           <div class="quick-actions" onclick="event.stopPropagation()">
             <button class="btn-quick btn-quick-reschedule" title="Reschedule" onclick="openRescheduleModal(${b.id}, event)">↺</button>
           </div>
@@ -2512,9 +2516,13 @@
       actions = `<div style="font-size:12px;color:var(--grey);">Cancelled: ${b.updatedAt ? new Date(b.updatedAt).toLocaleString('en-GB') : '—'}</div>`;
     }
 
-    const dateChip = isOther && !b.date
+    const todayISO = new Date().toISOString().split('T')[0];
+    const isOverdue = b.date && b.date < todayISO && (b.status === 'pending' || b.status === 'accepted');
+    const dateChip = (isOther && !b.date)
       ? `<div class="booking-date-chip chip-needs-call"><div class="chip-date">📞 Needs</div><div class="chip-time">Call</div></div>`
-      : `<div class="booking-date-chip"><div class="chip-date">${b.date || '—'}</div><div class="chip-time">${b.time || '—'}</div></div>`;
+      : isOverdue
+      ? `<div class="booking-date-chip chip-overdue"><div class="chip-date">${fmtChipDate(b.date)}</div><div class="chip-time">${b.time || '—'}</div><div class="chip-overdue-label">⚠ OVERDUE</div></div>`
+      : `<div class="booking-date-chip"><div class="chip-date">${fmtChipDate(b.date)}</div><div class="chip-time">${b.time || '—'}</div></div>`;
 
     return `
       <div class="booking-card ${b.status}${isNeedsCall ? '" style="border-left-color:#E59000;' : '"'}" id="card-${b.id}">
@@ -2565,7 +2573,7 @@
             <div class="booking-badges-row"><span class="status-badge status-phone">Via Phone</span></div>
           </div>
           <div class="booking-date-chip" style="background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.3);">
-            <div class="chip-date" style="color:var(--white);">${bl.date}</div>
+            <div class="chip-date" style="color:var(--white);">${fmtChipDate(bl.date)}</div>
             <div class="chip-time" style="color:var(--purple);">${bl.startTime}–${bl.endTime}</div>
           </div>
           <div class="quick-actions" onclick="event.stopPropagation()">
@@ -3157,6 +3165,12 @@
   function formatDate(dateStr) {
     return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
   }
+  // Returns DD/MM/YY for date chips (dates are stored as YYYY-MM-DD)
+  function fmtChipDate(dateStr) {
+    if (!dateStr) return '—';
+    const [y, m, d] = dateStr.split('-');
+    return `${d}/${m}/${y.slice(2)}`;
+  }
 
   let _toastTimer = null;
   function showToast(msg, type='', duration=5000) {
@@ -3521,23 +3535,4 @@
     win.document.write(`<!DOCTYPE html><html><head><title>Daily Schedule – ${today}</title>
       <style>body{font-family:Arial,sans-serif;font-size:13px;margin:24px;}
       h2{margin-bottom:4px;}p{color:#666;margin-bottom:16px;}
-      table{border-collapse:collapse;width:100%;}
-      th{background:#0a1a1f;color:#fff;padding:8px 10px;text-align:left;font-size:12px;}
-      td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:top;}
-      tr:nth-child(even)td{background:#f9f9f9;}
-      @media print{button{display:none;}}</style></head><body>
-      <h2>Motowarehouse – Daily Schedule</h2>
-      <p>${today} &nbsp;|&nbsp; ${todayBookings.length} appointment(s)</p>
-      <table><thead><tr>
-        <th>Time</th><th>Ref</th><th>Plate</th><th>Vehicle</th>
-        <th>Service</th><th>Name</th><th>Phone</th><th>Status</th><th>Mechanic ✓</th>
-      </tr></thead><tbody>${rows || '<tr><td colspan="9" style="color:#666;padding:20px;text-align:center;">No appointments for today.</td></tr>'}</tbody></table>
-      <br><button onclick="window.print()" style="padding:8px 18px;background:#009BB4;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;">Print</button>
-    </body></html>`);
-    win.document.close();
-  }
-
-  checkAuth();
-</script>
-</body>
-</html>
+      table{border
