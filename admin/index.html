@@ -3535,4 +3535,23 @@
     win.document.write(`<!DOCTYPE html><html><head><title>Daily Schedule – ${today}</title>
       <style>body{font-family:Arial,sans-serif;font-size:13px;margin:24px;}
       h2{margin-bottom:4px;}p{color:#666;margin-bottom:16px;}
-      table{border
+      table{border-collapse:collapse;width:100%;}
+      th{background:#0a1a1f;color:#fff;padding:8px 10px;text-align:left;font-size:12px;}
+      td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:top;}
+      tr:nth-child(even)td{background:#f9f9f9;}
+      @media print{button{display:none;}}</style></head><body>
+      <h2>Motowarehouse – Daily Schedule</h2>
+      <p>${today} &nbsp;|&nbsp; ${todayBookings.length} appointment(s)</p>
+      <table><thead><tr>
+        <th>Time</th><th>Ref</th><th>Plate</th><th>Vehicle</th>
+        <th>Service</th><th>Name</th><th>Phone</th><th>Status</th><th>Mechanic ✓</th>
+      </tr></thead><tbody>${rows || '<tr><td colspan="9" style="color:#666;padding:20px;text-align:center;">No appointments for today.</td></tr>'}</tbody></table>
+      <br><button onclick="window.print()" style="padding:8px 18px;background:#009BB4;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;">Print</button>
+    </body></html>`);
+    win.document.close();
+  }
+
+  checkAuth();
+</script>
+</body>
+</html>
