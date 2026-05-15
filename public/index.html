@@ -185,12 +185,12 @@
       .brand-badges   { display: none; }
       .logo-mark      { height: 36px; }
 
-      /* Right nav: stack phone + links vertically, hide "My Booking" on tiny screens */
-      .header-right { gap: 6px; }
-      .header-nav-link { padding: 6px 10px; font-size: 11px; letter-spacing: 0; }
-      .header-nav-link.ghost { display: none; }  /* hide My Booking — accessible from form */
+      /* Right nav */
+      .header-right { gap: 4px; }
+      .header-nav-link { padding: 5px 9px; font-size: 11px; letter-spacing: 0; }
+      .header-nav-link.ghost { display: inline-flex; }
       .header-divider { display: none; }
-      .header-phone { font-size: 13px; font-weight: 700; padding: 0; }
+      .header-phone { display: none; }
       .header-phone-label { display: none; }
     }
 
@@ -2007,35 +2007,4 @@
   // ── 3D CARD TILT ──────────────────────────────────────────────────
   document.querySelectorAll('.service-card').forEach(card => {
     card.addEventListener('mousemove', e => {
-      const r = card.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width  - 0.5;
-      const y = (e.clientY - r.top)  / r.height - 0.5;
-      card.style.transform = `perspective(600px) rotateY(${x * 14}deg) rotateX(${-y * 10}deg) translateY(-3px) scale(1.02)`;
-    });
-    card.addEventListener('mouseleave', () => {
-      card.style.transform = '';
-    });
-  });
-
-  // ── HERO PARALLAX ─────────────────────────────────────────────────
-  window.addEventListener('scroll', () => {
-    const hero = document.querySelector('.hero');
-    if (hero) {
-      const y = window.scrollY * 0.35;
-      hero.style.backgroundPositionY = `${y}px`;
-      const h1 = hero.querySelector('h1');
-      const sub = hero.querySelector('.hero-sub');
-      const lbl = hero.querySelector('.hero-label');
-      if (h1)  h1.style.transform  = `translateY(${y * 0.18}px)`;
-      if (sub) sub.style.transform = `translateY(${y * 0.12}px)`;
-      if (lbl) lbl.style.transform = `translateY(${y * 0.08}px)`;
-    }
-    updateProgress();
-    updateTracker();
-  }, { passive: true });
-
-  updateProgress();
-  updateTracker();
-</script>
-</body>
-</html>
+      const r = card.getBoundingClient
