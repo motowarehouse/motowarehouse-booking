@@ -1215,10 +1215,4 @@ module.exports = {
   importVehicles, getVehicleByPlate, getAllVehicles,
   createPartner, getPartnerByUsername, getPartnerById, getAllPartners, togglePartnerActive, updatePartnerPassword,
   getMechanicOffDays, addMechanicOffDay, removeMechanicOffDay,
-  createServiceEntry, getServiceEntryById, updateServiceEntry, deleteServiceEntry, getServiceHistoryByPlate, DEFAULT_SERVICE_ITEMS,
-  createWarrantyClaim, getWarrantyByPlate, getAllWarranties, updateWarrantyStatus,
-  updateMechanicNotes,
-  cancelBookingByCustomer,
-  getDurationMins,
-  initDB
-};
+  creat
