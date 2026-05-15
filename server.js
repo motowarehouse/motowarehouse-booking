@@ -11,6 +11,7 @@ const emailService = require('./emailService');
 const smsService = require('./smsService');
 const r2Service = require('./r2Service');
 const { startReminderCron } = require('./reminderCron');
+const { startBackupCron } = require('./backupCron');
 
 // Multer — memory storage, 100 MB per file, up to 20 files
 const upload = multer({
@@ -1115,6 +1116,7 @@ app.post('/api/booking/cancel', bookingRateLimit, async (req, res) => {
 db.initDB()
   .then(() => {
     startReminderCron();
+    startBackupCron();
     app.listen(PORT, () => {
       console.log(`\n✅ Motowarehouse Service Portal running on http://localhost:${PORT}`);
       console.log(`   Admin panel: http://localhost:${PORT}/admin`);
