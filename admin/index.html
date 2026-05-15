@@ -224,8 +224,8 @@
     .cal-dot.completed  { background:#00b882; opacity:0.7; }
     .cal-dot.no-show    { background:#4a5a6a; }
     .cal-count { font-size:10px; color:var(--grey); margin-top:3px; }
-    .cal-day-detail { background:var(--dark2); border:1px solid rgba(0,155,180,0.2); border-radius:8px; padding:20px; margin-top:16px; }
-    .cal-day-detail h4 { font-size:14px; font-weight:700; color:var(--blue); margin-bottom:14px; }
+    .cal-day-detail { background:transparent; margin-top:16px; }
+    .cal-day-detail h4 { font-size:14px; font-weight:700; color:var(--blue); margin-bottom:12px; }
 
     /* ── PANEL CARD ── */
     .panel-card { background:var(--dark2); border:1px solid rgba(0,155,180,0.12); border-radius:8px; padding:22px; margin-bottom:22px; }
@@ -2962,29 +2962,84 @@
       } else {
         const rows = events.sort((a,b) => (a.sub||'').localeCompare(b.sub||'')).map(e => {
           const color = e.type==='phone'?'purple':e.type==='accepted'?'green':e.type==='cancelled'?'red':'orange';
-          const existingNote = e._b ? (e._b.mechanicNotes || '') : '';
-          const noteSection = e._b ? `
-            <div class="cal-note-wrap" onclick="event.stopPropagation()">
-              <textarea class="cal-note-textarea" id="cal-note-${e._b.id}"
-                placeholder="Add notes for this appointment…">${escHtml(existingNote)}</textarea>
-              <button class="cal-note-save-btn" onclick="saveCalendarNote(${e._b.id})">Save note</button>
-            </div>` : '';
-          return `
-          <div class="today-slot" style="border-left:3px solid var(--${color});flex-direction:column;align-items:stretch;">
-            <div style="display:flex;align-items:center;gap:14px;">
-              <div class="today-time" style="font-size:14px;color:var(--${color});">${(e.sub||'').split(' · ')[1]||''}</div>
-              <div class="today-info" style="flex:1;">
-                <div class="today-name">${e.label}</div>
-                <div class="today-vehicle">${e.sub}</div>
+          const statusLabel = e.type==='accepted'?'Accepted':e.type==='phone'?'Phone Block':e.type==='cancelled'?'Cancelled':'Pending';
+          const time = e._b ? e._b.time : (e.startTime || '');
+
+          if (!e._b) {
+            // Phone/manual block
+            const b = e;
+            return `
+            <div style="border-left:3px solid var(--purple);background:rgba(167,139,250,0.06);border-radius:8px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <div style="font-size:22px;font-weight:900;color:var(--purple);min-width:54px;font-variant-numeric:tabular-nums;">${escHtml(b.startTime||'')}–${escHtml(b.endTime||'')}</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:14px;font-weight:700;color:var(--white);">📞 Phone Block${b.customerName ? ' — ' + escHtml(b.customerName) : ''}</div>
+                ${b.vehicle ? `<div style="font-size:12px;color:var(--grey);margin-top:3px;">${escHtml(b.vehicle)}</div>` : ''}
+                ${b.reason ? `<div style="font-size:12px;color:var(--grey);margin-top:2px;">${escHtml(b.reason)}</div>` : ''}
               </div>
-              ${e._b ? `<div class="quick-actions">
-                <button class="btn-quick btn-quick-reschedule" title="Reschedule" onclick="openRescheduleModal(${e._b.id}, event)">↺</button>
-              </div>` : ''}
+              ${b.customerPhone ? `<a href="tel:${escHtml(b.customerPhone)}" style="background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.3);border-radius:6px;color:var(--purple);font-size:13px;font-weight:700;padding:6px 12px;text-decoration:none;white-space:nowrap;" onclick="event.stopPropagation()">${escHtml(b.customerPhone)}</a>` : ''}
+            </div>`;
+          }
+
+          const b = e._b;
+          const svcLabel = SVC[b.serviceType] || b.serviceType || '—';
+          const vehicle  = [b.model, b.year].filter(Boolean).join(' ') || '—';
+          const plate    = b.plate || '—';
+          const phone    = b.phone || '';
+          const km       = b.km   ? `${b.km} km` : '';
+          const existingNote = b.mechanicNotes || '';
+
+          return `
+          <div style="border-left:3px solid var(--${color});background:var(--dark2);border-radius:8px;padding:0;margin-bottom:10px;overflow:hidden;">
+            <!-- Main row -->
+            <div style="display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:0;">
+              <!-- Time -->
+              <div style="background:rgba(0,0,0,0.2);padding:14px 0;text-align:center;align-self:stretch;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                <div style="font-size:20px;font-weight:900;color:var(--${color});font-variant-numeric:tabular-nums;line-height:1;">${escHtml(time)}</div>
+              </div>
+              <!-- Key info -->
+              <div style="padding:12px 16px;display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;">
+                <div>
+                  <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--grey);margin-bottom:2px;">Service</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--white);">${escHtml(svcLabel)}</div>
+                </div>
+                <div>
+                  <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--grey);margin-bottom:2px;">Vehicle</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--white);">${escHtml(vehicle)}</div>
+                </div>
+                <div>
+                  <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--grey);margin-bottom:2px;">Plate</div>
+                  <div style="font-size:15px;font-weight:900;color:var(--blue);letter-spacing:0.06em;">${escHtml(plate)}</div>
+                </div>
+                ${km ? `<div>
+                  <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--grey);margin-bottom:2px;">KM</div>
+                  <div style="font-size:13px;color:var(--white);">${escHtml(km)}</div>
+                </div>` : ''}
+                ${phone ? `<div>
+                  <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--grey);margin-bottom:2px;">Phone</div>
+                  <a href="tel:${escHtml(phone)}" style="font-size:14px;font-weight:700;color:var(--blue);text-decoration:none;" onclick="event.stopPropagation()">${escHtml(phone)}</a>
+                </div>` : ''}
+                <div>
+                  <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--grey);margin-bottom:2px;">Status</div>
+                  <div style="font-size:12px;font-weight:700;color:var(--${color});">${statusLabel}</div>
+                </div>
+              </div>
+              <!-- Actions -->
+              <div style="padding:12px 14px;display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+                <button class="btn-quick btn-quick-reschedule" title="Reschedule" onclick="openRescheduleModal(${b.id}, event)" style="font-size:18px;padding:4px 10px;">↺</button>
+              </div>
             </div>
-            ${noteSection}
+            <!-- Notes row -->
+            <div style="border-top:1px solid rgba(255,255,255,0.05);padding:10px 14px;" onclick="event.stopPropagation()">
+              <div style="display:flex;gap:8px;align-items:flex-start;">
+                <textarea class="cal-note-textarea" id="cal-note-${b.id}"
+                  placeholder="Workshop notes for this job…"
+                  style="flex:1;min-height:40px;font-size:12px;">${escHtml(existingNote)}</textarea>
+                <button class="cal-note-save-btn" onclick="saveCalendarNote(${b.id})" style="margin-top:0;white-space:nowrap;">Save</button>
+              </div>
+            </div>
           </div>`;
         }).join('');
-        dayDetail = `<div class="cal-day-detail"><h4>${label} — ${events.length} appointment${events.length>1?'s':''}</h4>${rows}</div>`;
+        dayDetail = `<div class="cal-day-detail"><h4 style="font-size:14px;font-weight:700;color:var(--blue);margin-bottom:14px;">${label} — ${events.length} appointment${events.length>1?'s':''}</h4>${rows}</div>`;
       }
     }
 
