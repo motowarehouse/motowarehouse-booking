@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Service Booking – Motowarehouse</title>
   <link rel="icon" type="image/png" href="/assets/MWH_Logo_New.png">
+  <link rel="manifest" href="/manifest-customer.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MW Booking">
+  <meta name="theme-color" content="#009BB4">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <style>
     @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Light.ttf'); font-weight:300; }
     @font-face { font-family:'SupremeLL'; src:url('/fonts/SupremeLLTT-Regular.ttf'); font-weight:400; }
@@ -1998,44 +2005,4 @@
     const sec = document.getElementById('vehicle-section');
     if (!sec.classList.contains('revealed')) {
       sec.classList.add('revealed');
-      sec.querySelectorAll('.field-reveal').forEach((el, i) => {
-        setTimeout(() => el.classList.add('visible'), 80 + i * 80);
-      });
-    }
-  }
-
-  // ── 3D CARD TILT ──────────────────────────────────────────────────
-  document.querySelectorAll('.service-card').forEach(card => {
-    card.addEventListener('mousemove', e => {
-      const r = card.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width  - 0.5;
-      const y = (e.clientY - r.top)  / r.height - 0.5;
-      card.style.transform = `perspective(600px) rotateY(${x * 14}deg) rotateX(${-y * 10}deg) translateY(-3px) scale(1.02)`;
-    });
-    card.addEventListener('mouseleave', () => {
-      card.style.transform = '';
-    });
-  });
-
-  // ── HERO PARALLAX ─────────────────────────────────────────────────
-  window.addEventListener('scroll', () => {
-    const hero = document.querySelector('.hero');
-    if (hero) {
-      const y = window.scrollY * 0.35;
-      hero.style.backgroundPositionY = `${y}px`;
-      const h1 = hero.querySelector('h1');
-      const sub = hero.querySelector('.hero-sub');
-      const lbl = hero.querySelector('.hero-label');
-      if (h1)  h1.style.transform  = `translateY(${y * 0.18}px)`;
-      if (sub) sub.style.transform = `translateY(${y * 0.12}px)`;
-      if (lbl) lbl.style.transform = `translateY(${y * 0.08}px)`;
-    }
-    updateProgress();
-    updateTracker();
-  }, { passive: true });
-
-  updateProgress();
-  updateTracker();
-</script>
-</body>
-</html>
+      sec.querySelectorAll('.field-reveal').forEach((el, i)
