@@ -106,16 +106,16 @@
     .booking-date-chip.chip-overdue .chip-time { color:rgba(229,0,82,0.75); }
     .chip-overdue-label { font-size:9px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--red); margin-top:4px; }
     .quick-actions { display:flex; gap:5px; align-items:center; flex-shrink:0; }
-    .btn-quick { width:30px; height:30px; border-radius:50%; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; transition:all 0.15s; flex-shrink:0; }
+    .btn-quick { height:28px; padding:0 11px; border-radius:6px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; transition:all 0.15s; flex-shrink:0; font-family:inherit; white-space:nowrap; }
     .btn-quick-accept { background:rgba(0,200,150,0.15); color:var(--green); border:1px solid rgba(0,200,150,0.3); }
     .btn-quick-accept:hover { background:var(--green); color:#0a1a1f; }
     .btn-quick-cancel { background:rgba(229,0,82,0.1); color:var(--red); border:1px solid rgba(229,0,82,0.25); }
     .btn-quick-cancel:hover { background:rgba(229,0,82,0.25); }
-    .btn-quick-reschedule { background:rgba(0,155,180,0.12); color:var(--blue); border:1px solid rgba(0,155,180,0.3); font-size:12px; }
+    .btn-quick-reschedule { background:rgba(0,155,180,0.12); color:var(--blue); border:1px solid rgba(0,155,180,0.3); }
     .btn-quick-reschedule:hover { background:rgba(0,155,180,0.25); }
-    .btn-quick-complete { background:rgba(0,180,130,0.15); color:#00c896; border:1px solid rgba(0,180,130,0.3); font-size:12px; }
+    .btn-quick-complete { background:rgba(0,180,130,0.15); color:#00c896; border:1px solid rgba(0,180,130,0.3); }
     .btn-quick-complete:hover { background:rgba(0,180,130,0.3); }
-    .btn-quick-noshow { background:rgba(100,110,130,0.1); color:#7a8fa0; border:1px solid rgba(100,110,130,0.2); font-size:11px; }
+    .btn-quick-noshow { background:rgba(100,110,130,0.1); color:#7a8fa0; border:1px solid rgba(100,110,130,0.2); }
     .btn-quick-noshow:hover { background:rgba(100,110,130,0.2); }
     .booking-service { font-size:11px; padding:3px 9px; border-radius:12px; font-weight:500; white-space:nowrap; }
     .service-small-service { background:rgba(0,200,150,0.12); color:var(--green); }
@@ -249,6 +249,9 @@
     .help-lang-bar { display:flex; gap:8px; margin-bottom:28px; }
     .help-lang-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:var(--grey); cursor:pointer; font-family:'SupremeLL',Arial,sans-serif; font-size:12px; font-weight:700; letter-spacing:0.1em; padding:7px 18px; text-transform:uppercase; transition:all 0.15s; }
     .help-lang-btn.active { background:var(--blue); border-color:var(--blue); color:#fff; }
+    .lang-btn { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:5px; color:var(--grey); cursor:pointer; font-family:'SupremeLL',Arial,sans-serif; font-size:11px; font-weight:700; letter-spacing:0.08em; padding:4px 10px; text-transform:uppercase; transition:all 0.15s; }
+    .lang-btn.active { background:var(--blue); border-color:var(--blue); color:#fff; }
+    .lang-btn:hover:not(.active) { border-color:rgba(255,255,255,0.25); color:var(--text); }
     .help-card { background:var(--dark3); border:1px solid rgba(0,155,180,0.15); border-radius:10px; margin-bottom:16px; overflow:hidden; }
     .help-card-header { background:rgba(0,155,180,0.10); border-bottom:1px solid rgba(0,155,180,0.15); padding:16px 22px; display:flex; align-items:center; gap:12px; }
     .help-card-icon { width:36px; height:36px; background:rgba(0,155,180,0.15); border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
@@ -419,7 +422,7 @@
       .booking-date-chip .chip-time { font-size: 12px; }
 
       /* Quick action buttons */
-      .btn-quick { width: 28px; height: 28px; font-size: 12px; }
+      .btn-quick { height: 26px; padding: 0 8px; font-size: 9px; }
       .quick-actions { gap: 4px; }
 
       /* Detail grid: 2-col on phone */
@@ -515,62 +518,77 @@
         <div class="sidebar-sub">Service Bookings</div>
       </div>
       <nav class="sidebar-nav">
-        <div class="nav-section-label">Bookings</div>
+        <div class="nav-section-label" data-en="Bookings" data-gr="Κρατήσεις">Bookings</div>
         <div class="nav-item active" id="nav-all" onclick="setView('all')">
-          <i class="nav-icon"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></i> All Bookings
+          <i class="nav-icon"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></i>
+          <span data-en="All Bookings" data-gr="Όλες οι Κρατήσεις">All Bookings</span>
           <span class="nav-badge" id="badge-all">0</span>
         </div>
         <div class="nav-item" id="nav-pending" onclick="setView('pending')">
-          <i class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg></i> Pending
+          <i class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg></i>
+          <span data-en="Pending" data-gr="Εκκρεμείς">Pending</span>
           <span class="nav-badge orange" id="badge-pending">0</span>
         </div>
         <div class="nav-item" id="nav-needs-call" onclick="setView('needs-call')">
-          <i class="nav-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.72a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></i> Needs Call
+          <i class="nav-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.72a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></i>
+          <span data-en="Needs Call" data-gr="Χρειάζεται Κλήση">Needs Call</span>
           <span class="nav-badge red" id="badge-needs-call" style="display:none;">0</span>
         </div>
         <div class="nav-item" id="nav-accepted" onclick="setView('accepted')">
-          <i class="nav-icon"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></i> Accepted
+          <i class="nav-icon"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></i>
+          <span data-en="Accepted" data-gr="Αποδεκτές">Accepted</span>
         </div>
         <div class="nav-item" id="nav-cancelled" onclick="setView('cancelled')">
-          <i class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></i> Cancelled
+          <i class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></i>
+          <span data-en="Cancelled" data-gr="Ακυρωμένες">Cancelled</span>
           <span class="nav-badge red" id="badge-needs-contact" style="display:none;">!</span>
         </div>
         <div class="nav-item" id="nav-no-show-history" onclick="setView('no-show-history')">
-          <i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/><line x1="4.22" y1="4.22" x2="19.78" y2="19.78"/></svg></i> No-Show History
+          <i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/><line x1="4.22" y1="4.22" x2="19.78" y2="19.78"/></svg></i>
+          <span data-en="No-Show History" data-gr="Ιστορικό No-Show">No-Show History</span>
         </div>
         <div class="nav-item" id="nav-today" onclick="setView('today')">
-          <i class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="12" cy="16" r="1" fill="currentColor"/></svg></i> Today's Schedule
+          <i class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="12" cy="16" r="1" fill="currentColor"/></svg></i>
+          <span data-en="Today's Schedule" data-gr="Πρόγραμμα Σήμερα">Today's Schedule</span>
         </div>
         <div class="nav-item" id="nav-calendar" onclick="setView('calendar')">
-          <i class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></i> Calendar
+          <i class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></i>
+          <span data-en="Calendar" data-gr="Ημερολόγιο">Calendar</span>
         </div>
         <div class="nav-item" id="nav-workload" onclick="setView('workload')">
-          <i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></i> Mechanic Workload
+          <i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></i>
+          <span data-en="Mechanic Workload" data-gr="Φόρτος Μηχανικού">Mechanic Workload</span>
         </div>
-        <div class="nav-section-label">Analytics</div>
+        <div class="nav-section-label" data-en="Analytics" data-gr="Αναλυτικά">Analytics</div>
         <div class="nav-item" id="nav-stats" onclick="setView('stats')">
-          <i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></i> Dashboard
+          <i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></i>
+          <span data-en="Dashboard" data-gr="Πίνακας Ελέγχου">Dashboard</span>
         </div>
-        <div class="nav-section-label">Management</div>
+        <div class="nav-section-label" data-en="Management" data-gr="Διαχείριση">Management</div>
         <div class="nav-item" id="nav-schedule" onclick="setView('schedule')">
-          <i class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></i> Block Time
+          <i class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></i>
+          <span data-en="Block Time" data-gr="Αποκλεισμός Ώρας">Block Time</span>
         </div>
         <div class="nav-item" id="nav-hours" onclick="setView('hours')">
-          <i class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg></i> Opening Hours
+          <i class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg></i>
+          <span data-en="Opening Hours" data-gr="Ώρες Λειτουργίας">Opening Hours</span>
         </div>
-        <div class="nav-section-label">Service History</div>
+        <div class="nav-section-label" data-en="Service History" data-gr="Ιστορικό Σέρβις">Service History</div>
         <div class="nav-item" id="nav-vehicles" onclick="setView('vehicles')">
-          <i class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2a10 10 0 0 1 0 20A10 10 0 0 1 12 2"/><path d="M12 6v2M12 16v2M6 12H4M20 12h-2"/></svg></i> Vehicles
+          <i class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2a10 10 0 0 1 0 20A10 10 0 0 1 12 2"/><path d="M12 6v2M12 16v2M6 12H4M20 12h-2"/></svg></i>
+          <span data-en="Vehicles" data-gr="Οχήματα">Vehicles</span>
         </div>
         <div class="nav-item" id="nav-partners" onclick="setView('partners')">
-          <i class="nav-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></i> Partners
+          <i class="nav-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></i>
+          <span data-en="Partners" data-gr="Συνεργάτες">Partners</span>
         </div>
         <div class="nav-item" id="nav-help" onclick="setView('help')" style="margin-top:auto;">
-          <i class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-width="2.5"/></svg></i> User Manual
+          <i class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-width="2.5"/></svg></i>
+          <span data-en="User Manual" data-gr="Εγχειρίδιο">User Manual</span>
         </div>
         <div class="nav-item" id="nav-warranty" onclick="setView('warranty')">
           <i class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></i>
-          Warranty
+          <span data-en="Warranty" data-gr="Εγγύηση">Warranty</span>
           <span id="warranty-badge" style="display:none;margin-left:auto;background:var(--orange);color:var(--dark);font-size:10px;font-weight:900;padding:1px 7px;border-radius:10px;"></span>
         </div>
       </nav>
@@ -586,6 +604,10 @@
         <div class="topbar-title" id="topbar-title">All Bookings</div>
         <div style="display:flex;align-items:center;gap:14px;">
           <div class="topbar-date" id="topbar-date"></div>
+          <div style="display:flex;gap:4px;">
+            <button class="lang-btn active" data-lang="en" onclick="setLang('en')">EN</button>
+            <button class="lang-btn" data-lang="el" onclick="setLang('el')">ΕΛ</button>
+          </div>
           <button id="notif-btn" onclick="toggleNotifications()" title="Push Notifications"
             style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:var(--grey);cursor:pointer;font-size:18px;line-height:1;padding:6px 10px;transition:all 0.2s;display:none;">
             🔔
@@ -596,11 +618,11 @@
 
         <!-- Stats -->
         <div class="stats-grid" id="stats-grid">
-          <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value pending" id="stat-pending">–</div></div>
-          <div class="stat-card"><div class="stat-label">Accepted</div><div class="stat-value accepted" id="stat-accepted">–</div></div>
-          <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="color:#00b882;" id="stat-completed">–</div></div>
-          <div class="stat-card"><div class="stat-label">Cancelled</div><div class="stat-value cancelled" id="stat-cancelled">–</div></div>
-          <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value total" id="stat-total">–</div></div>
+          <div class="stat-card"><div class="stat-label" data-en="Pending" data-gr="Εκκρεμείς">Pending</div><div class="stat-value pending" id="stat-pending">–</div></div>
+          <div class="stat-card"><div class="stat-label" data-en="Accepted" data-gr="Αποδεκτές">Accepted</div><div class="stat-value accepted" id="stat-accepted">–</div></div>
+          <div class="stat-card"><div class="stat-label" data-en="Completed" data-gr="Ολοκληρωμένες">Completed</div><div class="stat-value" style="color:#00b882;" id="stat-completed">–</div></div>
+          <div class="stat-card"><div class="stat-label" data-en="Cancelled" data-gr="Ακυρωμένες">Cancelled</div><div class="stat-value cancelled" id="stat-cancelled">–</div></div>
+          <div class="stat-card"><div class="stat-label" data-en="Total" data-gr="Σύνολο">Total</div><div class="stat-value total" id="stat-total">–</div></div>
         </div>
 
         <!-- Bookings list view -->
@@ -864,8 +886,101 @@
               <div style="font-size:26px;font-weight:900;color:var(--white);margin-bottom:6px;" id="help-main-title">Admin User Manual</div>
               <div style="font-size:15px;color:var(--grey);margin-bottom:20px;" id="help-main-sub">Complete guide to managing the Motowarehouse Service Booking Portal.</div>
               <div class="help-lang-bar">
-                <button class="help-lang-btn active" onclick="setHelpLang('en')">EN</button>
-                <button class="help-lang-btn" onclick="setHelpLang('el')">GR</button>
+                <button class="help-lang-btn" id="help-lang-en" onclick="setLang('en')">EN</button>
+                <button class="help-lang-btn" id="help-lang-el" onclick="setLang('el')">ΕΛ</button>
+              </div>
+            </div>
+
+            <!-- WHAT TO DO WHEN -->
+            <div class="help-card" style="border-color:rgba(229,144,0,0.3);">
+              <div class="help-card-header" style="background:rgba(229,144,0,0.10);border-bottom-color:rgba(229,144,0,0.2);">
+                <div class="help-card-icon" style="background:rgba(229,144,0,0.15);"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+                <div class="help-card-title" style="color:#E59000;" data-en="What To Do When…" data-gr="Τι να Κάνω Όταν…">What To Do When…</div>
+              </div>
+              <div class="help-card-body">
+
+                <div class="help-block">
+                  <div class="help-q" data-en="A new booking arrives" data-gr="Φτάνει νέα κράτηση">A new booking arrives</div>
+                  <ul class="help-steps">
+                    <li><span class="help-step-num">1</span><span data-en="You will receive an email notification and a push alert on your device." data-gr="Θα λάβετε email ειδοποίηση και push alert στη συσκευή σας.">You will receive an email notification and a push alert on your device.</span></li>
+                    <li><span class="help-step-num">2</span><span data-en="Go to <strong>Pending</strong> in the sidebar and open the booking card to review the details." data-gr="Πηγαίνετε στις <strong>Εκκρεμείς</strong> από το μενού και ανοίξτε την κάρτα για να δείτε τις λεπτομέρειες.">Go to <strong>Pending</strong> in the sidebar and open the booking card to review the details.</span></li>
+                    <li><span class="help-step-num">3</span><span data-en="If the slot works — click <strong>Accept</strong>. The customer gets a confirmation email and SMS automatically." data-gr="Αν η ώρα είναι εντάξει — πατήστε <strong>Accept</strong>. Ο πελάτης λαμβάνει email και SMS αυτόματα.">If the slot works — click <strong>Accept</strong>. The customer gets a confirmation email and SMS automatically.</span></li>
+                    <li><span class="help-step-num">4</span><span data-en="If the slot doesn't work — click <strong>Reschedule</strong> to move it, or <strong>Cancel</strong> and call the customer to arrange a new time." data-gr="Αν η ώρα δεν βολεύει — πατήστε <strong>Reschedule</strong> για αλλαγή, ή <strong>Cancel</strong> και καλέστε τον πελάτη.">If the slot doesn't work — click <strong>Reschedule</strong> to move it, or <strong>Cancel</strong> and call the customer to arrange a new time.</span></li>
+                  </ul>
+                </div>
+
+                <div class="help-block">
+                  <div class="help-q" data-en="A customer calls to book by phone" data-gr="Πελάτης τηλεφωνεί για κράτηση">A customer calls to book by phone</div>
+                  <ul class="help-steps">
+                    <li><span class="help-step-num">1</span><span data-en="Agree on a date, time, and service type with the customer." data-gr="Συμφωνήστε με τον πελάτη ημερομηνία, ώρα και είδος σέρβις.">Agree on a date, time, and service type with the customer.</span></li>
+                    <li><span class="help-step-num">2</span><span data-en="Go to <strong>Block Time</strong> in the sidebar." data-gr="Πηγαίνετε στον <strong>Αποκλεισμός Ώρας</strong> από το μενού.">Go to <strong>Block Time</strong> in the sidebar.</span></li>
+                    <li><span class="help-step-num">3</span><span data-en="Select the date, set the From/To times, and fill in the customer name, phone, and vehicle model." data-gr="Επιλέξτε ημερομηνία, ορίστε ώρες Από/Έως και συμπληρώστε όνομα, τηλέφωνο και μοντέλο πελάτη.">Select the date, set the From/To times, and fill in the customer name, phone, and vehicle model.</span></li>
+                    <li><span class="help-step-num">4</span><span data-en="Click <strong>Block This Time</strong>. The slot is now reserved and unavailable for online bookings." data-gr="Πατήστε <strong>Αποκλεισμός Ώρας</strong>. Η ώρα είναι πλέον δεσμευμένη και δεν εμφανίζεται online.">Click <strong>Block This Time</strong>. The slot is now reserved and unavailable for online bookings.</span></li>
+                  </ul>
+                </div>
+
+                <div class="help-block">
+                  <div class="help-q" data-en="A customer submits an &ldquo;Other Request&rdquo;" data-gr="Πελάτης υποβάλλει &ldquo;Άλλο Αίτημα&rdquo;">A customer submits an "Other Request"</div>
+                  <ul class="help-steps">
+                    <li><span class="help-step-num">1</span><span data-en="An orange <strong>Needs Call</strong> badge appears in the sidebar. Go to the <strong>Needs Call</strong> tab." data-gr="Εμφανίζεται πορτοκαλί σήμα <strong>Χρειάζεται Κλήση</strong> στο μενού. Πηγαίνετε στην καρτέλα <strong>Needs Call</strong>.">An orange <strong>Needs Call</strong> badge appears in the sidebar. Go to the <strong>Needs Call</strong> tab.</span></li>
+                    <li><span class="help-step-num">2</span><span data-en="Call the customer to understand what they need and agree on a date and time." data-gr="Καλέστε τον πελάτη για να συζητήσετε τι χρειάζεται και να συμφωνήσετε σε ημερομηνία και ώρα.">Call the customer to understand what they need and agree on a date and time.</span></li>
+                    <li><span class="help-step-num">3</span><span data-en="Go to <strong>Block Time</strong> and reserve the agreed slot with the customer's details." data-gr="Πηγαίνετε στον <strong>Αποκλεισμός Ώρας</strong> και δεσμεύστε την ώρα με τα στοιχεία του πελάτη.">Go to <strong>Block Time</strong> and reserve the agreed slot with the customer's details.</span></li>
+                    <li><span class="help-step-num">4</span><span data-en="Back in the Needs Call tab, tick all checklist steps and click <strong>Mark as Scheduled</strong> to close the request." data-gr="Στην καρτέλα Needs Call, τσεκάρετε όλα τα βήματα και πατήστε <strong>Mark as Scheduled</strong> για να κλείσετε το αίτημα.">Back in the Needs Call tab, tick all checklist steps and click <strong>Mark as Scheduled</strong> to close the request.</span></li>
+                  </ul>
+                </div>
+
+                <div class="help-block">
+                  <div class="help-q" data-en="A customer doesn&rsquo;t show up" data-gr="Πελάτης δεν εμφανίζεται">A customer doesn't show up</div>
+                  <ul class="help-steps">
+                    <li><span class="help-step-num">1</span><span data-en="Find the booking in <strong>All Bookings</strong> (it will show ⚠ OVERRUN if the appointment time has passed)." data-gr="Βρείτε την κράτηση στις <strong>Όλες οι Κρατήσεις</strong> (θα εμφανίζει ⚠ OVERRUN αν η ώρα έχει παρέλθει).">Find the booking in <strong>All Bookings</strong> (it will show ⚠ OVERRUN if the appointment time has passed).</span></li>
+                    <li><span class="help-step-num">2</span><span data-en="Click the booking card and press <strong>No Show</strong>. The booking is marked accordingly." data-gr="Κάντε κλικ στην κάρτα και πατήστε <strong>No Show</strong>. Η κράτηση σημειώνεται αντίστοιχα.">Click the booking card and press <strong>No Show</strong>. The booking is marked accordingly.</span></li>
+                    <li><span class="help-step-num">3</span><span data-en="The slot is freed up automatically. No notification is sent to the customer." data-gr="Η ώρα απελευθερώνεται αυτόματα. Δεν αποστέλλεται ειδοποίηση στον πελάτη.">The slot is freed up automatically. No notification is sent to the customer.</span></li>
+                  </ul>
+                  <div class="help-tip" data-en="Repeat no-shows (3 or more) are flagged in the No-Show History tab." data-gr="Επαναλαμβανόμενες μη εμφανίσεις (3 ή περισσότερες) επισημαίνονται στην καρτέλα Ιστορικό No-Show.">Repeat no-shows (3 or more) are flagged in the No-Show History tab.</div>
+                </div>
+
+                <div class="help-block">
+                  <div class="help-q" data-en="A booking needs to be rescheduled" data-gr="Κράτηση χρειάζεται αλλαγή ώρας">A booking needs to be rescheduled</div>
+                  <ul class="help-steps">
+                    <li><span class="help-step-num">1</span><span data-en="Find the booking and click the <strong>Reschedule</strong> button (works on both pending and accepted bookings)." data-gr="Βρείτε την κράτηση και πατήστε <strong>Reschedule</strong> (λειτουργεί σε εκκρεμείς και αποδεκτές κρατήσεις).">Find the booking and click the <strong>Reschedule</strong> button (works on both pending and accepted bookings).</span></li>
+                    <li><span class="help-step-num">2</span><span data-en="Pick a new date and available time slot. Only valid open slots are shown." data-gr="Επιλέξτε νέα ημερομηνία και διαθέσιμη ώρα. Εμφανίζονται μόνο έγκυρες ώρες.">Pick a new date and available time slot. Only valid open slots are shown.</span></li>
+                    <li><span class="help-step-num">3</span><span data-en="Confirm — the customer receives a reschedule notification email automatically." data-gr="Επιβεβαιώστε — ο πελάτης λαμβάνει email ειδοποίησης αλλαγής αυτόματα.">Confirm — the customer receives a reschedule notification email automatically.</span></li>
+                  </ul>
+                </div>
+
+                <div class="help-block">
+                  <div class="help-q" data-en="The workshop is closed for a day (holiday, emergency)" data-gr="Το συνεργείο είναι κλειστό για μια μέρα (αργία, έκτακτη ανάγκη)">The workshop is closed for a day (holiday, emergency)</div>
+                  <ul class="help-steps">
+                    <li><span class="help-step-num">1</span><span data-en="Go to <strong>Block Time</strong> and scroll down to the <strong>Close Entire Day(s)</strong> panel." data-gr="Πηγαίνετε στον <strong>Αποκλεισμός Ώρας</strong> και μετακινηθείτε στο τμήμα <strong>Κλείσιμο Ολόκληρης Ημέρας</strong>.">Go to <strong>Block Time</strong> and scroll down to the <strong>Close Entire Day(s)</strong> panel.</span></li>
+                    <li><span class="help-step-num">2</span><span data-en="Add the dates you want to close and enter a reason (e.g. Public Holiday)." data-gr="Προσθέστε τις ημερομηνίες που θέλετε να κλείσετε και εισάγετε λόγο (π.χ. Αργία).">Add the dates you want to close and enter a reason (e.g. Public Holiday).</span></li>
+                    <li><span class="help-step-num">3</span><span data-en="Click <strong>Close Selected Day(s)</strong>. Those dates become immediately unavailable for online bookings." data-gr="Πατήστε <strong>Κλείσιμο Επιλεγμένων Ημερών</strong>. Αυτές οι ημερομηνίες δεν είναι πλέον διαθέσιμες online.">Click <strong>Close Selected Day(s)</strong>. Those dates become immediately unavailable for online bookings.</span></li>
+                    <li><span class="help-step-num">4</span><span data-en="<strong>Important:</strong> If there are already accepted bookings on those dates, call those customers to reschedule — the system does not notify them automatically." data-gr="<strong>Σημαντικό:</strong> Αν υπάρχουν ήδη αποδεκτές κρατήσεις σε αυτές τις ημέρες, επικοινωνήστε με τους πελάτες — το σύστημα δεν τους ειδοποιεί αυτόματα."><strong>Important:</strong> If there are already accepted bookings on those dates, call those customers to reschedule — the system does not notify them automatically.</span></li>
+                  </ul>
+                </div>
+
+                <div class="help-block">
+                  <div class="help-q" data-en="A job is taking longer than expected (overrun)" data-gr="Μια εργασία καθυστερεί (overrun)">A job is taking longer than expected (overrun)</div>
+                  <ul class="help-steps">
+                    <li><span class="help-step-num">1</span><span data-en="The booking card will show an <strong>⚠ OVERRUN</strong> warning automatically once the expected end time has passed." data-gr="Η κάρτα κράτησης θα εμφανίσει αυτόματα <strong>⚠ OVERRUN</strong> μόλις παρέλθει η αναμενόμενη ώρα ολοκλήρωσης.">The booking card will show an <strong>⚠ OVERRUN</strong> warning automatically once the expected end time has passed.</span></li>
+                    <li><span class="help-step-num">2</span><span data-en="If additional work was found, call the customer to approve before proceeding (tick the checklist step)." data-gr="Αν βρέθηκε επιπλέον εργασία, καλέστε τον πελάτη για έγκριση πριν συνεχίσετε (τσεκάρετε το αντίστοιχο βήμα στο checklist).">If additional work was found, call the customer to approve before proceeding (tick the checklist step).</span></li>
+                    <li><span class="help-step-num">3</span><span data-en="Once the job is done, click <strong>Completed</strong> to mark it and free up the slot." data-gr="Μόλις τελειώσει η εργασία, πατήστε <strong>Completed</strong> για να τη σημειώσετε ως ολοκληρωμένη.">Once the job is done, click <strong>Completed</strong> to mark it and free up the slot.</span></li>
+                  </ul>
+                </div>
+
+                <div class="help-block">
+                  <div class="help-q" data-en="You need to find a past booking" data-gr="Χρειάζεστε να βρείτε παλιά κράτηση">You need to find a past booking</div>
+                  <ul class="help-steps">
+                    <li><span class="help-step-num">1</span><span data-en="Go to <strong>All Bookings</strong> in the sidebar." data-gr="Πηγαίνετε στις <strong>Όλες οι Κρατήσεις</strong> από το μενού.">Go to <strong>All Bookings</strong> in the sidebar.</span></li>
+                    <li><span class="help-step-num">2</span><span data-en="By default the list shows the last 30 days. Click <strong>Load All</strong> to see everything." data-gr="Εξ ορισμού εμφανίζονται οι τελευταίες 30 ημέρες. Πατήστε <strong>Φόρτωση Όλων</strong> για να δείτε τα πάντα.">By default the list shows the last 30 days. Click <strong>Load All</strong> to see everything.</span></li>
+                    <li><span class="help-step-num">3</span><span data-en="Alternatively, go to <strong>Vehicles</strong> and search by plate — the full service history for that vehicle is shown there." data-gr="Εναλλακτικά, πηγαίνετε στα <strong>Οχήματα</strong> και αναζητήστε με πινακίδα — εμφανίζεται ολόκληρο το ιστορικό σέρβις.">Alternatively, go to <strong>Vehicles</strong> and search by plate — the full service history for that vehicle is shown there.</span></li>
+                  </ul>
+                </div>
+
+                <div class="help-block" style="border-bottom:none;">
+                  <div class="help-q" data-en="A customer wants to cancel their booking" data-gr="Πελάτης θέλει να ακυρώσει την κράτησή του">A customer wants to cancel their booking</div>
+                  <p data-en="Customers can cancel themselves via the <strong>Cancel</strong> link in their confirmation email (up to 40 minutes before the appointment). If they call you directly, find the booking in the list and click <strong>Cancel</strong> — they will receive a cancellation confirmation email automatically." data-gr="Οι πελάτες μπορούν να ακυρώσουν μόνοι τους μέσω του συνδέσμου <strong>Ακύρωση</strong> στο email επιβεβαίωσης (έως 40 λεπτά πριν την ώρα). Αν σας καλέσουν τηλεφωνικά, βρείτε την κράτηση στη λίστα και πατήστε <strong>Cancel</strong> — θα λάβουν email επιβεβαίωσης ακύρωσης αυτόματα.">Customers can cancel themselves via the <strong>Cancel</strong> link in their confirmation email (up to 40 minutes before the appointment). If they call you directly, find the booking in the list and click <strong>Cancel</strong> — they will receive a cancellation confirmation email automatically.</p>
+                </div>
+
               </div>
             </div>
 
@@ -1298,7 +1413,310 @@
 </nav>
 
 <script>
-  const SVC = { 'small-service':'Small Service', 'full-service':'Full Service', 'other':'Other Request' };
+  // ── Global language system ────────────────────────────────────────────────────
+  let currentLang = localStorage.getItem('adminLang') || 'en';
+
+  const LABELS = {
+    en: {
+      // Service types
+      'svc.small':      'Small Service',
+      'svc.full':       'Full Service',
+      'svc.other':      'Other Request',
+      // Sidebar sections
+      'nav.bookings':   'Bookings',
+      'nav.analytics':  'Analytics',
+      'nav.management': 'Management',
+      'nav.history':    'Service History',
+      'nav.partners':   'Partners',
+      'nav.warranty':   'Warranty',
+      // Sidebar items
+      'nav.all':        'All Bookings',
+      'nav.pending':    'Pending',
+      'nav.needscall':  'Needs Call',
+      'nav.accepted':   'Accepted',
+      'nav.cancelled':  'Cancelled',
+      'nav.noshow':     'No-Show History',
+      'nav.today':      "Today's Schedule",
+      'nav.calendar':   'Calendar',
+      'nav.workload':   'Mechanic Workload',
+      'nav.stats':      'Dashboard',
+      'nav.schedule':   'Block Time',
+      'nav.hours':      'Opening Hours',
+      'nav.vehicles':   'Vehicles',
+      'nav.partnersmgr':'Partners',
+      'nav.warrantymgr':'Warranty Inbox',
+      'nav.help':       'User Manual',
+      // View titles
+      'view.all':       'All Bookings',
+      'view.pending':   'Pending',
+      'view.accepted':  'Accepted',
+      'view.needscall': '📞 Needs Call',
+      'view.cancelled': 'Closed (Completed / No Show / Cancelled)',
+      'view.today':     "Today's Schedule",
+      'view.calendar':  'Calendar',
+      'view.schedule':  'Block Time',
+      'view.hours':     'Opening Hours',
+      'view.vehicles':  'Vehicles',
+      'view.partners':  'Partners',
+      'view.warranty':  'Warranty Inbox',
+      'view.help':      'User Manual',
+      'view.workload':  'Mechanic Workload',
+      'view.stats':     'Dashboard',
+      'view.noshow':    'No-Show History',
+      // Quick action buttons
+      'btn.accept':        'Accept',
+      'btn.acceptconfirm': 'Accept & Confirm',
+      'btn.reschedule':    'Reschedule',
+      'btn.cancel':        'Cancel',
+      'btn.completed':     'Completed',
+      'btn.markdone':      'Mark as Completed',
+      'btn.noshow':        'No Show',
+      'btn.schedule':      'Schedule',
+      'btn.scheduleappt':  'Schedule Appointment',
+      'btn.savenotes':     'Save Notes',
+      // Booking detail labels
+      'lbl.name':          'Name',
+      'lbl.phone':         'Phone',
+      'lbl.email':         'Email',
+      'lbl.plate':         'Plate',
+      'lbl.model':         'Model',
+      'lbl.year':          'Year',
+      'lbl.km':            'KM',
+      'lbl.booked':        'Booked',
+      'lbl.note':          'Note',
+      'lbl.mechnotes':     'Mechanic Notes (internal)',
+      'lbl.mechnotes.ph':  'Add notes for the mechanic…',
+      'msg.saved':         'Saved ✓',
+      // Checklist
+      'chk.title':      'Job Checklist',
+      'chk.done':       'done',
+      'chk.arrived':    'Customer arrived',
+      'chk.checkin':    'Vehicle checked in',
+      'chk.approval':   'Customer called to approve extra work',
+      'chk.complete':   'Service complete',
+      'chk.sticker':    'Service sticker & invoice ready',
+      'chk.notified':   'Customer notified — vehicle ready sent',
+      'chk.collected':  'Vehicle collected',
+      // NC checklist
+      'nc.title':          'Manager Checklist',
+      'nc.checklist':      'Manager Checklist',
+      'nc.step':           'Step',
+      'nc.stepsdone':      'steps done',
+      'nc.allclear':       'All clear!',
+      'nc.allclear.sub':   'No pending "Needs Call" requests right now.',
+      'nc.submitted':      'Submitted',
+      'nc.markscheduled':  'Mark as Scheduled',
+      'nc.removelist':     'Remove from list',
+      'nc.callbadge':      'NEEDS CALL',
+      'nc.callinstruct':   'Call this customer to discuss their request and arrange a date & time. Then use Reschedule to assign the appointment, or Cancel if it cannot be arranged.',
+      'nc.intro':          'These customers submitted an <strong style="color:var(--white);">"Other Request"</strong> that requires a phone call to schedule. Work through the checklist for each client.',
+      'nc.call':           'Call the customer',
+      'nc.call.d':         'Use the phone number shown below. Confirm they still need service.',
+      'nc.scope':          'Agree on service scope',
+      'nc.scope.d':        'Clarify exactly what service/repair is needed and any parts required.',
+      'nc.schedule':       'Agree on date & time',
+      'nc.schedule.d':     'Find a slot that works for the customer and check workshop availability.',
+      'nc.block':          'Create a Block Time entry',
+      'nc.block.d':        'Go to Block Time in the sidebar and reserve the agreed slot.',
+      'nc.confirm':        'Confirm with the customer',
+      'nc.confirm.d':      'Send a WhatsApp or call back to confirm the scheduled appointment.',
+      // Block time form
+      'blk.date':       'Date',
+      'blk.from':       'From',
+      'blk.to':         'To',
+      'blk.customer':   'Customer Name',
+      'blk.phone':      'Phone',
+      'blk.vehicle':    'Vehicle Model',
+      'blk.reason':     'Job Description / Reason',
+      'blk.notes':      'Internal Notes',
+      'blk.submit':     'Block This Time',
+      'blk.active':     'Active Blocks',
+      'blk.remove':     '✕ Remove',
+      'blk.closeday':   'Close Entire Day(s)',
+      'blk.addate':     'Add Date',
+      'blk.closebtn':   'Close Selected Day(s)',
+      // Hours form
+      'hrs.save':       'Save Hours',
+      'hrs.closed':     'Closed',
+      'hrs.add':        'Add range',
+      // Misc
+      'misc.loadall':   'Load All Bookings',
+      'misc.loading':   'Loading…',
+      'misc.noshow.mark': 'Mark as Scheduled →',
+      'misc.remove':    'Remove from list',
+      'misc.steps':     'steps done',
+    },
+    el: {
+      // Service types
+      'svc.small':      'Μικρό Σέρβις',
+      'svc.full':       'Πλήρες Σέρβις',
+      'svc.other':      'Άλλο Αίτημα',
+      // Sidebar sections
+      'nav.bookings':   'Κρατήσεις',
+      'nav.analytics':  'Αναλυτικά',
+      'nav.management': 'Διαχείριση',
+      'nav.history':    'Ιστορικό Σέρβις',
+      'nav.partners':   'Συνεργεία',
+      'nav.warranty':   'Εγγύηση',
+      // Sidebar items
+      'nav.all':        'Όλες οι Κρατήσεις',
+      'nav.pending':    'Εκκρεμείς',
+      'nav.needscall':  'Χρειάζεται Κλήση',
+      'nav.accepted':   'Αποδεκτές',
+      'nav.cancelled':  'Κλειστές',
+      'nav.noshow':     'Ιστορικό No-Show',
+      'nav.today':      'Πρόγραμμα Σήμερα',
+      'nav.calendar':   'Ημερολόγιο',
+      'nav.workload':   'Φόρτος Εργασίας',
+      'nav.stats':      'Πίνακας Ελέγχου',
+      'nav.schedule':   'Αποκλεισμός Ώρας',
+      'nav.hours':      'Ωράριο Λειτουργίας',
+      'nav.vehicles':   'Οχήματα',
+      'nav.partnersmgr':'Συνεργεία',
+      'nav.warrantymgr':'Εισερχόμενα Εγγύησης',
+      'nav.help':       'Εγχειρίδιο Χρήστη',
+      // View titles
+      'view.all':       'Όλες οι Κρατήσεις',
+      'view.pending':   'Εκκρεμείς',
+      'view.accepted':  'Αποδεκτές',
+      'view.needscall': '📞 Χρειάζεται Κλήση',
+      'view.cancelled': 'Κλειστές (Ολοκληρωμένες / No Show / Ακυρωμένες)',
+      'view.today':     'Πρόγραμμα Σήμερα',
+      'view.calendar':  'Ημερολόγιο',
+      'view.schedule':  'Αποκλεισμός Ώρας',
+      'view.hours':     'Ωράριο Λειτουργίας',
+      'view.vehicles':  'Οχήματα',
+      'view.partners':  'Συνεργεία',
+      'view.warranty':  'Εισερχόμενα Εγγύησης',
+      'view.help':      'Εγχειρίδιο Χρήστη',
+      'view.workload':  'Φόρτος Εργασίας',
+      'view.stats':     'Πίνακας Ελέγχου',
+      'view.noshow':    'Ιστορικό No-Show',
+      // Quick action buttons
+      'btn.accept':        'Αποδοχή',
+      'btn.acceptconfirm': 'Αποδοχή & Επιβεβαίωση',
+      'btn.reschedule':    'Αλλαγή Ώρας',
+      'btn.cancel':        'Ακύρωση',
+      'btn.completed':     'Ολοκληρώθηκε',
+      'btn.markdone':      'Σήμανση ως Ολοκληρωμένο',
+      'btn.noshow':        'Δεν Ήρθε',
+      'btn.schedule':      'Προγραμματισμός',
+      'btn.scheduleappt':  'Προγραμματισμός Ραντεβού',
+      'btn.savenotes':     'Αποθήκευση',
+      // Booking detail labels
+      'lbl.name':          'Όνομα',
+      'lbl.phone':         'Τηλέφωνο',
+      'lbl.email':         'Email',
+      'lbl.plate':         'Πινακίδα',
+      'lbl.model':         'Μοντέλο',
+      'lbl.year':          'Έτος',
+      'lbl.km':            'Χλμ',
+      'lbl.booked':        'Κρατήθηκε',
+      'lbl.note':          'Σημείωση',
+      'lbl.mechnotes':     'Σημειώσεις Μηχανικού (εσωτερικά)',
+      'lbl.mechnotes.ph':  'Σημειώσεις για τον μηχανικό…',
+      'msg.saved':         'Αποθηκεύτηκε ✓',
+      // Checklist
+      'chk.title':      'Λίστα Ελέγχου',
+      'chk.done':       'ολοκληρώθηκαν',
+      'chk.arrived':    'Ο πελάτης έφτασε',
+      'chk.checkin':    'Το όχημα παραλήφθηκε',
+      'chk.approval':   'Κλήθηκε πελάτης για έγκριση επιπλέον εργασίας',
+      'chk.complete':   'Σέρβις ολοκληρώθηκε',
+      'chk.sticker':    'Αυτοκόλλητο σέρβις & τιμολόγιο έτοιμα',
+      'chk.notified':   'Ο πελάτης ειδοποιήθηκε — εστάλη SMS ετοιμότητας',
+      'chk.collected':  'Το όχημα παρελήφθη',
+      // NC checklist
+      'nc.title':          'Λίστα Ελέγχου Διαχειριστή',
+      'nc.checklist':      'Λίστα Ελέγχου Διαχειριστή',
+      'nc.step':           'Βήμα',
+      'nc.stepsdone':      'βήματα ολοκληρώθηκαν',
+      'nc.allclear':       'Όλα εντάξει!',
+      'nc.allclear.sub':   'Δεν υπάρχουν εκκρεμή αιτήματα "Χρειάζεται Κλήση".',
+      'nc.submitted':      'Υποβλήθηκε',
+      'nc.markscheduled':  'Επισήμανση ως Προγραμματισμένο',
+      'nc.removelist':     'Αφαίρεση από τη λίστα',
+      'nc.callbadge':      'ΧΡΕΙΑΖΕΤΑΙ ΚΛΗΣΗ',
+      'nc.callinstruct':   'Επικοινωνήστε με τον πελάτη για να συζητήσετε το αίτημά του και να κανονίσετε ημερομηνία. Χρησιμοποιήστε Αλλαγή Ώρας για να ορίσετε ραντεβού ή Ακύρωση αν δεν είναι δυνατό.',
+      'nc.intro':          'Αυτοί οι πελάτες υπέβαλαν <strong style="color:var(--white);">"Άλλο Αίτημα"</strong> που απαιτεί τηλεφωνική επικοινωνία. Συμπληρώστε τη λίστα ελέγχου για κάθε πελάτη.',
+      'nc.call':           'Κλήση πελάτη',
+      'nc.call.d':         'Χρησιμοποιήστε τον αριθμό τηλεφώνου παρακάτω. Επιβεβαιώστε ότι χρειάζεται ακόμα σέρβις.',
+      'nc.scope':          'Συμφωνία εύρους εργασίας',
+      'nc.scope.d':        'Διευκρινίστε ακριβώς ποιο σέρβις/επισκευή χρειάζεται και τα απαραίτητα ανταλλακτικά.',
+      'nc.schedule':       'Συμφωνία ημερομηνίας & ώρας',
+      'nc.schedule.d':     'Βρείτε ώρα που βολεύει τον πελάτη και ελέγξτε διαθεσιμότητα συνεργείου.',
+      'nc.block':          'Δημιουργία εγγραφής Block Time',
+      'nc.block.d':        'Πηγαίνετε στον Αποκλεισμό Ώρας και δεσμεύστε την συμφωνημένη ώρα.',
+      'nc.confirm':        'Επιβεβαίωση με τον πελάτη',
+      'nc.confirm.d':      'Στείλτε WhatsApp ή πάρτε τηλέφωνο για επιβεβαίωση του ραντεβού.',
+      // Block time form
+      'blk.date':       'Ημερομηνία',
+      'blk.from':       'Από',
+      'blk.to':         'Έως',
+      'blk.customer':   'Όνομα Πελάτη',
+      'blk.phone':      'Τηλέφωνο',
+      'blk.vehicle':    'Μοντέλο Οχήματος',
+      'blk.reason':     'Περιγραφή Εργασίας / Λόγος',
+      'blk.notes':      'Εσωτερικές Σημειώσεις',
+      'blk.submit':     'Αποκλεισμός Ώρας',
+      'blk.active':     'Ενεργοί Αποκλεισμοί',
+      'blk.remove':     '✕ Αφαίρεση',
+      'blk.closeday':   'Κλείσιμο Ολόκληρης Ημέρας',
+      'blk.addate':     'Προσθήκη Ημερομηνίας',
+      'blk.closebtn':   'Κλείσιμο Επιλεγμένων Ημερών',
+      // Hours form
+      'hrs.save':       'Αποθήκευση Ωραρίου',
+      'hrs.closed':     'Κλειστό',
+      'hrs.add':        'Προσθήκη εύρους',
+      // Misc
+      'misc.loadall':   'Φόρτωση Όλων των Κρατήσεων',
+      'misc.loading':   'Φόρτωση…',
+      'misc.noshow.mark': 'Επισημάνθηκε ως Προγραμματισμένο →',
+      'misc.remove':    'Αφαίρεση από τη λίστα',
+      'misc.steps':     'ολοκληρώθηκαν',
+    }
+  };
+
+  function t(key) {
+    return (LABELS[currentLang] && LABELS[currentLang][key]) ?? LABELS.en[key] ?? key;
+  }
+
+  function setLang(lang) {
+    currentLang = lang;
+    localStorage.setItem('adminLang', lang);
+    // Update toggle button states (topbar + help section mirror)
+    document.querySelectorAll('.lang-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.lang === lang);
+    });
+    const helpEn = document.getElementById('help-lang-en');
+    const helpEl = document.getElementById('help-lang-el');
+    if (helpEn) helpEn.classList.toggle('active', lang === 'en');
+    if (helpEl) helpEl.classList.toggle('active', lang === 'el');
+    // Apply to all elements with data-en/data-gr across the whole page
+    document.querySelectorAll('[data-en]').forEach(el => {
+      el.innerHTML = lang === 'el' ? el.dataset.gr : el.dataset.en;
+    });
+    // Update topbar title for current view
+    const viewKey = 'view.' + currentView.replace('-','').replace('noshow','noshow').replace('needscall','needscall').replace('noshowhistory','noshow');
+    const titleMap = {
+      'all':'view.all','pending':'view.pending','accepted':'view.accepted',
+      'needs-call':'view.needscall','cancelled':'view.cancelled','today':'view.today',
+      'calendar':'view.calendar','schedule':'view.schedule','hours':'view.hours',
+      'vehicles':'view.vehicles','partners':'view.partners','warranty':'view.warranty',
+      'help':'view.help','workload':'view.workload','stats':'view.stats',
+      'no-show-history':'view.noshow'
+    };
+    const titleEl = document.getElementById('topbar-title');
+    if (titleEl && titleMap[currentView]) titleEl.textContent = t(titleMap[currentView]);
+    // Re-render current view so dynamic content picks up new language
+    if (typeof renderView === 'function') renderView();
+  }
+
+  const SVC = {
+    get 'small-service'() { return t('svc.small'); },
+    get 'full-service'()  { return t('svc.full');  },
+    get 'other'()          { return t('svc.other'); }
+  };
   const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   let allBookings = [];
   let allBlocks = [];
@@ -1373,6 +1791,8 @@
       const badge = document.getElementById('warranty-badge');
       if (badge && open > 0) { badge.textContent = open; badge.style.display = 'inline'; }
     }).catch(() => {});
+    // Apply stored language preference
+    setLang(currentLang);
   }
 
   let bookingLoadMode = '30d'; // '30d' or 'all'
@@ -1428,14 +1848,27 @@
   }
 
   // ── VIEWS ──────────────────────────────────────────────────────────────
-  const VIEW_TITLES = {
-    all:'All Bookings', pending:'Pending', accepted:'Accepted',
-    'needs-call':'📞 Needs Call',
-    cancelled:'Closed (Completed / No Show / Cancelled)', today:"Today's Schedule",
-    calendar:'Calendar', schedule:'Block Time', hours:'Opening Hours',
-    vehicles:'Vehicles', partners:'Partners', warranty:'Warranty Inbox',
-    help:'User Manual', workload:'Mechanic Workload', stats:'Dashboard'
-  };
+  function getViewTitle(view) {
+    const map = {
+      'all':              'view.all',
+      'pending':          'view.pending',
+      'accepted':         'view.accepted',
+      'needs-call':       'view.needscall',
+      'cancelled':        'view.cancelled',
+      'no-show-history':  'view.noshow',
+      'today':            'view.today',
+      'calendar':         'view.calendar',
+      'schedule':         'view.schedule',
+      'hours':            'view.hours',
+      'vehicles':         'view.vehicles',
+      'partners':         'view.partners',
+      'warranty':         'view.warranty',
+      'help':             'view.help',
+      'workload':         'view.workload',
+      'stats':            'view.stats',
+    };
+    return map[view] ? t(map[view]) : view;
+  }
 
   function setView(view) {
     currentView = view;
@@ -1448,7 +1881,7 @@
     const mobMap = { today:'mob-nav-today', all:'mob-nav-all', pending:'mob-nav-pending', 'needs-call':'mob-nav-calls', accepted:'mob-nav-all', calendar:'mob-nav-calendar', hours:'mob-nav-settings', blocks:'mob-nav-settings', partners:'mob-nav-settings', vehicles:'mob-nav-settings', warranty:'mob-nav-settings', stats:'mob-nav-settings', help:'mob-nav-settings', workload:'mob-nav-settings', schedule:'mob-nav-settings' };
     const mobEl = document.getElementById(mobMap[view]);
     if (mobEl) mobEl.classList.add('active');
-    document.getElementById('topbar-title').textContent = VIEW_TITLES[view] || view;
+    document.getElementById('topbar-title').textContent = getViewTitle(view);
     renderView();
   }
 
@@ -2716,7 +3149,7 @@
           </div>
           <div class="booking-date-chip" style="opacity:0.55;"><div class="chip-date">${fmtChipDate(b.date)}</div><div class="chip-time">${b.time || '—'}</div></div>
           <div class="quick-actions" onclick="event.stopPropagation()">
-            <button class="btn-quick btn-quick-reschedule" title="Reschedule" onclick="openRescheduleModal(${b.id}, event)">↺</button>
+            <button class="btn-quick btn-quick-reschedule" onclick="openRescheduleModal(${b.id}, event)">Reschedule</button>
           </div>
         </div>
         <div class="booking-detail ${isExpanded ? 'open' : ''}" id="detail-${b.id}">
@@ -2743,51 +3176,51 @@
 
     const quickActions = b.status === 'pending' ? (isNeedsCall ? `
       <div class="quick-actions" onclick="event.stopPropagation()">
-        <button class="btn-quick btn-quick-reschedule" title="Schedule" onclick="openRescheduleModal(${b.id}, event)" style="background:rgba(229,144,0,0.15);color:#E59000;border-color:rgba(229,144,0,0.3);">📅</button>
-        <button class="btn-quick btn-quick-cancel" title="Cancel" onclick="cancelBooking(${b.id}, event)">✕</button>
+        <button class="btn-quick btn-quick-reschedule" onclick="openRescheduleModal(${b.id}, event)" style="background:rgba(229,144,0,0.15);color:#E59000;border-color:rgba(229,144,0,0.3);">${t('btn.schedule')}</button>
+        <button class="btn-quick btn-quick-cancel" onclick="cancelBooking(${b.id}, event)">${t('btn.cancel')}</button>
       </div>` : `
       <div class="quick-actions" onclick="event.stopPropagation()">
-        <button class="btn-quick btn-quick-accept" title="Accept" onclick="acceptBooking(${b.id}, event)">✓</button>
-        <button class="btn-quick btn-quick-reschedule" title="Reschedule" onclick="openRescheduleModal(${b.id}, event)">↺</button>
-        <button class="btn-quick btn-quick-cancel" title="Cancel" onclick="cancelBooking(${b.id}, event)">✕</button>
+        <button class="btn-quick btn-quick-accept" onclick="acceptBooking(${b.id}, event)">${t('btn.accept')}</button>
+        <button class="btn-quick btn-quick-reschedule" onclick="openRescheduleModal(${b.id}, event)">${t('btn.reschedule')}</button>
+        <button class="btn-quick btn-quick-cancel" onclick="cancelBooking(${b.id}, event)">${t('btn.cancel')}</button>
       </div>`) : b.status === 'accepted' ? `
       <div class="quick-actions" onclick="event.stopPropagation()">
-        <button class="btn-quick btn-quick-complete" title="Mark Complete" onclick="openCompleteModal(${b.id}, event)">✔</button>
-        <button class="btn-quick btn-quick-reschedule" title="Reschedule" onclick="openRescheduleModal(${b.id}, event)">↺</button>
-        <button class="btn-quick btn-quick-noshow" title="No Show" onclick="noShowBooking(${b.id}, event)">—</button>
-        <button class="btn-quick btn-quick-cancel" title="Cancel" onclick="cancelBooking(${b.id}, event)">✕</button>
+        <button class="btn-quick btn-quick-complete" onclick="openCompleteModal(${b.id}, event)">${t('btn.completed')}</button>
+        <button class="btn-quick btn-quick-reschedule" onclick="openRescheduleModal(${b.id}, event)">${t('btn.reschedule')}</button>
+        <button class="btn-quick btn-quick-noshow" onclick="noShowBooking(${b.id}, event)">${t('btn.noshow')}</button>
+        <button class="btn-quick btn-quick-cancel" onclick="cancelBooking(${b.id}, event)">${t('btn.cancel')}</button>
       </div>` : '';
 
     let actions = '';
     if (b.status === 'pending' && isNeedsCall) {
       actions = `
         <div style="background:rgba(229,144,0,0.08);border:1px solid rgba(229,144,0,0.3);border-radius:8px;padding:12px 14px;margin-bottom:10px;">
-          <div style="font-size:12px;font-weight:700;color:#E59000;margin-bottom:4px;">📞 NEEDS CALL</div>
-          <div style="font-size:12px;color:var(--grey);">Call this customer to discuss their request and arrange a date &amp; time. Then use Reschedule to assign the appointment, or Cancel if it cannot be arranged.</div>
+          <div style="font-size:12px;font-weight:700;color:#E59000;margin-bottom:4px;">📞 ${t('nc.callbadge')}</div>
+          <div style="font-size:12px;color:var(--grey);">${t('nc.callinstruct')}</div>
         </div>
         <div class="action-row">
-          <button class="btn-reschedule" onclick="openRescheduleModal(${b.id}, event)" style="background:rgba(229,144,0,0.15);color:#E59000;border-color:rgba(229,144,0,0.35);">📅 Schedule Appointment</button>
-          <button class="btn-cancel-booking" onclick="cancelBooking(${b.id}, event)">✕ Cancel</button>
+          <button class="btn-reschedule" onclick="openRescheduleModal(${b.id}, event)" style="background:rgba(229,144,0,0.15);color:#E59000;border-color:rgba(229,144,0,0.35);">📅 ${t('btn.scheduleappt')}</button>
+          <button class="btn-cancel-booking" onclick="cancelBooking(${b.id}, event)">✕ ${t('btn.cancel')}</button>
         </div>`;
     } else if (b.status === 'pending') {
       actions = `<div class="action-row">
-        <button class="btn-accept" onclick="acceptBooking(${b.id}, event)">✓ Accept & Confirm</button>
-        <button class="btn-reschedule" onclick="openRescheduleModal(${b.id}, event)">↺ Reschedule</button>
-        <button class="btn-cancel-booking" onclick="cancelBooking(${b.id}, event)">✕ Cancel</button>
+        <button class="btn-accept" onclick="acceptBooking(${b.id}, event)">✓ ${t('btn.acceptconfirm')}</button>
+        <button class="btn-reschedule" onclick="openRescheduleModal(${b.id}, event)">↺ ${t('btn.reschedule')}</button>
+        <button class="btn-cancel-booking" onclick="cancelBooking(${b.id}, event)">✕ ${t('btn.cancel')}</button>
       </div>`;
     } else if (b.status === 'accepted') {
       const escapedNotes = (b.mechanicNotes || '').replace(/'/g, '&#39;').replace(/"/g, '&quot;');
       actions = `<div class="action-row">
-        <button class="btn-complete" onclick="openCompleteModal(${b.id}, event)">✔ Mark as Completed</button>
-        <button class="btn-reschedule" onclick="openRescheduleModal(${b.id}, event)">↺ Reschedule</button>
-        <button class="btn-no-show" onclick="noShowBooking(${b.id}, event)">— No Show</button>
-        <button class="btn-cancel-booking" onclick="cancelBooking(${b.id}, event)">✕ Cancel</button>
+        <button class="btn-complete" onclick="openCompleteModal(${b.id}, event)">✔ ${t('btn.markdone')}</button>
+        <button class="btn-reschedule" onclick="openRescheduleModal(${b.id}, event)">↺ ${t('btn.reschedule')}</button>
+        <button class="btn-no-show" onclick="noShowBooking(${b.id}, event)">— ${t('btn.noshow')}</button>
+        <button class="btn-cancel-booking" onclick="cancelBooking(${b.id}, event)">✕ ${t('btn.cancel')}</button>
       </div>
       <div style="margin-top:10px;" onclick="event.stopPropagation()">
-        <label style="font-size:11px;font-weight:700;color:var(--grey);letter-spacing:0.05em;text-transform:uppercase;display:block;margin-bottom:5px;">Mechanic Notes (internal)</label>
-        <textarea id="mech-notes-${b.id}" rows="2" class="admin-input" style="width:100%;resize:vertical;font-size:13px;" placeholder="Add notes for the mechanic…">${escapedNotes}</textarea>
-        <button onclick="saveMechanicNotes(${b.id})" style="margin-top:6px;background:rgba(0,155,180,0.12);border:1px solid rgba(0,155,180,0.3);color:var(--blue);border-radius:6px;padding:5px 14px;font-size:12px;cursor:pointer;font-family:inherit;">Save Notes</button>
-        <span id="mech-notes-msg-${b.id}" style="font-size:11px;color:#00b882;margin-left:8px;display:none;">Saved ✓</span>
+        <label style="font-size:11px;font-weight:700;color:var(--grey);letter-spacing:0.05em;text-transform:uppercase;display:block;margin-bottom:5px;">${t('lbl.mechnotes')}</label>
+        <textarea id="mech-notes-${b.id}" rows="2" class="admin-input" style="width:100%;resize:vertical;font-size:13px;" placeholder="${t('lbl.mechnotes.ph')}">${escapedNotes}</textarea>
+        <button onclick="saveMechanicNotes(${b.id})" style="margin-top:6px;background:rgba(0,155,180,0.12);border:1px solid rgba(0,155,180,0.3);color:var(--blue);border-radius:6px;padding:5px 14px;font-size:12px;cursor:pointer;font-family:inherit;">${t('btn.savenotes')}</button>
+        <span id="mech-notes-msg-${b.id}" style="font-size:11px;color:#00b882;margin-left:8px;display:none;">${t('msg.saved')}</span>
       </div>`;
     } else if (b.status === 'completed') {
       actions = `<div style="background:rgba(0,180,130,0.07);border:1px solid rgba(0,180,130,0.2);border-radius:8px;padding:11px 14px;font-size:12px;color:#00b882;">
@@ -2842,11 +3275,11 @@
         </div>
         <div class="booking-detail ${isExpanded ? 'open' : ''}" id="detail-${b.id}">
           <div class="detail-grid">
-            <div class="detail-item"><label>Name</label><span>${escHtml(b.name)}</span></div>
-            <div class="detail-item"><label>Phone</label><span>${escHtml(b.phone)}</span></div>
-            <div class="detail-item"><label>Email</label><span>${escHtml(b.email) || '—'}</span></div>
+            <div class="detail-item"><label>${t('lbl.name')}</label><span>${escHtml(b.name)}</span></div>
+            <div class="detail-item"><label>${t('lbl.phone')}</label><span>${escHtml(b.phone)}</span></div>
+            <div class="detail-item"><label>${t('lbl.email')}</label><span>${escHtml(b.email) || '—'}</span></div>
             <div class="detail-item">
-              <label>Plate
+              <label>${t('lbl.plate')}
                 <button onclick="toggleFieldEdit(${b.id},'plate',event)" title="Edit plate" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:11px;padding:0 4px;opacity:0.7;">✏</button>
               </label>
               <span id="plate-display-${b.id}">${escHtml(b.plate)}</span>
@@ -2861,10 +3294,10 @@
                 </div>
               </div>
             </div>
-            <div class="detail-item"><label>Model</label><span>${escHtml(b.model)}</span></div>
-            <div class="detail-item"><label>Year</label><span>${escHtml(b.year)}</span></div>
+            <div class="detail-item"><label>${t('lbl.model')}</label><span>${escHtml(b.model)}</span></div>
+            <div class="detail-item"><label>${t('lbl.year')}</label><span>${escHtml(b.year)}</span></div>
             <div class="detail-item">
-              <label>KM
+              <label>${t('lbl.km')}
                 <button onclick="toggleFieldEdit(${b.id},'km',event)" title="Edit KM" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:11px;padding:0 4px;opacity:0.7;">✏</button>
               </label>
               <span id="km-display-${b.id}">${b.km ? Number(b.km).toLocaleString() + ' km' : '—'}</span>
@@ -2879,7 +3312,7 @@
                 </div>
               </div>
             </div>
-            <div class="detail-item"><label>Booked</label><span>${new Date(b.createdAt).toLocaleString('en-GB')}</span></div>
+            <div class="detail-item"><label>${t('lbl.booked')}</label><span>${new Date(b.createdAt).toLocaleString('en-GB')}</span></div>
           </div>
           ${b.description ? `<div class="customer-request-box"><div class="req-label">📋 Customer Request</div><div class="req-text">${escHtml(b.description)}</div></div>` : ''}
           ${b.notes ? `<div class="detail-notes">${escHtml(b.notes)}</div>` : ''}
@@ -2889,12 +3322,11 @@
             const steps    = b.ncSteps || {};
             const done     = svcSteps.filter(s => steps[s.id]).length;
             const stepRows = svcSteps.map((s, i) => bookingStepRow(b.id, s, i, steps, b.status)).join('');
-            const label    = 'Job Checklist';
             return `
             <div style="margin-top:16px;border-top:1px solid rgba(255,255,255,0.07);padding-top:16px;">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                <div class="nc-steps-label" style="margin-bottom:0;">${label}</div>
-                <div class="booking-checklist-progress nc-progress">${done} / ${svcSteps.length} done</div>
+                <div class="nc-steps-label" style="margin-bottom:0;">${t('chk.title')}</div>
+                <div class="booking-checklist-progress nc-progress">${done} / ${svcSteps.length} ${t('chk.done')}</div>
               </div>
               <div class="nc-steps booking-checklist-steps">${stepRows}</div>
             </div>`;
@@ -3115,7 +3547,7 @@
               </div>
               <!-- Actions -->
               <div style="padding:12px 14px;display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
-                <button class="btn-quick btn-quick-reschedule" title="Reschedule" onclick="openRescheduleModal(${b.id}, event)" style="font-size:18px;padding:4px 10px;">↺</button>
+                <button class="btn-quick btn-quick-reschedule" onclick="openRescheduleModal(${b.id}, event)">Reschedule</button>
               </div>
             </div>
             <!-- Notes row -->
@@ -3354,8 +3786,8 @@
     if (bookings.length === 0) {
       el.innerHTML = `<div class="empty-state">
         <div class="icon" style="color:var(--green);">✓</div>
-        <p style="font-size:15px;font-weight:700;margin-bottom:6px;">All clear!</p>
-        <p>No pending "Needs Call" requests right now.</p>
+        <p style="font-size:15px;font-weight:700;margin-bottom:6px;">${t('nc.allclear')}</p>
+        <p>${t('nc.allclear.sub')}</p>
       </div>`;
       return;
     }
@@ -3369,7 +3801,7 @@
         <div class="nc-step${steps[s.id] ? ' done' : ''}" onclick="toggleNcStep(${b.id}, '${s.id}')">
           <div class="nc-step-check">${steps[s.id] ? '✓' : ''}</div>
           <div>
-            <div class="nc-step-num">Step ${i + 1}</div>
+            <div class="nc-step-num">${t('nc.step')} ${i + 1}</div>
             <div class="nc-step-text"><strong>${s.label}</strong> — ${s.detail}</div>
           </div>
         </div>`).join('');
@@ -3379,26 +3811,26 @@
         <div class="nc-header" onclick="toggleExpand(${b.id})">
           <div style="flex:1;min-width:0;">
             <div class="nc-name">${escHtml(b.name)}</div>
-            <div class="nc-meta">${escHtml(SVC[b.serviceType] || b.serviceType)} · ${escHtml(b.model || '')} ${escHtml(b.year || '')} · Plate: ${escHtml(b.plate || '—')}</div>
-            <div class="nc-meta" style="margin-top:4px;color:var(--grey);font-size:11px;">Submitted: ${new Date(b.createdAt).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+            <div class="nc-meta">${escHtml(SVC[b.serviceType] || b.serviceType)} · ${escHtml(b.model || '')} ${escHtml(b.year || '')} · ${t('lbl.plate')}: ${escHtml(b.plate || '—')}</div>
+            <div class="nc-meta" style="margin-top:4px;color:var(--grey);font-size:11px;">${t('nc.submitted')}: ${new Date(b.createdAt).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;">
             <a href="tel:${phone}" class="nc-phone-badge" onclick="event.stopPropagation()">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.72a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
               ${phone}
             </a>
-            <div class="nc-progress">${doneCount} / ${NC_STEPS.length} steps done</div>
+            <div class="nc-progress">${doneCount} / ${NC_STEPS.length} ${t('nc.stepsdone')}</div>
           </div>
         </div>
         <div class="nc-body">
-          <div class="nc-steps-label">Manager Checklist</div>
+          <div class="nc-steps-label">${t('nc.checklist')}</div>
           <div class="nc-steps">${stepRows}</div>
           <div class="nc-actions">
             ${allDone
-              ? `<button class="btn-primary" style="font-size:12px;padding:8px 16px;" onclick="convertNcToBlock(${b.id})">Mark as Scheduled →</button>`
+              ? `<button class="btn-primary" style="font-size:12px;padding:8px 16px;" onclick="convertNcToBlock(${b.id})">${t('nc.markscheduled')} →</button>`
               : ''}
-            <button class="nc-dismiss-btn" onclick="dismissNcBooking(${b.id})">Remove from list</button>
-            ${b.notes ? `<div style="font-size:12px;color:var(--grey);margin-left:4px;">Note: ${escHtml(b.notes)}</div>` : ''}
+            <button class="nc-dismiss-btn" onclick="dismissNcBooking(${b.id})">${t('nc.removelist')}</button>
+            ${b.notes ? `<div style="font-size:12px;color:var(--grey);margin-left:4px;">${t('lbl.note')}: ${escHtml(b.notes)}</div>` : ''}
           </div>
         </div>
       </div>`;
@@ -3406,7 +3838,7 @@
 
     el.innerHTML = `
       <div style="margin-bottom:16px;">
-        <div style="font-size:13px;color:var(--grey);">These customers submitted an <strong style="color:var(--white);">"Other Request"</strong> that requires a phone call to schedule. Work through the checklist for each client.</div>
+        <div style="font-size:13px;color:var(--grey);">${t('nc.intro')}</div>
       </div>
       ${cards}`;
   }
@@ -4027,17 +4459,6 @@
       if (res.ok) showToast(data.message, 'success', 8000);
       else showToast(data.error || 'Unknown error', 'error', 10000);
     } catch { showToast('Network error', 'error', 8000); }
-  }
-
-  // ── HELP LANGUAGE TOGGLE ──────────────────────────────────────────────
-  function setHelpLang(lang) {
-    document.querySelectorAll('.help-lang-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.help-lang-btn').forEach(b => {
-      if ((lang === 'en' && b.textContent === 'EN') || (lang === 'el' && b.textContent === 'GR')) b.classList.add('active');
-    });
-    document.querySelectorAll('#help-view [data-en]').forEach(el => {
-      el.innerHTML = lang === 'el' ? el.dataset.gr : el.dataset.en;
-    });
   }
 
   // ── PHOTO VIEWER ──────────────────────────────────────────────────────
