@@ -542,7 +542,8 @@ app.post('/api/admin/bookings/:id/reschedule', requireAdmin, async (req, res) =>
 app.post('/api/admin/bookings/:id/contact-status', requireAdmin, async (req, res) => {
   try {
     const { status } = req.body;
-    const valid = ['needs-contact', 'needs-call', 'contacted', 'closed'];
+    // null is allowed — it clears the contact status (used by dismiss)
+    const valid = ['needs-contact', 'needs-call', 'contacted', 'closed', null];
     if (!valid.includes(status)) return res.status(400).json({ error: 'Invalid status' });
 
     const booking = await db.updateContactStatus(req.params.id, status);
@@ -639,6 +640,51 @@ app.post('/api/admin/bookings/:id/update-fields', requireAdmin, async (req, res)
   } catch (err) {
     console.error('[Update fields error]', err);
     res.status(500).json({ error: 'Failed to update booking.' });
+  }
+});
+
+// Close a needs-call / other-request booking WITHOUT sending a cancellation email
+// Used when admin decides to dismiss/convert the booking internally.
+app.post('/api/admin/bookings/:id/close-other', requireAdmin, async (req, res) => {
+  try {
+    const booking = await db.closeOtherRequest(req.params.id);
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+    res.json({ success: true, booking });
+  } catch (err) {
+    console.error('[Close-other error]', err);
+    res.status(500).json({ error: 'Failed to close booking.' });
+  }
+});
+
+// Save NC checklist step state (synced to DB for cross-device access)
+app.post('/api/admin/bookings/:id/nc-steps', requireAdmin, async (req, res) => {
+  try {
+    const { steps } = req.body;
+    if (typeof steps !== 'object' || steps === null) {
+      return res.status(400).json({ error: 'steps must be an object' });
+    }
+    const booking = await db.updateNcSteps(req.params.id, steps);
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+    res.json({ success: true, booking });
+  } catch (err) {
+    console.error('[NC steps error]', err);
+    res.status(500).json({ error: 'Failed to save NC steps.' });
+  }
+});
+
+// Close one or more full days (insert full-day blocks)
+app.post('/api/admin/close-day', requireAdmin, async (req, res) => {
+  try {
+    let { dates, reason } = req.body;
+    if (!dates) return res.status(400).json({ error: 'dates is required' });
+    if (!Array.isArray(dates)) dates = [dates]; // accept single date or array
+    if (!dates.length) return res.status(400).json({ error: 'dates array is empty' });
+
+    const inserted = await db.closeDates(dates, reason || 'Closed');
+    res.json({ success: true, inserted, count: inserted.length });
+  } catch (err) {
+    console.error('[Close day error]', err);
+    res.status(500).json({ error: 'Failed to close day(s).' });
   }
 });
 

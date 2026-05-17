@@ -344,6 +344,21 @@
       border-style: solid;
     }
 
+    /* ── OIL CHANGE CARD ── */
+    .service-card--oilchange {
+      border-style: dashed;
+      border-color: rgba(229,144,0,0.4);
+    }
+    .service-card--oilchange:hover,
+    .service-card--oilchange.selected {
+      border-color: #E59000;
+      border-style: solid;
+      background: rgba(229,144,0,0.06);
+    }
+    .service-card--oilchange .service-time {
+      color: #E59000;
+    }
+
     /* ── OTHER INFO BANNER ── */
     .other-info-banner {
       display: flex;
@@ -1131,9 +1146,9 @@
 
 <!-- HERO -->
 <div class="hero">
-  <div class="hero-label reveal" style="transition-delay:0.05s">Motowarehouse – Official Service Centre</div>
+  <div class="hero-label reveal" style="transition-delay:0.05s">Motowarehouse – Official Service Center</div>
   <h1 class="reveal" style="transition-delay:0.15s">Book Your<br><span>Service Appointment</span></h1>
-  <p class="hero-sub reveal" style="transition-delay:0.25s">CFMOTO &amp; SYM servicing in Nicosia. We'll confirm your appointment shortly after you submit.</p>
+  <p class="hero-sub reveal" style="transition-delay:0.25s;color:#ffffff;font-size:1.05rem;">CFMOTO &amp; SYM servicing in Nicosia. We'll confirm your appointment after your submission.</p>
 </div>
 
 <div class="section" id="booking-section">
@@ -1160,6 +1175,31 @@
       <div class="service-name">Other</div>
       <div class="service-time">By appointment</div>
       <div class="service-desc">Repair, diagnosis, or anything else. Describe your request and we will call you to arrange a time.</div>
+    </div>
+    <div class="service-card service-card--oilchange" onclick="showOilChangeInfo()">
+      <span class="service-icon">🛢️</span>
+      <div class="service-name">Oil Change</div>
+      <div class="service-time">Walk-in</div>
+      <div class="service-desc">Quick oil change only. No online booking needed — contact us directly.</div>
+    </div>
+  </div>
+
+  <!-- Oil Change info panel (shown when oil-change card clicked) -->
+  <div id="oilchange-panel" style="display:none;margin-top:16px;">
+    <div class="form-card" style="border-color:rgba(229,144,0,0.4);">
+      <div class="other-info-banner" style="background:rgba(229,144,0,0.08);border-color:rgba(229,144,0,0.3);">
+        <span class="other-info-icon">🛢️</span>
+        <div>
+          <div class="other-info-title" style="color:#E59000;">Oil Change – Contact Us Directly</div>
+          <div class="other-info-sub" style="margin-top:6px;">Oil changes don't need to be booked online. Simply call us and we'll arrange it for you.</div>
+          <div style="margin-top:12px;">
+            <a href="tel:22328788" class="otp-send-btn" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;background:#E59000;border-color:#E59000;color:#fff;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:600;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 11 19.79 19.79 0 01.01 2.32 2 2 0 012 .14h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14z"/></svg>
+              Call 22 328 788
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1262,6 +1302,10 @@
           </button>
         </div>
         <div id="otp-input-section" style="display:none;">
+          <div style="margin-bottom:10px;padding:10px 14px;background:rgba(0,155,180,0.08);border:1px solid rgba(0,155,180,0.25);border-radius:6px;font-size:13px;color:#a8c5cc;line-height:1.5;">
+            <strong style="color:#009BB4;">📱 Check your SMS!</strong><br>
+            We've sent a 6-digit code to your phone. Enter it in the box below to verify your number. The code expires in 5 minutes.
+          </div>
           <input type="text" id="otp-code" class="otp-code-input" maxlength="6" placeholder="000000" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" oninput="handleOTPInput(this)">
           <div id="otp-timer" class="otp-timer"></div>
           <div id="otp-status" class="otp-status"></div>
@@ -1731,6 +1775,33 @@
     document.getElementById('other-desc-panel').style.display = isOther ? 'block' : 'none';
     checkSymNote();
   }
+
+  // ── Oil Change info card (not a bookable service — just shows phone number) ──
+  function showOilChangeInfo() {
+    // Deselect any service card selection
+    document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
+    // Highlight the oil-change card
+    document.querySelector('.service-card--oilchange')?.classList.add('selected');
+    // Show the oil change panel, hide other panels
+    document.getElementById('oilchange-panel').style.display     = 'block';
+    document.getElementById('other-desc-panel').style.display    = 'none';
+    // Hide date/time step — oil change is not booked online
+    document.getElementById('step2-anchor').style.display = 'none';
+    const step2Title = document.querySelector('#step2-anchor + .step-title') ||
+                       document.querySelector('#step2-anchor ~ .step-title');
+    if (step2Title) step2Title.style.display = 'none';
+    const step2Card = document.querySelector('#step2-anchor ~ .form-card');
+    if (step2Card) step2Card.style.display = 'none';
+    // Clear selectedService so form validation won't allow submission
+    selectedService = null;
+  }
+
+  // Patch selectService to also hide the oil change panel
+  const _origSelectService = selectService;
+  selectService = function(el, event) {
+    document.getElementById('oilchange-panel').style.display = 'none';
+    _origSelectService(el, event);
+  };
 
   // ── SYM 125 note ─────────────────────────────────────────────────
   const SYM_125 = ['SR 125 CBS','SR 125 ABS','JET 14 EVO 125','CARGO 125','ADX 125','JET X 125','VF125','MIO 50'];

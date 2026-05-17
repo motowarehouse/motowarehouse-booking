@@ -70,6 +70,8 @@ async function initDB() {
     await client.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS mechanic_notes TEXT`);
     await client.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS duration_mins INTEGER`);
     await client.query(`ALTER TABLE partners  ADD COLUMN IF NOT EXISTS email TEXT`);
+    await client.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS nc_steps JSONB DEFAULT '{}'`);
+    await client.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS day_before_reminder_sent BOOLEAN DEFAULT FALSE`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS mechanic_off_days (
@@ -221,13 +223,15 @@ function rowToBooking(r) {
     status:        r.status,
     contactStatus: r.contact_status,
     reminderSent:  r.reminder_sent,
-    mechanicNotes: r.mechanic_notes,
-    durationMins:  r.duration_mins,
-    serviceKm:     r.service_km,
-    serviceRegNo:  r.service_reg_no,
-    completedAt:   r.completed_at,
-    updatedAt:     r.updated_at,
-    createdAt:     r.created_at
+    mechanicNotes:        r.mechanic_notes,
+    durationMins:         r.duration_mins,
+    serviceKm:            r.service_km,
+    serviceRegNo:         r.service_reg_no,
+    completedAt:          r.completed_at,
+    ncSteps:              r.nc_steps || {},
+    dayBeforeReminderSent: r.day_before_reminder_sent || false,
+    updatedAt:            r.updated_at,
+    createdAt:            r.created_at
   };
 }
 
@@ -430,6 +434,7 @@ function getDurationMins(model, serviceType) {
 
   // 3. Displacement-based fallback
   if (!entry) {
+    console.warn(`[getDurationMins] No duration entry for model "${model}" (key="${key}") — using displacement fallback`);
     const numMatch = key.match(/\d+/);
     const cc = numMatch ? parseInt(numMatch[0]) : 0;
     if (serviceType === 'full-service') {
@@ -1186,6 +1191,108 @@ async function updateBookingFields(id, { plate, km }) {
   return rowToBooking(rows[0] || null);
 }
 
+// ── Close Other Request (NC → closed, no email) ───────────────────────────────
+// Used when admin decides to convert a needs-call booking into a manual block
+// or simply close it without sending a cancellation email to the customer.
+async function closeOtherRequest(id) {
+  const { rows } = await pool.query(
+    `UPDATE bookings
+     SET status = 'cancelled', contact_status = 'closed', updated_at = NOW()
+     WHERE id = $1 RETURNING *`,
+    [parseInt(id)]
+  );
+  return rowToBooking(rows[0] || null);
+}
+
+// ── NC Steps (needs-call checklist, stored in DB for cross-device sync) ────────
+async function updateNcSteps(id, steps) {
+  const { rows } = await pool.query(
+    `UPDATE bookings SET nc_steps = $1::jsonb, updated_at = NOW()
+     WHERE id = $2 RETURNING *`,
+    [JSON.stringify(steps || {}), parseInt(id)]
+  );
+  return rowToBooking(rows[0] || null);
+}
+
+// ── Full-day Closure (blocks all slots for one or more dates) ─────────────────
+// Inserts a blocks row spanning the full working day for each date.
+// Skips dates that already have a full-day block to avoid duplicates.
+async function closeDates(dates, reason) {
+  const inserted = [];
+  for (const date of dates) {
+    // Check if a full-day block already exists for this date
+    const { rows: existing } = await pool.query(
+      `SELECT id FROM blocks WHERE date = $1 AND start_time = '00:00' AND end_time = '23:59'`,
+      [date]
+    );
+    if (existing.length) continue; // already closed
+
+    const id = Date.now() + inserted.length; // unique IDs
+    const { rows } = await pool.query(
+      `INSERT INTO blocks (id, date, start_time, end_time, reason, customer_name, customer_phone, vehicle_model, notes)
+       VALUES ($1,$2,'00:00','23:59',$3,'','','','') RETURNING *`,
+      [id, date, reason || 'Closed']
+    );
+    inserted.push(rowToBlock(rows[0]));
+    // Small delay to avoid duplicate timestamps when looping fast
+    await new Promise(r => setTimeout(r, 1));
+  }
+  return inserted;
+}
+
+// ── Pending Booking Expiry ────────────────────────────────────────────────────
+// Marks bookings that have been pending for more than 48 hours as 'expired'.
+async function expirePendingBookings() {
+  const { rows } = await pool.query(
+    `UPDATE bookings
+     SET status = 'expired', updated_at = NOW()
+     WHERE status = 'pending'
+       AND created_at < NOW() - INTERVAL '48 hours'
+     RETURNING *`
+  );
+  if (rows.length) {
+    console.log(`[Cron] Expired ${rows.length} pending booking(s): ${rows.map(r => r.ref).join(', ')}`);
+  }
+  return rows.map(rowToBooking);
+}
+
+// ── Previous-Day Reminder ─────────────────────────────────────────────────────
+// Returns accepted bookings that:
+//  - are tomorrow
+//  - have an appointment time before 11:00 (early appointments)
+//  - haven't had a day-before reminder sent yet
+async function getBookingsDueForDayBeforeReminder() {
+  // Get tomorrow's date in Cyprus local time
+  const now = new Date();
+  const tomorrowCyprus = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Nicosia'
+  }).format(new Date(now.getTime() + 24 * 60 * 60 * 1000));
+
+  const { rows } = await pool.query(
+    `SELECT * FROM bookings
+     WHERE status = 'accepted'
+       AND date = $1
+       AND day_before_reminder_sent = false
+       AND time IS NOT NULL
+       AND time != ''`,
+    [tomorrowCyprus]
+  );
+
+  // Filter to early appointments only (before 11:00)
+  return rows.map(rowToBooking).filter(b => {
+    const hour = parseInt((b.time || '99:00').split(':')[0], 10);
+    return hour < 11;
+  });
+}
+
+async function markDayBeforeReminderSent(id) {
+  await pool.query(
+    `UPDATE bookings SET day_before_reminder_sent = true, updated_at = NOW()
+     WHERE id = $1`,
+    [parseInt(id)]
+  );
+}
+
 // ── Customer Self-Cancel ──────────────────────────────────────────────────────
 
 async function cancelBookingByCustomer(ref, phone) {
@@ -1236,5 +1343,11 @@ module.exports = {
   updateBookingFields,
   cancelBookingByCustomer,
   getDurationMins,
+  closeOtherRequest,
+  updateNcSteps,
+  closeDates,
+  expirePendingBookings,
+  getBookingsDueForDayBeforeReminder,
+  markDayBeforeReminderSent,
   initDB
 };

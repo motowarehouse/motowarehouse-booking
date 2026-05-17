@@ -6,6 +6,25 @@ const SERVICE_LABELS = {
   'other':         'Service Request'
 };
 
+// ── Date formatter ────────────────────────────────────────────────────────────
+// Converts "2026-05-20" → "Wednesday, 20 May 2026"
+function formatDateHuman(dateStr) {
+  if (!dateStr) return dateStr || '';
+  try {
+    // Parse as local date (avoid timezone shift — dateStr is always YYYY-MM-DD)
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    return date.toLocaleDateString('en-GB', {
+      weekday: 'long',
+      day:     'numeric',
+      month:   'long',
+      year:    'numeric'
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
 const SENDER    = { name: 'Motowarehouse', email: 'support@motowarehouse.com.cy' };
 const SITE_URL  = process.env.SITE_URL || '';
 
@@ -177,7 +196,7 @@ async function sendConfirmationToCustomer(booking) {
           <table style="border-collapse:collapse;width:100%;margin:20px 0;">
             <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Booking Reference</td><td style="padding:10px;">${booking.ref}</td></tr>
             <tr><td style="padding:10px;font-weight:bold;">Service</td><td style="padding:10px;">${SERVICE_LABELS[booking.serviceType]}</td></tr>
-            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Date</td><td style="padding:10px;">${booking.date}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Date</td><td style="padding:10px;">${formatDateHuman(booking.date)}</td></tr>
             <tr><td style="padding:10px;font-weight:bold;">Time</td><td style="padding:10px;">${booking.time}</td></tr>
             <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${booking.year} ${booking.model}</td></tr>
             <tr><td style="padding:10px;font-weight:bold;">Plate Number</td><td style="padding:10px;">${booking.plate}</td></tr>
@@ -219,15 +238,15 @@ async function sendCancellationToCustomer(booking) {
 
   await sendBrevoEmail({
     to:      booking.email,
-    subject: `Your Booking ${booking.ref} – Update Required`,
+    subject: `Your Booking ${booking.ref} Has Been Cancelled`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
         <div style="background:#1a1a1a;padding:24px;text-align:center;">
-          <h1 style="color:#009BB4;margin:0;font-size:24px;">Booking Update</h1>
+          <h1 style="color:#009BB4;margin:0;font-size:24px;">Booking Cancelled</h1>
         </div>
         <div style="padding:32px;background:#fff;">
           <p>Dear ${booking.name},</p>
-          <p>Unfortunately, we are unable to accommodate your booking <strong>${booking.ref}</strong> on <strong>${booking.date} at ${booking.time}</strong>.</p>
+          <p>Unfortunately, we are unable to accommodate your booking <strong>${booking.ref}</strong> on <strong>${formatDateHuman(booking.date)} at ${booking.time}</strong>.</p>
           <p>Please contact us to arrange a more suitable time:</p>
           <div style="background:#f0fbfd;border-left:4px solid #009BB4;padding:16px;margin:20px 0;">
             <strong>📞 22 328 788</strong><br>
@@ -292,7 +311,7 @@ async function sendRescheduleToCustomer(booking) {
           <table style="border-collapse:collapse;width:100%;margin:20px 0;">
             <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Booking Reference</td><td style="padding:10px;">${booking.ref}</td></tr>
             <tr><td style="padding:10px;font-weight:bold;">Service</td><td style="padding:10px;">${SERVICE_LABELS[booking.serviceType]}</td></tr>
-            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">New Date</td><td style="padding:10px;">${booking.date}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">New Date</td><td style="padding:10px;">${formatDateHuman(booking.date)}</td></tr>
             <tr><td style="padding:10px;font-weight:bold;">New Time</td><td style="padding:10px;">${booking.time}</td></tr>
             <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${booking.year} ${booking.model}</td></tr>
             <tr><td style="padding:10px;font-weight:bold;">Plate Number</td><td style="padding:10px;">${booking.plate}</td></tr>
@@ -467,6 +486,44 @@ async function sendVehicleReadyToCustomer(booking) {
   });
 }
 
+// ── Previous-day reminder (sent evening before, for early appointments) ────────
+async function sendPreviousDayReminderToCustomer(booking) {
+  if (!booking.email) return;
+
+  await sendBrevoEmail({
+    to:      booking.email,
+    subject: `Reminder: Your appointment tomorrow at ${booking.time} – ${booking.ref}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+        <div style="background:#009BB4;padding:24px;text-align:center;">
+          <h1 style="color:white;margin:0;font-size:24px;">Appointment Reminder</h1>
+        </div>
+        <div style="padding:32px;background:#fff;">
+          <p>Dear ${booking.name},</p>
+          <p>This is a friendly reminder that you have a service appointment <strong>tomorrow morning</strong> at <strong>Motowarehouse</strong>.</p>
+          <table style="border-collapse:collapse;width:100%;margin:20px 0;">
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Date</td><td style="padding:10px;">${formatDateHuman(booking.date)}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Time</td><td style="padding:10px;">${booking.time}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Service</td><td style="padding:10px;">${SERVICE_LABELS[booking.serviceType] || booking.serviceType}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${booking.year} ${booking.model}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Plate</td><td style="padding:10px;">${booking.plate}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Reference</td><td style="padding:10px;">${booking.ref}</td></tr>
+          </table>
+          <div style="background:#f0fbfd;border-left:4px solid #009BB4;padding:16px;margin:20px 0;">
+            <strong>📍 Motowarehouse – 40 Athinon Str., Strovolos, Nicosia</strong><br>
+            <strong>📞 22 328 788</strong>
+          </div>
+          <p>Please arrive a few minutes before your scheduled time. If you need to reschedule or cancel, please call us on <strong>22 328 788</strong> as soon as possible.</p>
+          <p>The Motowarehouse Team</p>
+        </div>
+        <div style="background:#1a1a1a;padding:16px;text-align:center;">
+          <p style="color:#999;font-size:12px;margin:0;">Motowarehouse Ltd – support@motowarehouse.com.cy</p>
+        </div>
+      </div>
+    `
+  });
+}
+
 module.exports = {
   sendOTPCodeEmail,
   sendNewBookingAlert,
@@ -477,5 +534,6 @@ module.exports = {
   sendWarrantyAlert,
   sendWarrantyStatusToPartner,
   sendOtherRequestAcknowledgement,
-  sendVehicleReadyToCustomer
+  sendVehicleReadyToCustomer,
+  sendPreviousDayReminderToCustomer
 };
