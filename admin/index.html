@@ -2889,7 +2889,7 @@
             const steps    = b.ncSteps || {};
             const done     = svcSteps.filter(s => steps[s.id]).length;
             const stepRows = svcSteps.map((s, i) => bookingStepRow(b.id, s, i, steps, b.status)).join('');
-            const label    = b.serviceType === 'full-service' ? 'Full Service Checklist' : 'Small Service Checklist';
+            const label    = 'Job Checklist';
             return `
             <div style="margin-top:16px;border-top:1px solid rgba(255,255,255,0.07);padding-top:16px;">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -3265,32 +3265,18 @@
   // ── Per-service booking checklists ────────────────────────────────────────────
   // Stored in the same nc_steps JSONB column using prefixed keys (ss_ / fs_)
   // so they never collide with NC steps.
-  const SMALL_SERVICE_STEPS = [
-    { id: 'ss_checkin',   label: 'Check vehicle in',            detail: 'Record odometer reading. Note any pre-existing damage or customer concerns.' },
-    { id: 'ss_oil',       label: 'Engine oil & filter',         detail: 'Drain old oil, replace filter, refill with correct grade and quantity.' },
-    { id: 'ss_chain',     label: 'Chain — lube & adjust',       detail: 'Check tension and wear. Lubricate. Adjust if outside spec.' },
-    { id: 'ss_tyres',     label: 'Tyre pressures & condition',  detail: 'Inflate to spec (front & rear). Check tread depth and sidewall condition.' },
-    { id: 'ss_brakes',    label: 'Brake pads & fluid',          detail: 'Measure pad thickness front and rear. Top up brake fluid if low.' },
-    { id: 'ss_airfilter', label: 'Air filter',                  detail: 'Inspect and clean. Replace if excessively dirty or damaged.' },
-    { id: 'ss_testride',  label: 'Test ride & fault codes',     detail: 'Short test ride. Check for unusual noise, vibration, or warning lights.' },
-    { id: 'ss_sticker',   label: 'Service sticker & paperwork', detail: 'Fit next-service sticker. Complete service record and invoice.' },
+  const BOOKING_STEPS = [
+    { id: 'bk_arrived',   label: 'Customer arrived',                      detail: '' },
+    { id: 'bk_checkin',   label: 'Vehicle checked in',                    detail: '' },
+    { id: 'bk_approval',  label: 'Customer called to approve extra work',  detail: '' },
+    { id: 'bk_complete',  label: 'Service complete',                       detail: '' },
+    { id: 'bk_sticker',   label: 'Service sticker & invoice ready',        detail: '' },
+    { id: 'bk_notified',  label: 'Customer notified — vehicle ready sent', detail: '' },
+    { id: 'bk_collected', label: 'Vehicle collected',                      detail: '' },
   ];
 
-  const FULL_SERVICE_STEPS = [
-    { id: 'fs_checkin',   label: 'Check vehicle in',               detail: 'Record odometer reading. Note any pre-existing damage or customer concerns.' },
-    { id: 'fs_oil',       label: 'Engine oil & filter',            detail: 'Drain old oil, replace filter, refill with correct grade and quantity.' },
-    { id: 'fs_plugs',     label: 'Spark plugs',                    detail: 'Remove, inspect, and replace all spark plugs.' },
-    { id: 'fs_airfilter', label: 'Air filter',                     detail: 'Replace air filter element. Clean housing.' },
-    { id: 'fs_throttle',  label: 'Throttle body / carb clean',     detail: 'Clean throttle body or carburettor. Check idle and throttle response.' },
-    { id: 'fs_valves',    label: 'Valve clearances',               detail: 'Check and adjust valve clearances if applicable for this model.' },
-    { id: 'fs_chain',     label: 'Chain — inspect & adjust',       detail: 'Measure wear. Replace if beyond service limit. Adjust tension and lubricate.' },
-    { id: 'fs_brakes',    label: 'Brake pads, discs & fluid',      detail: 'Measure pad thickness and disc thickness front & rear. Replace fluid if due.' },
-    { id: 'fs_tyres',     label: 'Tyre tread & pressures',         detail: 'Inflate to spec. Check tread depth both ends. Advise customer if near limit.' },
-    { id: 'fs_coolant',   label: 'Coolant level & condition',      detail: 'Check level in reservoir (liquid-cooled models). Replace if due or discoloured.' },
-    { id: 'fs_lights',    label: 'Lights, horn & indicators',      detail: 'Test all lighting, horn, and turn signals. Replace any failed bulbs.' },
-    { id: 'fs_testride',  label: 'Test ride & fault codes',        detail: 'Road test. Check for unusual noise, vibration, or warning lights. Clear any stored codes.' },
-    { id: 'fs_sticker',   label: 'Service sticker & paperwork',    detail: 'Fit next-service sticker. Complete full service record and invoice.' },
-  ];
+  const SMALL_SERVICE_STEPS = BOOKING_STEPS;
+  const FULL_SERVICE_STEPS  = BOOKING_STEPS;
 
   const SERVICE_STEPS = {
     'small-service': SMALL_SERVICE_STEPS,
@@ -3354,12 +3340,9 @@
     const done     = !!steps[s.id];
     const readonly = (status === 'completed' || status === 'no-show' || status === 'cancelled');
     const clickAttr = readonly ? '' : ` onclick="toggleBookingStep(${bookingId}, '${s.id}')"`;
-    return `<div class="nc-step${done ? ' done' : ''}${readonly ? '' : ''}"${clickAttr} style="${readonly ? 'cursor:default;' : ''}">
+    return `<div class="nc-step${done ? ' done' : ''}"${clickAttr} style="${readonly ? 'cursor:default;' : ''}">
       <div class="nc-step-check">${done ? '✓' : ''}</div>
-      <div>
-        <div class="nc-step-num">Step ${i + 1}</div>
-        <div class="nc-step-text"><strong>${s.label}</strong> — ${s.detail}</div>
-      </div>
+      <div class="nc-step-text"><strong>${s.label}</strong></div>
     </div>`;
   }
 
