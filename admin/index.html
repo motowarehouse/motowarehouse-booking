@@ -3625,14 +3625,17 @@
     if (!dateVal) return;
     const dow = new Date(dateVal + 'T12:00:00').getDay();
     const periods = OPENING_HOURS[dow] || [];
-    if (!periods.length) {
-      startSel.innerHTML = '<option value="">Closed this day</option>';
-      endSel.innerHTML   = '<option value="">Closed this day</option>';
-      return;
-    }
-    // Build list of 30-min slots
+
+    // Build list of 30-min slots.
+    // Admin blocks can be placed on ANY day (including closed days / Sundays),
+    // so if the day has no configured hours we fall back to a full 07:00–20:00 range
+    // instead of showing "Closed this day" and bailing out.
+    const effectivePeriods = periods.length
+      ? periods
+      : [{ from: '07:00', to: '20:00' }];
+
     const slots = [];
-    periods.forEach(({ from, to }) => {
+    effectivePeriods.forEach(({ from, to }) => {
       let [h, m] = from.split(':').map(Number);
       const [eh, em] = to.split(':').map(Number);
       while (h * 60 + m <= eh * 60 + em) {
