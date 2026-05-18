@@ -4,9 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Terms &amp; Conditions – Motowarehouse Service Booking</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,900;1,700;1,900&display=swap" rel="stylesheet">
+  <style>
+    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 300; font-display: swap; src: url('/fonts/inter-latin-300-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/inter-latin-400-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/inter-latin-500-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/inter-latin-600-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/inter-latin-700-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Inter'; font-style: italic; font-weight: 700; font-display: swap; src: url('/fonts/inter-latin-700-italic.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 900; font-display: swap; src: url('/fonts/inter-latin-900-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Inter'; font-style: italic; font-weight: 900; font-display: swap; src: url('/fonts/inter-latin-900-italic.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+  </style>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -23,12 +30,16 @@
     }
     body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.75; min-height: 100vh; }
     .top-bar { height: 4px; background: linear-gradient(90deg, var(--blue) 0%, var(--teal-light) 100%); }
-    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 28px 40px; display: flex; align-items: center; gap: 16px; }
-    .logo-mark { width: 36px; height: 36px; background: linear-gradient(135deg, var(--blue) 0%, var(--teal-light) 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .logo-mark svg { width: 20px; height: 20px; fill: #fff; }
-    .logo-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--grey); }
-    .logo-name { font-size: 18px; font-weight: 900; color: var(--white); letter-spacing: -0.02em; line-height: 1.2; }
-    .logo-name span { color: var(--blue); }
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 40px; display: flex; align-items: center; justify-content: space-between; gap: 0; }
+    .logo-wrap { display: flex; align-items: center; gap: 14px; }
+    .logo-mark { height: 44px; width: auto; display: block; flex-shrink: 0; border-radius: 6px; object-fit: contain; }
+    .logo-mark-fallback { width: 44px; height: 44px; background: var(--blue); border-radius: 6px; display: none; align-items: center; justify-content: center; flex-shrink: 0; color: white; font-size: 16px; font-weight: 900; letter-spacing: -1px; }
+    .logo-text-wrap { display: flex; flex-direction: column; line-height: 1.1; }
+    .logo-name { font-size: 15px; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; color: var(--white); }
+    .logo-tagline { font-size: 10px; font-weight: 400; letter-spacing: 0.08em; color: var(--blue); text-transform: uppercase; }
+    .logo-divider { width: 1px; height: 28px; background: rgba(0,155,180,0.3); }
+    .brand-badges { display: flex; gap: 8px; align-items: center; }
+    .brand-badge { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: var(--grey); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 3px 8px; text-transform: uppercase; }
     .header-back { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--grey); text-decoration: none; letter-spacing: 0.05em; text-transform: uppercase; border: 1px solid var(--border); padding: 7px 14px; border-radius: 6px; transition: color 0.15s, border-color 0.15s; }
     .header-back:hover { color: var(--blue); border-color: var(--blue); }
     .hero { background: linear-gradient(160deg, var(--surface-2) 0%, var(--bg) 60%); border-bottom: 1px solid var(--border); padding: 56px 40px 48px; }
@@ -63,12 +74,18 @@
   <div class="top-bar"></div>
 
   <header>
-    <div class="logo-mark">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-    </div>
-    <div class="logo-text">
-      <div class="logo-eyebrow">Service Booking Portal</div>
-      <div class="logo-name">Moto<span>warehouse</span></div>
+    <div class="logo-wrap">
+      <img class="logo-mark" src="/assets/MWH_Logo_New.png" alt="Motowarehouse" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <div class="logo-mark-fallback">MW</div>
+      <div class="logo-text-wrap">
+        <div class="logo-name">Motowarehouse</div>
+        <div class="logo-tagline">Official Importer · Cyprus</div>
+      </div>
+      <div class="logo-divider"></div>
+      <div class="brand-badges">
+        <span class="brand-badge">CFMOTO</span>
+        <span class="brand-badge">SYM</span>
+      </div>
     </div>
     <a href="/" class="header-back">← Back to Booking</a>
   </header>
@@ -84,10 +101,10 @@
   <div class="content">
 
     <p>These Terms &amp; Conditions govern your use of the online service booking portal operated by K.S. Kyprianou Moto Warehouse Ltd ("Motowarehouse", "we", "us") at <a href="https://bookings.motowarehouse.com.cy">bookings.motowarehouse.com.cy</a>.</p>
-    <p>By submitting a booking request through this portal, you agree to these Terms. Please read them carefully before proceeding.</p>
+    <p>By submitting a booking request through this portal, you agree to these Terms. Please read them carefully before proceeding. Use of this portal is intended for persons aged <strong>18 years or over</strong>. By submitting a booking, you confirm that you are at least 18 years of age.</p>
 
     <h2>1. About This Service</h2>
-    <p>This portal allows customers to request service appointments for their CFMOTO vehicles at the Motowarehouse workshop, 40 Athinon Street, Strovolos, Nicosia, Cyprus.</p>
+    <p>This portal allows customers to request service appointments for their <strong>CFMOTO and SYM vehicles</strong> at the Motowarehouse workshop, 40 Athinon Street, Strovolos, Nicosia, Cyprus. Motowarehouse is the official importer of CFMOTO and SYM vehicles in Cyprus.</p>
     <p>Available service types:</p>
     <ul>
       <li><strong>Oil Change</strong> — engine oil and filter replacement</li>
@@ -104,7 +121,7 @@
       <li>We will either <strong>confirm</strong> your appointment by email/SMS or <strong>contact you</strong> to arrange an alternative date</li>
       <li>Your appointment is only confirmed once you receive an explicit confirmation from us</li>
     </ul>
-    <p>We aim to respond to all requests within one business day.</p>
+    <p>We aim to respond to all requests within one business day during our normal opening hours (Monday–Friday, excluding public holidays in Cyprus). Response times during peak periods or around public holidays may be longer.</p>
 
     <h2>3. Your Responsibilities</h2>
     <ul>
@@ -118,40 +135,48 @@
 
     <h2>4. Cancellations and Rescheduling</h2>
     <p><strong>By Motowarehouse:</strong> We reserve the right to cancel or reschedule a confirmed appointment due to unforeseen circumstances. We will contact you as soon as possible to arrange an alternative.</p>
-    <p><strong>By You:</strong> If you need to cancel or reschedule, please notify us at least 24 hours in advance by calling 22 328 788 or messaging on WhatsApp at 97 828 510.</p>
+    <p><strong>By You:</strong> If you need to cancel or reschedule, please notify us at least <strong>24 hours before your scheduled appointment time</strong> by calling 22 328 788 or messaging on WhatsApp at 97 828 510.</p>
 
     <h2>5. No-Show Policy</h2>
-    <p>If you do not attend your confirmed appointment without prior notice, your booking will be recorded as a no-show. Repeated no-shows may result in future booking requests being deprioritised.</p>
+    <p>If you do not attend your confirmed appointment without prior notice, your booking will be recorded as a no-show. Customers with a history of no-shows may, at our discretion, have future booking requests deprioritised.</p>
 
     <h2>6. Pending Bookings</h2>
-    <p>If a booking request is submitted but not confirmed within a reasonable period, the request may expire automatically. You will be notified and are welcome to submit a new request.</p>
+    <p>If a booking request is submitted but not confirmed within <strong>48 hours</strong> (excluding weekends and public holidays), the request may expire automatically. You will be notified by email or SMS and are welcome to submit a new request.</p>
 
     <h2>7. Vehicle Condition and Liability</h2>
-    <p>Motowarehouse will take reasonable care of your vehicle while on our premises. However, we are not responsible for:</p>
+    <p>Motowarehouse will take reasonable care of your vehicle while on our premises. However, to the fullest extent permitted by applicable law, we are not responsible for:</p>
     <ul>
       <li>Pre-existing damage or mechanical issues unrelated to the service performed</li>
       <li>Damage caused by issues not detectable during a standard service</li>
       <li>Personal items left in or on the vehicle</li>
     </ul>
     <p>Our liability is limited to the value of the specific service performed.</p>
+    <p>Nothing in these Terms limits or excludes liability that cannot be limited or excluded under applicable Cypriot consumer protection law.</p>
 
     <h2>8. Parts and Pricing</h2>
-    <p>All parts used in Motowarehouse services are <strong>100% genuine original CFMOTO parts</strong>. We do not use aftermarket or third-party components unless expressly agreed in writing.</p>
-    <p>Service pricing is not quoted through this portal. Pricing will be communicated upon appointment confirmation. Prices are subject to change without notice.</p>
+    <p>All parts used in Motowarehouse services are <strong>100% genuine original parts</strong> (CFMOTO or SYM as appropriate). We do not use aftermarket or third-party components unless expressly agreed in writing with the customer.</p>
+    <p>Service pricing is not quoted through this portal. The price for your service will be communicated to you upon appointment confirmation. Once a price has been confirmed to you, that confirmed price will be honoured for your appointment. We reserve the right to adjust unconfirmed pricing at any time.</p>
+    <p><strong>Payment is due upon completion of the service</strong> at our workshop. We do not accept advance payments through this portal.</p>
 
-    <h2>9. Intellectual Property</h2>
+    <h2>9. Consumer Rights</h2>
+    <p>Nothing in these Terms affects your rights as a consumer under the laws of the Republic of Cyprus and applicable EU consumer protection regulations, including rights in relation to services not carried out with reasonable care and skill.</p>
+
+    <h2>10. Intellectual Property</h2>
     <p>All content on this portal is the property of K.S. Kyprianou Moto Warehouse Ltd or its licensors. You may not reproduce or distribute any content without our written consent.</p>
 
-    <h2>10. Portal Availability</h2>
+    <h2>11. Portal Availability</h2>
     <p>We aim to keep this portal available at all times but do not guarantee uninterrupted access. We are not liable for any loss caused by downtime or technical issues.</p>
 
-    <h2>11. Governing Law</h2>
+    <h2>12. Force Majeure</h2>
+    <p>Motowarehouse shall not be liable for any failure or delay in performing its obligations under these Terms where such failure or delay is caused by circumstances beyond our reasonable control, including but not limited to natural disasters, acts of government, strikes, supply chain disruptions, or pandemics. In such cases, we will contact you to arrange an alternative appointment as soon as reasonably practicable.</p>
+
+    <h2>13. Governing Law</h2>
     <p>These Terms are governed by the laws of the Republic of Cyprus. Any disputes shall be subject to the exclusive jurisdiction of the courts of Cyprus.</p>
 
-    <h2>12. Changes to These Terms</h2>
-    <p>We may update these Terms at any time. The date at the top reflects the most recent update. Continued use of the portal constitutes acceptance of updated Terms.</p>
+    <h2>14. Changes to These Terms</h2>
+    <p>We may update these Terms at any time. The date at the top reflects the most recent update. For minor changes, the revised Terms take effect immediately upon publication. For material changes, we will take reasonable steps to notify users before the changes take effect.</p>
 
-    <h2>13. Contact</h2>
+    <h2>15. Contact</h2>
     <div class="info-box">
       <strong>K.S. Kyprianou Moto Warehouse Ltd</strong><br>
       40 Athinon Street, Strovolos, Nicosia, Cyprus<br>
@@ -165,7 +190,7 @@
     <a href="/terms">Terms &amp; Conditions</a>
     <a href="/cookie-policy">Cookie Policy</a>
     <br><br>
-    © 2026 K.S. Kyprianou Moto Warehouse Ltd. All rights reserved.
+    &copy; 2026 K.S. Kyprianou Moto Warehouse Ltd. All rights reserved.
   </footer>
 
 </body>

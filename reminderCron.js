@@ -67,7 +67,20 @@ function startReminderCron() {
     }
   });
 
-  console.log('[Cron] Reminder scheduler started (15-min reminders, 20:00 day-before, 01:00 expiry)');
+  // ── GDPR data retention — annual deletion (1 January at 03:00 UTC) ───────────
+  // Deletes bookings and related service history older than 6 years.
+  // Cyprus tax law requires records to be retained for 6 years; they must be
+  // deleted once that period has elapsed. Runs once a year at a low-traffic time.
+  cron.schedule('0 3 1 1 *', async () => {
+    try {
+      console.log('[GDPR Cron] Annual data retention run started — deleting records older than 6 years...');
+      await db.deleteOldBookings();
+    } catch (err) {
+      console.error('[GDPR Cron] Annual deletion failed:', err.message);
+    }
+  });
+
+  console.log('[Cron] Reminder scheduler started (15-min reminders, 20:00 day-before, 01:00 expiry, annual GDPR deletion)');
   // Note: no file-based backup needed — PostgreSQL on Railway handles data persistence.
 }
 

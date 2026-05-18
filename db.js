@@ -1275,6 +1275,49 @@ async function closeDates(dates, reason) {
 }
 
 // ── Pending Booking Expiry ────────────────────────────────────────────────────
+// ── GDPR Data Retention ───────────────────────────────────────────────────────
+// Deletes bookings (and related service history rows) older than 6 years.
+// Cyprus tax law requires 6-year retention; data must be deleted after that.
+// This function is called by the annual cron job in reminderCron.js.
+async function deleteOldBookings() {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Delete service history entries linked to old bookings first (FK constraint)
+    const { rowCount: historyDeleted } = await client.query(
+      `DELETE FROM service_history
+       WHERE booking_id IN (
+         SELECT id FROM bookings
+         WHERE created_at < NOW() - INTERVAL '6 years'
+       )`
+    );
+
+    // Delete the bookings themselves
+    const { rows: deleted } = await client.query(
+      `DELETE FROM bookings
+       WHERE created_at < NOW() - INTERVAL '6 years'
+       RETURNING ref, created_at::date AS date`
+    );
+
+    await client.query('COMMIT');
+
+    if (deleted.length) {
+      console.log(`[GDPR Cron] Deleted ${deleted.length} booking(s) older than 6 years (+ ${historyDeleted} service history rows).`);
+      console.log(`[GDPR Cron] Refs removed: ${deleted.map(r => r.ref).join(', ')}`);
+    } else {
+      console.log('[GDPR Cron] No bookings older than 6 years found — nothing deleted.');
+    }
+    return deleted.length;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('[GDPR Cron] deleteOldBookings failed, rolled back:', err.message);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 // Marks bookings that have been pending for more than 48 hours as 'expired'.
 async function expirePendingBookings() {
   const { rows } = await pool.query(
@@ -1380,6 +1423,7 @@ module.exports = {
   closeOtherRequest,
   updateNcSteps,
   closeDates,
+  deleteOldBookings,
   expirePendingBookings,
   getBookingsDueForDayBeforeReminder,
   markDayBeforeReminderSent,

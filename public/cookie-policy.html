@@ -4,9 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cookie Policy – Motowarehouse Service Booking</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,900;1,700;1,900&display=swap" rel="stylesheet">
+  <style>
+    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 300; font-display: swap; src: url('/fonts/inter-latin-300-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/inter-latin-400-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/inter-latin-500-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/inter-latin-600-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/inter-latin-700-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Inter'; font-style: italic; font-weight: 700; font-display: swap; src: url('/fonts/inter-latin-700-italic.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 900; font-display: swap; src: url('/fonts/inter-latin-900-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Inter'; font-style: italic; font-weight: 900; font-display: swap; src: url('/fonts/inter-latin-900-italic.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+  </style>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -23,12 +30,16 @@
     }
     body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.75; min-height: 100vh; }
     .top-bar { height: 4px; background: linear-gradient(90deg, var(--blue) 0%, var(--teal-light) 100%); }
-    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 28px 40px; display: flex; align-items: center; gap: 16px; }
-    .logo-mark { width: 36px; height: 36px; background: linear-gradient(135deg, var(--blue) 0%, var(--teal-light) 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .logo-mark svg { width: 20px; height: 20px; fill: #fff; }
-    .logo-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--grey); }
-    .logo-name { font-size: 18px; font-weight: 900; color: var(--white); letter-spacing: -0.02em; line-height: 1.2; }
-    .logo-name span { color: var(--blue); }
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 40px; display: flex; align-items: center; justify-content: space-between; gap: 0; }
+    .logo-wrap { display: flex; align-items: center; gap: 14px; }
+    .logo-mark { height: 44px; width: auto; display: block; flex-shrink: 0; border-radius: 6px; object-fit: contain; }
+    .logo-mark-fallback { width: 44px; height: 44px; background: var(--blue); border-radius: 6px; display: none; align-items: center; justify-content: center; flex-shrink: 0; color: white; font-size: 16px; font-weight: 900; letter-spacing: -1px; }
+    .logo-text-wrap { display: flex; flex-direction: column; line-height: 1.1; }
+    .logo-name { font-size: 15px; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; color: var(--white); }
+    .logo-tagline { font-size: 10px; font-weight: 400; letter-spacing: 0.08em; color: var(--blue); text-transform: uppercase; }
+    .logo-divider { width: 1px; height: 28px; background: rgba(0,155,180,0.3); }
+    .brand-badges { display: flex; gap: 8px; align-items: center; }
+    .brand-badge { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: var(--grey); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 3px 8px; text-transform: uppercase; }
     .header-back { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--grey); text-decoration: none; letter-spacing: 0.05em; text-transform: uppercase; border: 1px solid var(--border); padding: 7px 14px; border-radius: 6px; transition: color 0.15s, border-color 0.15s; }
     .header-back:hover { color: var(--blue); border-color: var(--blue); }
     .hero { background: linear-gradient(160deg, var(--surface-2) 0%, var(--bg) 60%); border-bottom: 1px solid var(--border); padding: 56px 40px 48px; }
@@ -68,12 +79,18 @@
   <div class="top-bar"></div>
 
   <header>
-    <div class="logo-mark">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-    </div>
-    <div class="logo-text">
-      <div class="logo-eyebrow">Service Booking Portal</div>
-      <div class="logo-name">Moto<span>warehouse</span></div>
+    <div class="logo-wrap">
+      <img class="logo-mark" src="/assets/MWH_Logo_New.png" alt="Motowarehouse" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <div class="logo-mark-fallback">MW</div>
+      <div class="logo-text-wrap">
+        <div class="logo-name">Motowarehouse</div>
+        <div class="logo-tagline">Official Importer · Cyprus</div>
+      </div>
+      <div class="logo-divider"></div>
+      <div class="brand-badges">
+        <span class="brand-badge">CFMOTO</span>
+        <span class="brand-badge">SYM</span>
+      </div>
     </div>
     <a href="/" class="header-back">← Back to Booking</a>
   </header>
@@ -107,13 +124,13 @@
           <td><strong>connect.sid</strong></td>
           <td>Strictly necessary</td>
           <td>Session management — maintains login state for authorised workshop partners and admins only. Not set for regular customers submitting a booking.</td>
-          <td>Session (deleted on browser close)</td>
+          <td>7 days (persistent)</td>
         </tr>
         <tr>
           <td><strong>hCaptcha cookies</strong></td>
           <td>Functional / Security</td>
           <td>Set by hCaptcha (Intuition Machines, Inc.) for bot detection and security verification on the booking form. Not used for advertising.</td>
-          <td>Session / short-term</td>
+          <td>Up to 1 year</td>
         </tr>
       </table>
     </div>
@@ -126,11 +143,11 @@
       <li>Third-party profiling cookies of any kind</li>
     </ul>
 
-    <h2>Google Fonts</h2>
-    <p>This portal loads fonts from Google Fonts (Google LLC). When your browser requests a font file, your IP address is transmitted to Google's servers as a standard technical process. Google may process this data in accordance with their own privacy policy. We use Google Fonts solely to display the portal interface correctly.</p>
+    <h2>Web Fonts</h2>
+    <p>This portal uses the Inter typeface, which is served directly from our own server. No font requests are made to Google Fonts or any third-party font service. Your IP address is not transmitted to any external server for the purpose of loading fonts.</p>
 
     <h2>Managing Cookies</h2>
-    <p>You can manage or delete cookies through your browser settings. Note that disabling session cookies may affect portal functionality for workshop partners. For regular customers, no persistent cookies are set during the booking process.</p>
+    <p>You can manage or delete cookies through your browser settings. Note that disabling the <strong>connect.sid</strong> session cookie will prevent workshop partners and admins from staying logged in. For regular customers submitting a booking, no session cookie is set — only the hCaptcha security cookies apply.</p>
     <ul>
       <li><a href="https://support.google.com/chrome/answer/95647" target="_blank" rel="noopener">Google Chrome</a></li>
       <li><a href="https://support.mozilla.org/en-US/kb/enable-and-disable-cookies-website-preferences" target="_blank" rel="noopener">Mozilla Firefox</a></li>

@@ -4,9 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Privacy Policy – Motowarehouse Service Booking</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,900;1,700;1,900&display=swap" rel="stylesheet">
+  <style>
+    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 300; font-display: swap; src: url('/fonts/inter-latin-300-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/inter-latin-400-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/inter-latin-500-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/inter-latin-600-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/inter-latin-700-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Inter'; font-style: italic; font-weight: 700; font-display: swap; src: url('/fonts/inter-latin-700-italic.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Inter'; font-style: normal; font-weight: 900; font-display: swap; src: url('/fonts/inter-latin-900-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Inter'; font-style: italic; font-weight: 900; font-display: swap; src: url('/fonts/inter-latin-900-italic.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+  </style>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -42,39 +49,22 @@
     header {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 28px 40px;
+      padding: 12px 40px;
       display: flex;
       align-items: center;
-      gap: 16px;
+      justify-content: space-between;
+      gap: 0;
     }
-    .logo-mark {
-      width: 36px;
-      height: 36px;
-      background: linear-gradient(135deg, var(--blue) 0%, var(--teal-light) 100%);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .logo-mark svg { width: 20px; height: 20px; fill: #fff; }
-    .logo-text { }
-    .logo-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--grey); }
-    .logo-name { font-size: 18px; font-weight: 900; color: var(--white); letter-spacing: -0.02em; line-height: 1.2; }
-    .logo-name span { color: var(--blue); }
-    .header-back {
-      margin-left: auto;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--grey);
-      text-decoration: none;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      border: 1px solid var(--border);
-      padding: 7px 14px;
-      border-radius: 6px;
-      transition: color 0.15s, border-color 0.15s;
-    }
+    .logo-wrap { display: flex; align-items: center; gap: 14px; }
+    .logo-mark { height: 44px; width: auto; display: block; flex-shrink: 0; border-radius: 6px; object-fit: contain; }
+    .logo-mark-fallback { width: 44px; height: 44px; background: var(--blue); border-radius: 6px; display: none; align-items: center; justify-content: center; flex-shrink: 0; color: white; font-size: 16px; font-weight: 900; letter-spacing: -1px; }
+    .logo-text-wrap { display: flex; flex-direction: column; line-height: 1.1; }
+    .logo-name { font-size: 15px; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; color: var(--white); }
+    .logo-tagline { font-size: 10px; font-weight: 400; letter-spacing: 0.08em; color: var(--blue); text-transform: uppercase; }
+    .logo-divider { width: 1px; height: 28px; background: rgba(0,155,180,0.3); }
+    .brand-badges { display: flex; gap: 8px; align-items: center; }
+    .brand-badge { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: var(--grey); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 3px 8px; text-transform: uppercase; }
+    .header-back { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--grey); text-decoration: none; letter-spacing: 0.05em; text-transform: uppercase; border: 1px solid var(--border); padding: 7px 14px; border-radius: 6px; transition: color 0.15s, border-color 0.15s; }
     .header-back:hover { color: var(--blue); border-color: var(--blue); }
 
     /* ── Hero ── */
@@ -191,12 +181,18 @@
   <div class="top-bar"></div>
 
   <header>
-    <div class="logo-mark">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-    </div>
-    <div class="logo-text">
-      <div class="logo-eyebrow">Service Booking Portal</div>
-      <div class="logo-name">Moto<span>warehouse</span></div>
+    <div class="logo-wrap">
+      <img class="logo-mark" src="/assets/MWH_Logo_New.png" alt="Motowarehouse" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <div class="logo-mark-fallback">MW</div>
+      <div class="logo-text-wrap">
+        <div class="logo-name">Motowarehouse</div>
+        <div class="logo-tagline">Official Importer · Cyprus</div>
+      </div>
+      <div class="logo-divider"></div>
+      <div class="brand-badges">
+        <span class="brand-badge">CFMOTO</span>
+        <span class="brand-badge">SYM</span>
+      </div>
     </div>
     <a href="/" class="header-back">← Back to Booking</a>
   </header>
@@ -256,9 +252,24 @@
           <td>Yes</td>
         </tr>
         <tr>
-          <td><strong>Service type and date</strong></td>
+          <td><strong>Service type and requested date/time</strong></td>
           <td>To schedule and manage your appointment</td>
           <td>Yes</td>
+        </tr>
+        <tr>
+          <td><strong>Current mileage (km)</strong></td>
+          <td>To record vehicle condition at time of service</td>
+          <td>Yes</td>
+        </tr>
+        <tr>
+          <td><strong>Additional notes</strong></td>
+          <td>To capture any specific concerns or instructions you wish to communicate to the workshop</td>
+          <td>No (optional)</td>
+        </tr>
+        <tr>
+          <td><strong>IP address and server logs</strong></td>
+          <td>Automatically collected by our hosting provider (Railway) for security, error monitoring, and abuse prevention. Not used to identify individual users under normal operation.</td>
+          <td>Automatic</td>
         </tr>
       </table>
     </div>
@@ -268,8 +279,9 @@
     <ul>
       <li><strong>Contract performance (Art. 6(1)(b)):</strong> Processing your details is necessary to arrange and manage the service you requested.</li>
       <li><strong>Legal obligation (Art. 6(1)(c)):</strong> Cypriot tax and commercial law requires us to retain business records for six (6) years.</li>
-      <li><strong>Legitimate interests (Art. 6(1)(f)):</strong> Sending appointment reminders directly related to your booking.</li>
+      <li><strong>Legitimate interests (Art. 6(1)(f)):</strong> Sending appointment reminders directly related to your booking, and operating security measures such as bot protection.</li>
     </ul>
+    <p>We do not rely on consent as a legal basis for processing your booking data. If we ever introduce consent-based processing, you will have the right to withdraw that consent at any time without affecting the lawfulness of processing carried out before withdrawal.</p>
 
     <h2>4. How We Use Your Data</h2>
     <ul>
@@ -282,6 +294,7 @@
     <p>We do not use your data for marketing purposes without your separate consent. We do not sell your data to any third party.</p>
 
     <h2>5. Third-Party Service Providers</h2>
+    <p>We share your data only with the following processors, each engaged under a data processing agreement (DPA) or equivalent contractual safeguards:</p>
     <div class="table-wrap">
       <table>
         <tr>
@@ -292,49 +305,51 @@
         </tr>
         <tr>
           <td><strong>Brevo (Sendinblue SAS)</strong></td>
-          <td>Sending confirmation and reminder emails and SMS messages</td>
-          <td>Name, email address, phone number</td>
-          <td>EU (France)</td>
+          <td>Sending transactional emails (confirmation, reminders, cancellations) and SMS messages</td>
+          <td>Name, email address, phone number, booking date/time, service type</td>
+          <td>EU (France) — adequacy applies</td>
         </tr>
         <tr>
-          <td><strong>hCaptcha</strong></td>
-          <td>Bot protection on the booking form</td>
-          <td>IP address, browser data</td>
-          <td>USA (SCC apply)</td>
+          <td><strong>hCaptcha (Intuition Machines, Inc.)</strong></td>
+          <td>Bot protection on the booking and verification forms</td>
+          <td>IP address, browser fingerprint data</td>
+          <td>USA — Standard Contractual Clauses apply</td>
         </tr>
         <tr>
-          <td><strong>Railway</strong></td>
-          <td>Cloud hosting and encrypted database</td>
-          <td>All booking data</td>
-          <td>USA (SCC apply)</td>
-        </tr>
-        <tr>
-          <td><strong>Google Fonts</strong></td>
-          <td>Web fonts used in portal interface</td>
-          <td>IP address on page load</td>
-          <td>USA (SCC apply)</td>
+          <td><strong>Railway (Railway Corp.)</strong></td>
+          <td>Cloud application hosting, encrypted database, and server infrastructure</td>
+          <td>All booking data; server logs may include IP addresses. Railway may retain infrastructure logs and backups for operational purposes in accordance with their own retention policy.</td>
+          <td>USA — Standard Contractual Clauses apply</td>
         </tr>
       </table>
     </div>
+    <p>No other third parties receive your personal data from this portal.</p>
 
-    <h2>6. Data Retention</h2>
-    <p>We retain your personal data and booking records for <strong>six (6) years</strong> from the date of your appointment, in line with Cypriot tax and commercial record-keeping requirements. After this period, your data is securely deleted.</p>
+    <h2>6. International Data Transfers</h2>
+    <p>Two of our service providers — hCaptcha and Railway — are based in the United States, which does not benefit from an EU adequacy decision. Transfers to these providers are made subject to <strong>Standard Contractual Clauses (SCCs)</strong> approved by the European Commission under Article 46(2)(c) GDPR, which provide appropriate safeguards for your personal data.</p>
+    <p>Brevo is based in France (EU) and no cross-border transfer safeguards are required for that provider.</p>
 
-    <h2>7. Your Rights Under GDPR</h2>
+    <h2>7. Data Retention</h2>
+    <p>We retain your personal data and booking records for <strong>six (6) years</strong> from the date of your appointment, in line with Cypriot tax and commercial record-keeping requirements. After this period, your data is deleted from our primary database. Please note that our hosting provider (Railway) may retain infrastructure-level logs and encrypted backups for a limited period beyond this in accordance with their own data retention policies.</p>
+
+    <h2>8. Your Rights Under GDPR</h2>
+    <p>Under GDPR, you have the following rights in relation to your personal data:</p>
     <ul>
-      <li><strong>Access:</strong> Request a copy of the personal data we hold about you</li>
-      <li><strong>Rectification:</strong> Request correction of inaccurate or incomplete data</li>
-      <li><strong>Erasure:</strong> Request deletion of your data (subject to legal retention obligations)</li>
-      <li><strong>Restriction:</strong> Request that we limit how we use your data</li>
-      <li><strong>Portability:</strong> Receive your data in a structured, machine-readable format</li>
-      <li><strong>Objection:</strong> Object to processing based on our legitimate interests</li>
+      <li><strong>Access (Art. 15):</strong> Request a copy of the personal data we hold about you</li>
+      <li><strong>Rectification (Art. 16):</strong> Request correction of inaccurate or incomplete data</li>
+      <li><strong>Erasure (Art. 17):</strong> Request deletion of your data (subject to our legal retention obligations)</li>
+      <li><strong>Restriction (Art. 18):</strong> Request that we limit how we use your data</li>
+      <li><strong>Portability (Art. 20):</strong> Receive your data in a structured, commonly used, machine-readable format</li>
+      <li><strong>Objection (Art. 21):</strong> Object to processing based on our legitimate interests</li>
+      <li><strong>No automated decisions (Art. 22):</strong> Not be subject to a decision based solely on automated processing that produces legal or similarly significant effects on you. We do not carry out such processing.</li>
+      <li><strong>Lodge a complaint (Art. 77):</strong> Lodge a complaint with a supervisory authority — see Section 11</li>
     </ul>
-    <p>To exercise any right, contact <a href="mailto:support@motowarehouse.com.cy">support@motowarehouse.com.cy</a>. We will respond within 30 days.</p>
+    <p>To exercise any right, contact <a href="mailto:support@motowarehouse.com.cy">support@motowarehouse.com.cy</a>. We will respond within <strong>one month</strong> of receiving your request. This period may be extended by a further two months where requests are complex or numerous, in which case we will notify you.</p>
 
-    <h2>8. Cookies</h2>
+    <h2>9. Cookies</h2>
     <p>This portal uses a session cookie for authorised workshop partner logins and security cookies set by hCaptcha. No advertising or analytics cookies are used. See our <a href="/cookie-policy">Cookie Policy</a> for full details.</p>
 
-    <h2>9. Data Security</h2>
+    <h2>10. Data Security</h2>
     <ul>
       <li>Encrypted database storage</li>
       <li>HTTPS encryption for all data in transit</li>
@@ -342,23 +357,27 @@
       <li>Rate limiting and bot protection via hCaptcha</li>
       <li>Access controls — only authorised Motowarehouse staff can view booking data</li>
     </ul>
+    <p>In the event of a personal data breach that is likely to result in a risk to your rights and freedoms, we will notify the Commissioner for Personal Data Protection within <strong>72 hours</strong> of becoming aware of it (Art. 33 GDPR). If the breach is likely to result in a high risk to you, we will also notify you directly without undue delay (Art. 34 GDPR).</p>
 
-    <h2>10. Supervisory Authority</h2>
-    <p>If you believe we have not handled your personal data correctly, you may lodge a complaint with:</p>
+    <h2>11. Supervisory Authority</h2>
+    <p>If you believe we have not handled your personal data correctly, you have the right to lodge a complaint with a supervisory authority. You may contact the Cypriot data protection authority directly:</p>
     <div class="info-box">
-      <strong>Commissioner for Personal Data Protection</strong><br>
+      <strong>Commissioner for Personal Data Protection (Cyprus)</strong><br>
       1 Iasonos Street, 1082 Nicosia, Cyprus<br>
       Tel: +357 22 818 456 &nbsp;·&nbsp; <a href="mailto:commissioner@dataprotection.gov.cy">commissioner@dataprotection.gov.cy</a><br>
       <a href="http://www.dataprotection.gov.cy" target="_blank" rel="noopener">www.dataprotection.gov.cy</a>
     </div>
+    <p>If you are located in another EU/EEA member state, you also have the right to lodge a complaint with the supervisory authority in the country where you live or work. A list of EU data protection authorities is available at <a href="https://www.edpb.europa.eu/about-edpb/about-edpb/members_en" target="_blank" rel="noopener">edpb.europa.eu</a>.</p>
 
-    <h2>11. Changes to This Policy</h2>
-    <p>We may update this Privacy Policy from time to time. The date at the top of this page reflects the most recent update. Continued use of the portal constitutes acceptance of the revised policy.</p>
+    <h2>12. Changes to This Policy</h2>
+    <p>We may update this Privacy Policy from time to time. The date at the top of this page reflects the most recent update. For minor changes, we will update the date and the revised policy will take effect immediately. For material changes — such as a new purpose for processing or a new category of data — we will take reasonable steps to notify you, and where required by law, obtain your consent before the change takes effect.</p>
 
-    <h2>12. Contact Us</h2>
-    <p><strong>K.S. Kyprianou Moto Warehouse Ltd</strong><br>
-    40 Athinon Street, Strovolos, Nicosia, Cyprus<br>
-    <a href="mailto:support@motowarehouse.com.cy">support@motowarehouse.com.cy</a> &nbsp;·&nbsp; Tel: 22 328 788</p>
+    <h2>13. Contact Us</h2>
+    <div class="info-box">
+      <strong>K.S. Kyprianou Moto Warehouse Ltd</strong><br>
+      40 Athinon Street, Strovolos, Nicosia, Cyprus<br>
+      <a href="mailto:support@motowarehouse.com.cy">support@motowarehouse.com.cy</a> &nbsp;·&nbsp; Tel: 22 328 788
+    </div>
 
   </div>
 
@@ -367,7 +386,7 @@
     <a href="/terms">Terms &amp; Conditions</a>
     <a href="/cookie-policy">Cookie Policy</a>
     <br><br>
-    © 2026 K.S. Kyprianou Moto Warehouse Ltd. All rights reserved.
+    &copy; 2026 K.S. Kyprianou Moto Warehouse Ltd. All rights reserved.
   </footer>
 
 </body>

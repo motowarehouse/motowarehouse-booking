@@ -2592,64 +2592,153 @@
   const dismissBtn  = document.getElementById('pwa-dismiss-btn');
   const iosSub      = document.getElementById('pwa-banner-ios-sub');
   const normalSub   = document.getElementById('pwa-banner-sub');
-
-  // Detect iOS Safari
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-
   let deferredPrompt = null;
 
-  const iosArrow = document.getElementById('pwa-ios-arrow');
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    // Show banner after short delay
+    setTimeout(() => banner.classList.add('visible'), 2000);
+  });
 
-  function dismissArrow() {
-    if (!iosArrow) return;
-    iosArrow.classList.add('fading');
-    setTimeout(() => { iosArrow.classList.remove('visible', 'fading'); }, 400);
-  }
-
-  if (isIOS && isSafari) {
-    // iOS: show manual instructions + bouncing arrow, no install button
+  // iOS detection
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+  const isInStandaloneMode = ('standalone' in window.navigator) && (window.navigator.standalone);
+  if (isIOS && !isInStandaloneMode) {
+    normalSub.style.display = 'none';
+    iosSub.style.display = 'block';
     installBtn.style.display = 'none';
-    normalSub.style.display  = 'none';
-    iosSub.style.display     = 'block';
     setTimeout(() => {
       banner.classList.add('visible');
-      // Show arrow 0.5s after banner appears
-      setTimeout(() => {
-        if (iosArrow) iosArrow.classList.add('visible');
-        // Auto-fade after 3 seconds
-        setTimeout(dismissArrow, 3000);
-      }, 500);
-    }, 2500);
-  } else {
-    // Android / Chrome: wait for beforeinstallprompt
-    window.addEventListener('beforeinstallprompt', function(e) {
-      e.preventDefault();
-      deferredPrompt = e;
-      setTimeout(() => banner.classList.add('visible'), 2000);
+      const arrow = document.getElementById('pwa-ios-arrow');
+      if (arrow) { arrow.classList.add('visible'); setTimeout(() => arrow.classList.add('fading'), 3000); }
+    }, 2000);
+  }
+
+  if (installBtn) {
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      banner.classList.remove('visible');
+      if (outcome === 'accepted') localStorage.setItem('pwa-dismissed', '1');
     });
   }
 
-  installBtn.addEventListener('click', async function() {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    deferredPrompt = null;
-    banner.classList.remove('visible');
-    if (outcome === 'accepted') localStorage.setItem('pwa-dismissed', '1');
-  });
-
-  dismissBtn.addEventListener('click', function() {
-    banner.classList.remove('visible');
-    dismissArrow();
-    localStorage.setItem('pwa-dismissed', '1');
-  });
-
-  // Register service worker
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(function() {});
+  if (dismissBtn) {
+    dismissBtn.addEventListener('click', () => {
+      banner.classList.remove('visible');
+      localStorage.setItem('pwa-dismissed', '1');
+    });
   }
 })();
 </script>
+
+<!-- ── COOKIE CONSENT BANNER ── -->
+<style>
+  #cookie-banner {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: #001e28;
+    border-top: 1px solid #003040;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    z-index: 99998;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.34,1.2,0.64,1);
+    box-shadow: 0 -4px 32px rgba(0,0,0,0.6);
+    flex-wrap: wrap;
+  }
+  #cookie-banner.visible { transform: translateY(0); }
+  #cookie-banner-text {
+    flex: 1;
+    min-width: 240px;
+    font-size: 13px;
+    color: rgba(204,232,237,0.85);
+    line-height: 1.55;
+    font-weight: 300;
+  }
+  #cookie-banner-text strong { color: #fff; font-weight: 600; }
+  #cookie-banner-text a { color: #009BB4; text-decoration: none; }
+  #cookie-banner-text a:hover { color: #00efd1; text-decoration: underline; }
+  #cookie-banner-btns {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  #cookie-accept-btn {
+    background: #009BB4;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 9px 20px;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+    letter-spacing: 0.03em;
+    transition: background 0.15s;
+  }
+  #cookie-accept-btn:hover { background: #00b8d4; }
+  #cookie-decline-btn {
+    background: none;
+    border: 1px solid #003040;
+    border-radius: 6px;
+    color: rgba(255,255,255,0.45);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 9px 16px;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  #cookie-decline-btn:hover { color: rgba(255,255,255,0.7); border-color: #005060; }
+  @media (max-width: 600px) {
+    #cookie-banner { padding: 14px 16px; }
+    #cookie-banner-btns { width: 100%; justify-content: flex-end; }
+  }
+</style>
+
+<div id="cookie-banner" role="dialog" aria-label="Cookie consent">
+  <div id="cookie-banner-text">
+    <strong>This site uses cookies.</strong> We use a session cookie to keep you logged in (workshop partners only) and hCaptcha for security. No advertising or tracking cookies are used. See our <a href="/cookie-policy" target="_blank">Cookie Policy</a> and <a href="/privacy" target="_blank">Privacy Policy</a> for details.
+  </div>
+  <div id="cookie-banner-btns">
+    <button id="cookie-decline-btn">Decline</button>
+    <button id="cookie-accept-btn">Accept &amp; Continue</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  const CONSENT_KEY = 'mw_cookie_consent';
+  const banner = document.getElementById('cookie-banner');
+  if (!banner) return;
+
+  // Don't show if already answered
+  if (localStorage.getItem(CONSENT_KEY)) return;
+
+  // Show after a brief delay so page load feels clean
+  setTimeout(() => banner.classList.add('visible'), 800);
+
+  document.getElementById('cookie-accept-btn').addEventListener('click', () => {
+    localStorage.setItem(CONSENT_KEY, 'accepted');
+    banner.classList.remove('visible');
+  });
+
+  document.getElementById('cookie-decline-btn').addEventListener('click', () => {
+    localStorage.setItem(CONSENT_KEY, 'declined');
+    banner.classList.remove('visible');
+  });
+})();
+</script>
+
 </body>
 </html>
