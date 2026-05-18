@@ -19,68 +19,135 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:      #0a0a0a;
-      --surface: #141414;
-      --border:  #1e1e1e;
-      --blue:    #009bb4;
-      --white:   #f0f0f0;
-      --grey:    #6b7280;
-      --red:     #e54b4b;
+      --bg:         #00171f;
+      --surface:    #001e28;
+      --surface-2:  #002330;
+      --border:     #003040;
+      --blue:       #009bb4;
+      --teal-light: #00efd1;
+      --white:      #ffffff;
+      --text:       #cce8ed;
+      --grey:       #5a8a95;
+      --red:        #e54b4b;
     }
 
     body {
       font-family: 'Inter', sans-serif;
       background: var(--bg);
-      color: var(--white);
+      color: var(--text);
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 20px;
     }
 
+    /* top gradient bar */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--blue) 0%, var(--teal-light) 100%);
+      z-index: 100;
+    }
+
     .wrap {
       width: 100%;
-      max-width: 380px;
+      max-width: 400px;
     }
 
+    /* logo area */
     .logo {
-      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       margin-bottom: 36px;
+      gap: 10px;
     }
 
-    .logo-text {
-      font-size: 13px;
+    .logo-img-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-mark {
+      height: 48px;
+      width: auto;
+      display: block;
+      border-radius: 8px;
+      object-fit: contain;
+    }
+
+    .logo-mark-fallback {
+      width: 48px;
+      height: 48px;
+      background: var(--blue);
+      border-radius: 8px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: white;
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
+
+    .logo-text-wrap {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+
+    .logo-name {
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--white);
+    }
+
+    .logo-tagline {
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      color: var(--blue);
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .portal-badge {
+      font-size: 10px;
       font-weight: 700;
-      letter-spacing: 0.18em;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
       color: var(--grey);
+      background: rgba(0,155,180,0.08);
+      border: 1px solid rgba(0,155,180,0.2);
+      padding: 4px 12px;
+      border-radius: 4px;
     }
 
-    .logo-brand {
-      font-size: 22px;
-      font-weight: 900;
-      letter-spacing: -0.02em;
-      color: var(--white);
-      margin-top: 4px;
-    }
-
-    .logo-brand span { color: var(--blue); }
-
+    /* card */
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 28px;
+      padding: 32px 28px 28px;
     }
 
     .card-title {
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 700;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: var(--grey);
-      margin-bottom: 20px;
+      color: var(--blue);
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
     }
 
     label {
@@ -98,7 +165,7 @@
 
     input[type="password"] {
       width: 100%;
-      background: #0a0a0a;
+      background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 8px;
       color: var(--white);
@@ -114,14 +181,14 @@
     .btn {
       display: block;
       width: 100%;
-      margin-top: 22px;
+      margin-top: 24px;
       padding: 13px;
-      background: var(--blue);
+      background: linear-gradient(90deg, var(--blue) 0%, #00b8d4 100%);
       color: #fff;
       font-family: inherit;
       font-size: 13px;
       font-weight: 700;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       border: none;
       border-radius: 8px;
@@ -137,22 +204,30 @@
       font-weight: 500;
       padding: 10px 12px;
       border-radius: 7px;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
       display: none;
     }
 
-    .msg.error   { background: rgba(229,75,75,0.12); color: var(--red); display: block; }
-    .msg.success { background: rgba(0,155,180,0.12); color: var(--blue); display: block; }
+    .msg.error   { background: rgba(229,75,75,0.12); color: var(--red); display: block; border: 1px solid rgba(229,75,75,0.2); }
+    .msg.success { background: rgba(0,155,180,0.1); color: var(--teal-light); display: block; border: 1px solid rgba(0,155,180,0.2); }
 
-    /* hCaptcha centering */
-    .h-captcha { margin-top: 18px; display: flex; justify-content: center; }
+    .h-captcha { margin-top: 20px; display: flex; justify-content: center; }
   </style>
 </head>
 <body>
   <div class="wrap">
+
     <div class="logo">
-      <div class="logo-text">Service Portal</div>
-      <div class="logo-brand">Moto<span>warehouse</span></div>
+      <div class="logo-img-wrap">
+        <img class="logo-mark" src="/assets/MWH_Logo_New.png" alt="Motowarehouse"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div class="logo-mark-fallback">MW</div>
+        <div class="logo-text-wrap">
+          <div class="logo-name">Motowarehouse</div>
+          <div class="logo-tagline">Official Importer · Cyprus</div>
+        </div>
+      </div>
+      <div class="portal-badge">Service Portal — Admin</div>
     </div>
 
     <div class="card">
@@ -164,10 +239,11 @@
       <input type="password" id="password" autocomplete="current-password"
         onkeydown="if(event.key==='Enter') doLogin()">
 
-      <div class="h-captcha" data-sitekey="eb84b046-39d0-4fd2-a1e2-28e02294d4ce" data-theme="dark"></div>
+      <div class="h-captcha" data-sitekey="__HCAPTCHA_SITE_KEY__" data-theme="dark"></div>
 
       <button class="btn" id="loginBtn" onclick="doLogin()">Sign In</button>
     </div>
+
   </div>
 
   <script>
@@ -185,7 +261,6 @@
         return;
       }
 
-      // Get hCaptcha token
       const captchaToken = hcaptcha.getResponse();
 
       btn.disabled = true;
@@ -219,4 +294,5 @@
       }
     }
   </script>
-</
+</body>
+</html>

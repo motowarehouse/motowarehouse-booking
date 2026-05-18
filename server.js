@@ -1,4 +1,5 @@
 require('dotenv').config();
+const fs      = require('fs');
 const express = require('express');
 const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
@@ -160,6 +161,25 @@ async function verifyHcaptcha(token) {
   }
 }
 
+// ── HTML injection helper — injects runtime config into HTML before sending ───
+// Replaces __HCAPTCHA_SITE_KEY__ placeholder with the value from .env / Railway.
+// This keeps the site key out of git while still delivering it to the browser.
+function sendHtmlWithConfig(res, filePath) {
+  fs.readFile(filePath, 'utf8', (err, html) => {
+    if (err) {
+      console.error('[sendHtmlWithConfig] Failed to read', filePath, err.message);
+      return res.status(500).send('Internal server error');
+    }
+    const siteKey = process.env.HCAPTCHA_SITE_KEY || '';
+    if (!siteKey) {
+      console.warn('[sendHtmlWithConfig] HCAPTCHA_SITE_KEY is not set — captcha widget will not load.');
+    }
+    html = html.replace(/__HCAPTCHA_SITE_KEY__/g, siteKey);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  });
+}
+
 // ── Security headers middleware ───────────────────────────────────────────────
 function securityHeaders(req, res, next) {
   res.setHeader('X-Content-Type-Options',  'nosniff');
@@ -175,7 +195,14 @@ app.set('trust proxy', 1); // Required for Railway/Heroku HTTPS proxy
 app.use(securityHeaders);
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
-app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
+// Booking form — served with config injected. Must come BEFORE express.static
+// so the placeholder is replaced before the file reaches the browser.
+app.get(['/', '/index.html'], (req, res) => {
+  sendHtmlWithConfig(res, path.join(__dirname, 'public', 'index.html'));
+});
+// index: false prevents express.static from auto-serving index.html directly
+// (the route above handles that with runtime config injection).
+app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'], index: false }));
 if (!process.env.SESSION_SECRET) {
   console.warn('\n⚠️  SESSION_SECRET is not set. Using insecure default. Set SESSION_SECRET in Railway environment variables.\n');
 }
@@ -185,7 +212,7 @@ app.use(session({
     tableName:          'session',
     createTableIfMissing: true  // safety net — also created in initDB()
   }),
-  secret: process.env.SESSION_SECRET || 'mw-secret-2024-CHANGE-ME',
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -992,7 +1019,7 @@ app.get('/admin', (req, res) => res.status(404).send('Not found.'));
 // Login page — served to unauthenticated visitors
 app.get('/mw-service-solonas/login', (req, res) => {
   if (req.session && req.session.admin) return res.redirect('/mw-service-solonas');
-  res.sendFile(path.join(__dirname, 'admin', 'login.html'));
+  sendHtmlWithConfig(res, path.join(__dirname, 'admin', 'login.html'));
 });
 
 // Admin panel — requires valid session
@@ -1308,7 +1335,7 @@ app.post('/api/admin/partners/:id/reset-password', requireAdmin, async (req, res
 // Serve partner portal — unauthenticated users get the login page only
 app.get('/partner', (req, res) => {
   if (!req.session || !req.session.partner) {
-    return res.sendFile(path.join(__dirname, 'partner', 'login.html'));
+    return sendHtmlWithConfig(res, path.join(__dirname, 'partner', 'login.html'));
   }
   res.sendFile(path.join(__dirname, 'partner', 'index.html'));
 });
