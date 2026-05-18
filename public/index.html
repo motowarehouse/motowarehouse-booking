@@ -713,6 +713,31 @@
     .btn-submit:active { transform: scale(0.98); }
     .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
+    .consent-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 18px;
+      cursor: pointer;
+    }
+    .consent-label input[type="checkbox"] {
+      margin-top: 3px;
+      flex-shrink: 0;
+      width: 16px;
+      height: 16px;
+      accent-color: var(--blue);
+      cursor: pointer;
+    }
+    .consent-label span {
+      font-size: 12px;
+      color: var(--grey);
+      line-height: 1.6;
+    }
+    .consent-label span a {
+      color: var(--blue);
+      text-decoration: underline;
+    }
+
     /* ── ALERTS ── */
     .alert { border-radius: 6px; font-size: 14px; padding: 12px 16px; margin-top: 4px; grid-column: 1/-1; display: none; }
     .alert.show { display: block; }
@@ -1452,12 +1477,14 @@
       <div class="alert error" id="form-error"></div>
 
       <div class="submit-row">
+        <label class="consent-label">
+          <input type="checkbox" id="consent-checkbox">
+          <span>I have read and agree to the <a href="/privacy" target="_blank">Privacy Policy</a> and <a href="/terms" target="_blank">Terms &amp; Conditions</a>. I consent to my contact details and vehicle information being used to manage my service appointment.</span>
+        </label>
+
         <button class="btn-submit" id="submit-btn" onclick="submitBooking()">
           Request Appointment
         </button>
-        <p style="font-size:11px;color:var(--grey);margin-top:12px;line-height:1.5;text-align:center;">
-          By submitting this form you agree that your contact details and vehicle information will be used solely to manage your service appointment. Motowarehouse Ltd will not share your data with third parties.
-        </p>
       </div>
 
     </div>
@@ -1993,6 +2020,9 @@
 
     const isOther = selectedService === 'other';
     const description = isOther ? document.getElementById('other-description').value.trim() : '';
+
+    const consent = document.getElementById('consent-checkbox');
+    if (!consent || !consent.checked) return showError('Please read and accept the Privacy Policy and Terms & Conditions to continue.');
 
     if (!selectedService) return showError('Please select a service type.');
     if (!isOther) {
