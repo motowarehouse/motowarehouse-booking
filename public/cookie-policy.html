@@ -6,98 +6,131 @@
   <title>Cookie Policy – Motowarehouse Service Booking</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,900;1,700;1,900&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0a0a0a;
-      --surface: #141414;
-      --border: #1e1e1e;
-      --blue: #009bb4;
-      --white: #f0f0f0;
-      --grey: #6b7280;
-      --text: #c8c8c8;
+      --bg:          #00171f;
+      --surface:     #001e28;
+      --surface-2:   #002330;
+      --border:      #003040;
+      --blue:        #009bb4;
+      --teal-light:  #00efd1;
+      --teal-mid:    #51b7c3;
+      --white:       #ffffff;
+      --text:        #cce8ed;
+      --grey:        #5a8a95;
     }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.7;
-      padding: 40px 20px 80px;
-    }
-    .wrap { max-width: 780px; margin: 0 auto; }
-    .logo { margin-bottom: 48px; }
-    .logo-sub { font-size: 12px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--grey); }
-    .logo-name { font-size: 22px; font-weight: 700; color: var(--white); margin-top: 4px; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.75; min-height: 100vh; }
+    .top-bar { height: 4px; background: linear-gradient(90deg, var(--blue) 0%, var(--teal-light) 100%); }
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 28px 40px; display: flex; align-items: center; gap: 16px; }
+    .logo-mark { width: 36px; height: 36px; background: linear-gradient(135deg, var(--blue) 0%, var(--teal-light) 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .logo-mark svg { width: 20px; height: 20px; fill: #fff; }
+    .logo-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--grey); }
+    .logo-name { font-size: 18px; font-weight: 900; color: var(--white); letter-spacing: -0.02em; line-height: 1.2; }
     .logo-name span { color: var(--blue); }
-    h1 { font-size: 26px; font-weight: 700; color: var(--white); margin-bottom: 8px; }
-    .meta { font-size: 13px; color: var(--grey); margin-bottom: 40px; }
-    h2 { font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--blue); margin: 36px 0 12px; }
-    p { margin-bottom: 14px; font-size: 15px; }
-    ul { margin: 10px 0 14px 20px; }
-    li { margin-bottom: 6px; font-size: 15px; }
-    table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 14px; }
-    th { text-align: left; padding: 10px 14px; background: var(--surface); color: var(--white); font-weight: 600; border: 1px solid var(--border); }
-    td { padding: 10px 14px; border: 1px solid var(--border); vertical-align: top; }
+    .header-back { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--grey); text-decoration: none; letter-spacing: 0.05em; text-transform: uppercase; border: 1px solid var(--border); padding: 7px 14px; border-radius: 6px; transition: color 0.15s, border-color 0.15s; }
+    .header-back:hover { color: var(--blue); border-color: var(--blue); }
+    .hero { background: linear-gradient(160deg, var(--surface-2) 0%, var(--bg) 60%); border-bottom: 1px solid var(--border); padding: 56px 40px 48px; }
+    .hero-inner { max-width: 800px; margin: 0 auto; }
+    .hero-tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--blue); background: rgba(0,155,180,0.1); border: 1px solid rgba(0,155,180,0.25); padding: 4px 12px; border-radius: 4px; margin-bottom: 16px; }
+    .hero h1 { font-size: 38px; font-weight: 900; font-style: italic; color: var(--white); letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 12px; }
+    .hero-meta { font-size: 13px; color: var(--grey); }
+    .content { max-width: 800px; margin: 0 auto; padding: 48px 40px 80px; }
+    h2 { font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--blue); margin: 44px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    h2:first-child { margin-top: 0; }
+    p { margin-bottom: 14px; font-size: 15px; font-weight: 300; }
+    strong { font-weight: 600; color: var(--white); }
+    ul { margin: 8px 0 14px 18px; }
+    li { margin-bottom: 7px; font-size: 15px; font-weight: 300; }
     a { color: var(--blue); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    .back { display: inline-block; margin-top: 48px; font-size: 13px; color: var(--grey); border: 1px solid var(--border); border-radius: 7px; padding: 8px 16px; transition: color 0.15s, border-color 0.15s; }
-    .back:hover { color: var(--blue); border-color: var(--blue); text-decoration: none; }
+    a:hover { color: var(--teal-light); text-decoration: underline; }
+    .table-wrap { overflow-x: auto; margin: 16px 0 24px; border-radius: 8px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { text-align: left; padding: 12px 16px; background: var(--surface-2); color: var(--white); font-weight: 600; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+    td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: top; font-weight: 300; }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: rgba(0,35,48,0.4); }
+    .info-box { background: rgba(0,155,180,0.07); border-left: 3px solid var(--blue); border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 20px 0; font-size: 14px; }
+    footer { background: var(--surface); border-top: 1px solid var(--border); padding: 24px 40px; text-align: center; font-size: 12px; color: var(--grey); }
+    footer a { color: var(--grey); margin: 0 8px; }
+    footer a:hover { color: var(--blue); }
+    @media (max-width: 600px) {
+      header { padding: 20px; }
+      .hero { padding: 40px 20px 32px; }
+      .hero h1 { font-size: 28px; }
+      .content { padding: 32px 20px 60px; }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
 
-    <div class="logo">
-      <div class="logo-sub">Service Booking Portal</div>
+  <div class="top-bar"></div>
+
+  <header>
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
+    <div class="logo-text">
+      <div class="logo-eyebrow">Service Booking Portal</div>
       <div class="logo-name">Moto<span>warehouse</span></div>
     </div>
+    <a href="/" class="header-back">← Back to Booking</a>
+  </header>
 
-    <h1>Cookie Policy</h1>
-    <p class="meta">Last updated: May 2026 &nbsp;·&nbsp; Effective immediately</p>
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="hero-tag">Legal</div>
+      <h1>Cookie Policy</h1>
+      <p class="hero-meta">Last updated: May 2026 &nbsp;·&nbsp; Effective immediately</p>
+    </div>
+  </div>
+
+  <div class="content">
 
     <p>This Cookie Policy explains how the Motowarehouse service booking portal at <a href="https://bookings.motowarehouse.com.cy">bookings.motowarehouse.com.cy</a> uses cookies and similar technologies.</p>
 
     <h2>What Are Cookies?</h2>
-    <p>Cookies are small text files placed on your device by a website when you visit it. They are widely used to make websites work properly and to provide information to the site operator.</p>
+    <p>Cookies are small text files placed on your device when you visit a website. They are used to make websites function correctly and to provide information to the site operator.</p>
 
     <h2>Cookies We Use</h2>
-    <p>This portal uses only strictly necessary and functional cookies. We do not use advertising, tracking, or analytics cookies.</p>
+    <p>This portal uses only strictly necessary and functional/security cookies. We do not use advertising, tracking, or analytics cookies of any kind.</p>
+    <div class="table-wrap">
+      <table>
+        <tr>
+          <th>Cookie</th>
+          <th>Type</th>
+          <th>Purpose</th>
+          <th>Duration</th>
+        </tr>
+        <tr>
+          <td><strong>connect.sid</strong></td>
+          <td>Strictly necessary</td>
+          <td>Session management — maintains login state for authorised workshop partners and admins only. Not set for regular customers submitting a booking.</td>
+          <td>Session (deleted on browser close)</td>
+        </tr>
+        <tr>
+          <td><strong>hCaptcha cookies</strong></td>
+          <td>Functional / Security</td>
+          <td>Set by hCaptcha (Intuition Machines, Inc.) for bot detection and security verification on the booking form. Not used for advertising.</td>
+          <td>Session / short-term</td>
+        </tr>
+      </table>
+    </div>
 
-    <table>
-      <tr>
-        <th>Cookie</th>
-        <th>Type</th>
-        <th>Purpose</th>
-        <th>Duration</th>
-      </tr>
-      <tr>
-        <td><strong>connect.sid</strong></td>
-        <td>Strictly necessary</td>
-        <td>Session management — maintains your login state if you are an authorised workshop partner or admin. Not set for regular customers booking an appointment.</td>
-        <td>Session (deleted when browser closes)</td>
-      </tr>
-      <tr>
-        <td><strong>hCaptcha cookies</strong></td>
-        <td>Functional / Security</td>
-        <td>Set by hCaptcha (Intuition Machines, Inc.) for bot detection and security verification on the booking form. These cookies do not track you for advertising purposes.</td>
-        <td>Session / short-term</td>
-      </tr>
-    </table>
-
-    <h2>Cookies We Do NOT Use</h2>
+    <h2>Cookies We Do Not Use</h2>
     <ul>
-      <li>Analytics cookies (e.g. Google Analytics)</li>
+      <li>Analytics cookies (e.g. Google Analytics, Hotjar)</li>
       <li>Advertising or retargeting cookies</li>
       <li>Social media tracking cookies</li>
-      <li>Any third-party profiling cookies</li>
+      <li>Third-party profiling cookies of any kind</li>
     </ul>
 
     <h2>Google Fonts</h2>
-    <p>This portal loads fonts from Google Fonts (Google LLC). When your browser requests a font file from Google's servers, your IP address is transmitted to Google. This is a standard technical process. Google may use this data in accordance with their own privacy policy. We use Google Fonts solely to display the portal interface correctly.</p>
+    <p>This portal loads fonts from Google Fonts (Google LLC). When your browser requests a font file, your IP address is transmitted to Google's servers as a standard technical process. Google may process this data in accordance with their own privacy policy. We use Google Fonts solely to display the portal interface correctly.</p>
 
-    <h2>Your Choices</h2>
-    <p>Since this portal only uses strictly necessary and security-related cookies, disabling cookies may affect the functionality of the portal. You can manage or delete cookies through your browser settings:</p>
+    <h2>Managing Cookies</h2>
+    <p>You can manage or delete cookies through your browser settings. Note that disabling session cookies may affect portal functionality for workshop partners. For regular customers, no persistent cookies are set during the booking process.</p>
     <ul>
       <li><a href="https://support.google.com/chrome/answer/95647" target="_blank" rel="noopener">Google Chrome</a></li>
       <li><a href="https://support.mozilla.org/en-US/kb/enable-and-disable-cookies-website-preferences" target="_blank" rel="noopener">Mozilla Firefox</a></li>
@@ -106,11 +139,20 @@
     </ul>
 
     <h2>More Information</h2>
-    <p>For more information about how we handle your personal data, see our <a href="/privacy">Privacy Policy</a>.</p>
-    <p>For questions about this Cookie Policy, contact us at <a href="mailto:support@motowarehouse.com.cy">support@motowarehouse.com.cy</a>.</p>
-
-    <a href="/" class="back">← Back to booking</a>
+    <div class="info-box">
+      For full details on how we handle your personal data, see our <a href="/privacy">Privacy Policy</a>.<br>
+      Questions? Contact us at <a href="mailto:support@motowarehouse.com.cy">support@motowarehouse.com.cy</a>
+    </div>
 
   </div>
+
+  <footer>
+    <a href="/privacy">Privacy Policy</a>
+    <a href="/terms">Terms &amp; Conditions</a>
+    <a href="/cookie-policy">Cookie Policy</a>
+    <br><br>
+    © 2026 K.S. Kyprianou Moto Warehouse Ltd. All rights reserved.
+  </footer>
+
 </body>
 </html>
