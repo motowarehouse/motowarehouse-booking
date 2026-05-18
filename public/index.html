@@ -1092,6 +1092,7 @@
       box-shadow: 0 0 8px rgba(0,239,209,0.6);
     }
   </style>
+  <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
 </head>
 <body>
 
@@ -1296,6 +1297,13 @@
 
         <!-- OTP Verification -->
         <div id="otp-send-section">
+          <!-- Invisible hCaptcha — verified before SMS is sent -->
+          <div id="otp-captcha" class="h-captcha"
+            data-sitekey="eb84b046-39d0-4fd2-a1e2-28e02294d4ce"
+            data-size="invisible"
+            data-theme="dark"
+            data-callback="onOtpCaptchaVerified"
+            style="display:none;"></div>
           <button type="button" id="send-otp-btn" class="otp-send-btn" onclick="sendOTP()" disabled>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 11 19.79 19.79 0 01.01 2.32 2 2 0 012 .14h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14z"/></svg>
             Send Verification Code
@@ -1569,7 +1577,27 @@
     updateSendOTPBtn();
   }
 
+  // Called by hCaptcha after invisible challenge completes
+  async function onOtpCaptchaVerified(token) {
+    await _doSendOTP(window._otpIsResend || false, token);
+  }
+
   async function sendOTP(isResend = false) {
+    const phone = getFullPhone();
+    if (!phone) return;
+
+    window._otpIsResend = isResend;
+
+    // Trigger invisible hCaptcha — it will call onOtpCaptchaVerified when done
+    if (typeof hcaptcha !== 'undefined') {
+      hcaptcha.execute(hcaptcha.getRenderParams('otp-captcha'));
+    } else {
+      // hCaptcha not loaded yet (e.g. slow network) — proceed without it
+      await _doSendOTP(isResend, '');
+    }
+  }
+
+  async function _doSendOTP(isResend, captchaToken) {
     const phone = getFullPhone();
     if (!phone) return;
 
@@ -1587,7 +1615,7 @@
       const res  = await fetch('/api/verify/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, email })
+        body: JSON.stringify({ phone, email, 'h-captcha-response': captchaToken })
       });
       const data = await res.json();
 
@@ -2595,4 +2623,3 @@
 </script>
 </body>
 </html>
-                    

@@ -1,6 +1,19 @@
 require('dotenv').config();
 const { Pool } = require('pg');
 
+// ── Booking reference generator ───────────────────────────────────────────────
+// Produces refs like MW-A7X3K2 — 6 random characters from an unambiguous set
+// (no 0/O or 1/I which look alike). Collision probability is negligible:
+// 30^6 = 729 million combinations.
+const REF_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function generateRef() {
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += REF_CHARS[Math.floor(Math.random() * REF_CHARS.length)];
+  }
+  return 'MW-' + code;
+}
+
 // ── Connection ────────────────────────────────────────────────────────────────
 
 if (!process.env.DATABASE_URL) {
@@ -72,6 +85,17 @@ async function initDB() {
     await client.query(`ALTER TABLE partners  ADD COLUMN IF NOT EXISTS email TEXT`);
     await client.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS nc_steps JSONB DEFAULT '{}'`);
     await client.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS day_before_reminder_sent BOOLEAN DEFAULT FALSE`);
+
+    // ── Ref column migration: drop GENERATED ALWAYS so app code can set random refs ──
+    // This is idempotent — if the column is already a plain column, the ALTER is a no-op.
+    try {
+      await client.query(`ALTER TABLE bookings ALTER COLUMN ref DROP EXPRESSION IF EXISTS`);
+    } catch (e) {
+      // Older PostgreSQL versions that don't support DROP EXPRESSION — column may already be plain
+      if (!e.message.includes('is not a generated column')) {
+        console.warn('[DB] ref column migration note:', e.message);
+      }
+    }
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS mechanic_off_days (
@@ -505,13 +529,23 @@ async function createBooking(data) {
     mechanic = Object.entries(counts).sort((a, b) => a[1] - b[1])[0][0];
   }
 
+  // Generate a unique random ref — retry up to 5 times on the rare collision
+  let ref;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const candidate = generateRef();
+    const { rows: existing } = await pool.query('SELECT id FROM bookings WHERE ref = $1', [candidate]);
+    if (existing.length === 0) { ref = candidate; break; }
+  }
+  if (!ref) throw new Error('Could not generate a unique booking reference. Please try again.');
+
   const { rows } = await pool.query(
     `INSERT INTO bookings
-       (name, phone, email, service_type, date, time, model, year, plate, km,
+       (ref, name, phone, email, service_type, date, time, model, year, plate, km,
         notes, description, mechanic, duration_mins, status, contact_status, reminder_sent)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'pending',$15,false)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'pending',$16,false)
      RETURNING *`,
     [
+      ref,
       data.name, data.phone, data.email || '', data.serviceType,
       data.date || '', data.time || '',
       data.model, data.year, data.plate, data.km,

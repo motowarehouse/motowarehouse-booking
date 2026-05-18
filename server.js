@@ -58,9 +58,9 @@ function makeRateLimiter(maxAttempts, windowMs, errorMsg) {
   };
 }
 
-// Public booking: max 5 submissions / IP / hour
+// Public booking: max 2 submissions / IP / hour
 const bookingRateLimit = makeRateLimiter(
-  5, 60 * 60 * 1000,
+  2, 60 * 60 * 1000,
   'Too many booking attempts. Please try again later or call us on 22 328 788.'
 );
 
@@ -70,10 +70,16 @@ const adminLoginRateLimit = makeRateLimiter(
   'Too many login attempts. Please wait 1 hour or contact support.'
 );
 
-// Partner login: max 10 attempts / IP / hour (partners may share a device / café WiFi)
+// Partner login: max 5 attempts / IP / hour
 const partnerLoginRateLimit = makeRateLimiter(
-  10, 60 * 60 * 1000,
+  5, 60 * 60 * 1000,
   'Too many login attempts. Please wait 1 hour.'
+);
+
+// OTP SMS: max 3 requests / IP / hour (separate from per-phone limit)
+const otpIpRateLimit = makeRateLimiter(
+  3, 60 * 60 * 1000,
+  'Too many verification requests. Please try again in an hour or call us on 22 328 788.'
 );
 
 // ── Phone normalisation (shared by OTP routes + /api/book) ───────────────────
@@ -106,8 +112,67 @@ setInterval(() => {
   }
 }, 10 * 60 * 1000);
 
+// ── Input sanitisation helpers ────────────────────────────────────────────────
+// Strip HTML tags and dangerous characters, then trim whitespace.
+function sanitise(val) {
+  if (val === null || val === undefined) return '';
+  return String(val)
+    .replace(/<[^>]*>/g, '')          // strip HTML tags
+    .replace(/[<>"'`]/g, '')          // strip remaining angle brackets / quotes
+    .trim();
+}
+
+// Sanitise + enforce a maximum character length.
+function cleanStr(val, maxLen = 200) {
+  return sanitise(val).slice(0, maxLen);
+}
+
+// Parse and range-check an integer field. Returns null if invalid.
+function cleanInt(val, min, max) {
+  const n = parseInt(val, 10);
+  if (isNaN(n) || n < min || n > max) return null;
+  return n;
+}
+
+// Validate that a route :id param is a positive integer.
+function validId(id) {
+  const n = parseInt(id, 10);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
+// ── hCaptcha server-side verification ────────────────────────────────────────
+// HCAPTCHA_SECRET must be set in Railway env vars.
+// If not set, verification is skipped (so the app works before keys are configured).
+async function verifyHcaptcha(token) {
+  if (!process.env.HCAPTCHA_SECRET) return true; // not yet configured — skip
+  if (!token) return false;
+  try {
+    const resp = await fetch('https://hcaptcha.com/siteverify', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body:    `response=${encodeURIComponent(token)}&secret=${encodeURIComponent(process.env.HCAPTCHA_SECRET)}`
+    });
+    const data = await resp.json();
+    return data.success === true;
+  } catch (e) {
+    console.error('[hCaptcha] Verification error:', e.message);
+    return true; // fail open on network error — don't block legitimate users
+  }
+}
+
+// ── Security headers middleware ───────────────────────────────────────────────
+function securityHeaders(req, res, next) {
+  res.setHeader('X-Content-Type-Options',  'nosniff');
+  res.setHeader('X-Frame-Options',         'DENY');
+  res.setHeader('X-XSS-Protection',        '1; mode=block');
+  res.setHeader('Referrer-Policy',         'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy',      'geolocation=(), microphone=(), camera=()');
+  next();
+}
+
 // --- Middleware ---
 app.set('trust proxy', 1); // Required for Railway/Heroku HTTPS proxy
+app.use(securityHeaders);
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -216,9 +281,13 @@ app.get('/api/slots', async (req, res) => {
 });
 
 // ── OTP: send verification code ──────────────────────────────────────────────
-app.post('/api/verify/send', async (req, res) => {
+app.post('/api/verify/send', otpIpRateLimit, async (req, res) => {
   const { phone, email } = req.body;
   if (!phone) return res.status(400).json({ error: 'Phone number required.' });
+
+  // hCaptcha verification
+  const captchaOk = await verifyHcaptcha(req.body['h-captcha-response']);
+  if (!captchaOk) return res.status(400).json({ error: 'Captcha verification failed. Please try again.' });
 
   const norm = normalisePhone(phone);
   if (norm.replace(/\D/g, '').length < 7) {
@@ -320,12 +389,24 @@ app.post('/api/verify/confirm', (req, res) => {
 
 // Submit a new booking
 app.post('/api/book', bookingRateLimit, async (req, res) => {
-  const { name, phone, email, serviceType, date, time, model, year, plate, km, notes, description } = req.body;
+  // Sanitise all free-text inputs before any processing
+  const name        = cleanStr(req.body.name,        100);
+  const phone       = cleanStr(req.body.phone,         20);
+  const email       = cleanStr(req.body.email,        200);
+  const serviceType = cleanStr(req.body.serviceType,   30);
+  const date        = cleanStr(req.body.date,          10);
+  const time        = cleanStr(req.body.time,           5);
+  const model       = cleanStr(req.body.model,        100);
+  const plate       = cleanStr(req.body.plate,         20).toUpperCase();
+  const notes       = cleanStr(req.body.notes,        500);
+  const description = cleanStr(req.body.description,  500);
+  const year        = cleanInt(req.body.year, 1990, new Date().getFullYear() + 1);
+  const km          = cleanInt(req.body.km,  0, 999999);
 
   const isOther = serviceType === 'other';
   const validServices = ['small-service', 'full-service', 'other'];
 
-  if (!name || !phone || !serviceType || !model || !year || !plate || !km) {
+  if (!name || !phone || !serviceType || !model || !year || !plate || km === null) {
     return res.status(400).json({ error: 'All required fields must be filled.' });
   }
 
@@ -334,7 +415,7 @@ app.post('/api/book', bookingRateLimit, async (req, res) => {
   }
 
   // Phone validation: 7–15 digits (after stripping spaces, +, -)
-  const phoneDigits = (phone || '').replace(/[\s\+\-]/g, '');
+  const phoneDigits = phone.replace(/[\s\+\-]/g, '');
   if (!/^\d{7,15}$/.test(phoneDigits)) {
     return res.status(400).json({ error: 'Please enter a valid phone number (7–15 digits).' });
   }
@@ -351,7 +432,7 @@ app.post('/api/book', bookingRateLimit, async (req, res) => {
   const existingBooking = await db.getActiveBookingByPlate(plate);
   if (existingBooking) {
     return res.status(409).json({
-      error: `There is already an active booking for plate ${plate.toUpperCase()} (Ref: ${existingBooking.ref}). Please cancel it first or call us on 22 328 788.`
+      error: `There is already an active booking for plate ${plate} (Ref: ${existingBooking.ref}). Please cancel it first or call us on 22 328 788.`
     });
   }
 
@@ -432,6 +513,10 @@ app.get('/api/server-time', (req, res) => {
 
 // Login
 app.post('/api/admin/login', adminLoginRateLimit, async (req, res) => {
+  // hCaptcha check
+  const captchaOk = await verifyHcaptcha(req.body['h-captcha-response']);
+  if (!captchaOk) return res.status(400).json({ error: 'Captcha verification failed. Please try again.' });
+
   const { password } = req.body;
   const adminHash = process.env.ADMIN_PASSWORD_HASH;
 
@@ -483,8 +568,10 @@ app.get('/api/admin/bookings', requireAdmin, async (req, res) => {
 
 // Accept a booking
 app.post('/api/admin/bookings/:id/accept', requireAdmin, async (req, res) => {
+  const id = validId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'Invalid booking ID.' });
   try {
-    const booking = await db.updateBookingStatus(req.params.id, 'accepted');
+    const booking = await db.updateBookingStatus(id, 'accepted');
     if (!booking) return res.status(404).json({ error: 'Booking not found' });
 
     let emailError = null;
@@ -511,11 +598,14 @@ app.post('/api/admin/bookings/:id/accept', requireAdmin, async (req, res) => {
 
 // Reschedule a booking
 app.post('/api/admin/bookings/:id/reschedule', requireAdmin, async (req, res) => {
+  const id = validId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'Invalid booking ID.' });
   try {
-    const { date, time } = req.body;
+    const date = cleanStr(req.body.date, 10);
+    const time = cleanStr(req.body.time,  5);
     if (!date || !time) return res.status(400).json({ error: 'date and time required' });
 
-    const booking = await db.rescheduleBooking(req.params.id, date, time);
+    const booking = await db.rescheduleBooking(id, date, time);
     if (!booking) return res.status(404).json({ error: 'Booking not found' });
 
     try {
@@ -540,13 +630,15 @@ app.post('/api/admin/bookings/:id/reschedule', requireAdmin, async (req, res) =>
 
 // Update contact status for cancelled / needs-call bookings
 app.post('/api/admin/bookings/:id/contact-status', requireAdmin, async (req, res) => {
+  const id = validId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'Invalid booking ID.' });
   try {
     const { status } = req.body;
     // null is allowed — it clears the contact status (used by dismiss)
     const valid = ['needs-contact', 'needs-call', 'contacted', 'closed', null];
     if (!valid.includes(status)) return res.status(400).json({ error: 'Invalid status' });
 
-    const booking = await db.updateContactStatus(req.params.id, status);
+    const booking = await db.updateContactStatus(id, status);
     if (!booking) return res.status(404).json({ error: 'Booking not found' });
 
     res.json({ success: true, booking });
@@ -558,8 +650,10 @@ app.post('/api/admin/bookings/:id/contact-status', requireAdmin, async (req, res
 
 // Cancel a booking
 app.post('/api/admin/bookings/:id/cancel', requireAdmin, async (req, res) => {
+  const id = validId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'Invalid booking ID.' });
   try {
-    const booking = await db.updateBookingStatus(req.params.id, 'cancelled');
+    const booking = await db.updateBookingStatus(id, 'cancelled');
     if (!booking) return res.status(404).json({ error: 'Booking not found' });
 
     try {
@@ -584,11 +678,17 @@ app.post('/api/admin/bookings/:id/cancel', requireAdmin, async (req, res) => {
 
 // Complete a booking and write service history
 app.post('/api/admin/bookings/:id/complete', requireAdmin, async (req, res) => {
+  const id = validId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'Invalid booking ID.' });
   try {
-    const { regNo, km, items, notes, date } = req.body;
-    if (!km) return res.status(400).json({ error: 'KM reading is required.' });
+    const regNo = cleanStr(req.body.regNo, 20).toUpperCase();
+    const km    = cleanInt(req.body.km, 0, 999999);
+    const items = req.body.items;
+    const notes = cleanStr(req.body.notes, 1000);
+    const date  = cleanStr(req.body.date,    10);
+    if (km === null) return res.status(400).json({ error: 'KM reading is required.' });
 
-    const result = await db.completeBooking(req.params.id, { regNo, km, items, notes, date });
+    const result = await db.completeBooking(id, { regNo, km, items, notes, date });
     if (!result) return res.status(404).json({ error: 'Booking not found' });
 
     // Notify customer their vehicle is ready
@@ -607,8 +707,10 @@ app.post('/api/admin/bookings/:id/complete', requireAdmin, async (req, res) => {
 
 // Mark booking as no-show
 app.post('/api/admin/bookings/:id/no-show', requireAdmin, async (req, res) => {
+  const id = validId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'Invalid booking ID.' });
   try {
-    const booking = await db.markNoShow(req.params.id);
+    const booking = await db.markNoShow(id);
     if (!booking) return res.status(404).json({ error: 'Booking not found' });
     res.json({ success: true, booking });
   } catch (err) {
@@ -619,9 +721,11 @@ app.post('/api/admin/bookings/:id/no-show', requireAdmin, async (req, res) => {
 
 // Save mechanic notes on an accepted booking
 app.post('/api/admin/bookings/:id/mechanic-notes', requireAdmin, async (req, res) => {
+  const id = validId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'Invalid booking ID.' });
   try {
-    const { notes } = req.body;
-    const booking = await db.updateMechanicNotes(req.params.id, notes);
+    const notes = cleanStr(req.body.notes, 1000);
+    const booking = await db.updateMechanicNotes(id, notes);
     if (!booking) return res.status(404).json({ error: 'Booking not found' });
     res.json({ success: true, booking });
   } catch (err) {
@@ -632,9 +736,12 @@ app.post('/api/admin/bookings/:id/mechanic-notes', requireAdmin, async (req, res
 
 // Admin: correct plate / KM on a booking
 app.post('/api/admin/bookings/:id/update-fields', requireAdmin, async (req, res) => {
+  const id = validId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'Invalid booking ID.' });
   try {
-    const { plate, km } = req.body;
-    const booking = await db.updateBookingFields(req.params.id, { plate, km });
+    const plate = cleanStr(req.body.plate, 20).toUpperCase();
+    const km    = cleanInt(req.body.km, 0, 999999);
+    const booking = await db.updateBookingFields(id, { plate, km });
     if (!booking) return res.status(404).json({ error: 'Booking not found' });
     res.json({ success: true, booking });
   } catch (err) {
@@ -646,8 +753,10 @@ app.post('/api/admin/bookings/:id/update-fields', requireAdmin, async (req, res)
 // Close a needs-call / other-request booking WITHOUT sending a cancellation email
 // Used when admin decides to dismiss/convert the booking internally.
 app.post('/api/admin/bookings/:id/close-other', requireAdmin, async (req, res) => {
+  const id = validId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'Invalid booking ID.' });
   try {
-    const booking = await db.closeOtherRequest(req.params.id);
+    const booking = await db.closeOtherRequest(id);
     if (!booking) return res.status(404).json({ error: 'Booking not found' });
     res.json({ success: true, booking });
   } catch (err) {
@@ -658,12 +767,14 @@ app.post('/api/admin/bookings/:id/close-other', requireAdmin, async (req, res) =
 
 // Save NC checklist step state (synced to DB for cross-device access)
 app.post('/api/admin/bookings/:id/nc-steps', requireAdmin, async (req, res) => {
+  const id = validId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'Invalid booking ID.' });
   try {
     const { steps } = req.body;
     if (typeof steps !== 'object' || steps === null) {
       return res.status(400).json({ error: 'steps must be an object' });
     }
-    const booking = await db.updateNcSteps(req.params.id, steps);
+    const booking = await db.updateNcSteps(id, steps);
     if (!booking) return res.status(404).json({ error: 'Booking not found' });
     res.json({ success: true, booking });
   } catch (err) {
@@ -675,10 +786,13 @@ app.post('/api/admin/bookings/:id/nc-steps', requireAdmin, async (req, res) => {
 // Close one or more full days (insert full-day blocks)
 app.post('/api/admin/close-day', requireAdmin, async (req, res) => {
   try {
-    let { dates, reason } = req.body;
+    let { dates } = req.body;
+    const reason = cleanStr(req.body.reason, 200);
     if (!dates) return res.status(400).json({ error: 'dates is required' });
     if (!Array.isArray(dates)) dates = [dates]; // accept single date or array
     if (!dates.length) return res.status(400).json({ error: 'dates array is empty' });
+    // Sanitise each date string
+    dates = dates.map(d => cleanStr(d, 10)).filter(Boolean);
 
     const inserted = await db.closeDates(dates, reason || 'Closed');
     res.json({ success: true, inserted, count: inserted.length });
@@ -702,7 +816,14 @@ app.get('/api/admin/blocks', requireAdmin, async (req, res) => {
 // Create a block
 app.post('/api/admin/blocks', requireAdmin, async (req, res) => {
   try {
-    const { date, startTime, endTime, reason, customerName, customerPhone, vehicleModel, notes } = req.body;
+    const date          = cleanStr(req.body.date,          10);
+    const startTime     = cleanStr(req.body.startTime,      5);
+    const endTime       = cleanStr(req.body.endTime,        5);
+    const reason        = cleanStr(req.body.reason,       200);
+    const customerName  = cleanStr(req.body.customerName, 100);
+    const customerPhone = cleanStr(req.body.customerPhone,  20);
+    const vehicleModel  = cleanStr(req.body.vehicleModel, 100);
+    const notes         = cleanStr(req.body.notes,        500);
     if (!date || !startTime || !endTime) {
       return res.status(400).json({ error: 'date, startTime, and endTime are required.' });
     }
@@ -721,8 +842,10 @@ app.post('/api/admin/blocks', requireAdmin, async (req, res) => {
 
 // Delete a block
 app.delete('/api/admin/blocks/:id', requireAdmin, async (req, res) => {
+  const id = validId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'Invalid block ID.' });
   try {
-    const ok = await db.deleteBlock(req.params.id);
+    const ok = await db.deleteBlock(id);
     if (!ok) return res.status(404).json({ error: 'Block not found.' });
     res.json({ success: true });
   } catch (err) {
@@ -813,7 +936,7 @@ app.post('/api/push/test', requireAdmin, async (req, res) => {
       title: '🔔 Test Notification',
       body:  'Push notifications are working correctly!',
       tag:   'test',
-      url:   '/admin/',
+      url:   '/mw-service-solonas',
     });
     res.json({ success: true });
   } catch (err) {
@@ -862,8 +985,19 @@ app.delete('/api/admin/mechanic-off-days', requireAdmin, async (req, res) => {
   }
 });
 
-// Serve admin panel
-app.get('/admin', (req, res) => {
+// ── Admin panel — served only to authenticated sessions ───────────────────────
+// /admin returns 404 (old URL — don't redirect, defeats the purpose of renaming)
+app.get('/admin', (req, res) => res.status(404).send('Not found.'));
+
+// Login page — served to unauthenticated visitors
+app.get('/mw-service-solonas/login', (req, res) => {
+  if (req.session && req.session.admin) return res.redirect('/mw-service-solonas');
+  res.sendFile(path.join(__dirname, 'admin', 'login.html'));
+});
+
+// Admin panel — requires valid session
+app.get('/mw-service-solonas', (req, res) => {
+  if (!req.session || !req.session.admin) return res.redirect('/mw-service-solonas/login');
   res.sendFile(path.join(__dirname, 'admin', 'index.html'));
 });
 
@@ -871,6 +1005,10 @@ app.get('/admin', (req, res) => {
 
 // Partner login
 app.post('/api/partner/login', partnerLoginRateLimit, async (req, res) => {
+  // hCaptcha check
+  const captchaOk = await verifyHcaptcha(req.body['h-captcha-response']);
+  if (!captchaOk) return res.status(400).json({ error: 'Captcha verification failed. Please try again.' });
+
   try {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: 'Username and password required.' });
@@ -949,8 +1087,12 @@ app.get('/api/service-items', requireAdminOrPartner, (req, res) => {
 // Log a service entry (partner or admin)
 app.post('/api/service-entry', requireAdminOrPartner, async (req, res) => {
   try {
-    const { regNo, km, items, notes, date } = req.body;
-    if (!regNo || !km || !items || items.length === 0) {
+    const regNo = cleanStr(req.body.regNo, 20).toUpperCase();
+    const km    = cleanInt(req.body.km, 0, 999999);
+    const items = req.body.items;
+    const notes = cleanStr(req.body.notes, 1000);
+    const date  = cleanStr(req.body.date,    10);
+    if (!regNo || km === null || !items || items.length === 0) {
       return res.status(400).json({ error: 'Plate, KM, and at least one service item are required.' });
     }
     if (!await db.getVehicleByPlate(regNo)) {
@@ -976,19 +1118,23 @@ app.post('/api/service-entry', requireAdminOrPartner, async (req, res) => {
 
 // Edit a service entry — partners can only edit their own entries; admin can edit any
 app.put('/api/service-entry/:id', requireAdminOrPartner, async (req, res) => {
+  const id = validId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'Invalid entry ID.' });
   try {
-    const { km, items, notes } = req.body;
+    const km    = cleanInt(req.body.km, 0, 999999);
+    const items = req.body.items;
+    const notes = cleanStr(req.body.notes, 1000);
 
     // Ownership check for partners
     if (req.session.partner && !req.session.admin) {
-      const entry = await db.getServiceEntryById(req.params.id);
+      const entry = await db.getServiceEntryById(id);
       if (!entry) return res.status(404).json({ error: 'Entry not found.' });
       if (String(entry.partnerId) !== String(req.session.partner.id)) {
         return res.status(403).json({ error: 'You can only edit your own service entries.' });
       }
     }
 
-    const result = await db.updateServiceEntry(req.params.id, { km, items, notes });
+    const result = await db.updateServiceEntry(id, { km, items, notes });
     if (result.notFound) return res.status(404).json({ error: 'Entry not found.' });
     res.json({ success: true, entry: result.entry });
   } catch (err) {
@@ -999,8 +1145,10 @@ app.put('/api/service-entry/:id', requireAdminOrPartner, async (req, res) => {
 
 // Delete a service entry — admin only
 app.delete('/api/service-entry/:id', requireAdmin, async (req, res) => {
+  const id = validId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'Invalid entry ID.' });
   try {
-    const result = await db.deleteServiceEntry(req.params.id);
+    const result = await db.deleteServiceEntry(id);
     if (result.notFound) return res.status(404).json({ error: 'Entry not found.' });
     res.json({ success: true });
   } catch (err) {
@@ -1028,7 +1176,25 @@ app.post('/api/admin/vehicles/import', requireAdmin, async (req, res) => {
     if (!Array.isArray(rows) || rows.length === 0) {
       return res.status(400).json({ error: 'rows array required.' });
     }
-    const result = await db.importVehicles(rows);
+    if (rows.length > 5000) {
+      return res.status(400).json({ error: 'Maximum 5000 rows per import.' });
+    }
+
+    // Sanitise every row — only allow expected string fields, strip HTML from all values
+    const ALLOWED_FIELDS = ['regNo','frameNo','model','manufacturer','year','description','engineNo'];
+    const sanitisedRows = rows.map(row => {
+      const clean = {};
+      for (const field of ALLOWED_FIELDS) {
+        if (row[field] !== undefined) clean[field] = cleanStr(String(row[field] ?? ''), 200);
+      }
+      return clean;
+    }).filter(r => r.regNo); // drop rows with no plate
+
+    if (sanitisedRows.length === 0) {
+      return res.status(400).json({ error: 'No valid rows found. Each row must have a registration number.' });
+    }
+
+    const result = await db.importVehicles(sanitisedRows);
     await db.setSetting('lastVehicleImport', new Date().toISOString());
     res.json({ success: true, ...result });
   } catch (err) {
@@ -1060,10 +1226,11 @@ app.get('/api/admin/vehicles', requireAdmin, async (req, res) => {
 // Get vehicle + full service + warranty history (admin only)
 app.get('/api/admin/vehicles/:plate', requireAdmin, async (req, res) => {
   try {
-    const vehicle = await db.getVehicleByPlate(req.params.plate);
+    const plate = cleanStr(req.params.plate, 20).toUpperCase();
+    const vehicle = await db.getVehicleByPlate(plate);
     if (!vehicle) return res.status(404).json({ error: 'Vehicle not found.' });
-    const history  = await db.getServiceHistoryByPlate(req.params.plate);
-    const warranty = await db.getWarrantyByPlate(req.params.plate);
+    const history  = await db.getServiceHistoryByPlate(plate);
+    const warranty = await db.getWarrantyByPlate(plate);
     res.json({ vehicle, history, warranty });
   } catch (err) {
     console.error('[Vehicle detail error]', err);
@@ -1087,7 +1254,11 @@ app.get('/api/admin/partners', requireAdmin, async (req, res) => {
 // Create a partner
 app.post('/api/admin/partners', requireAdmin, async (req, res) => {
   try {
-    const { username, password, workshopName, phone, email } = req.body;
+    const username     = cleanStr(req.body.username,     50);
+    const password     = (req.body.password || '').toString().slice(0, 200); // don't strip chars from passwords
+    const workshopName = cleanStr(req.body.workshopName, 100);
+    const phone        = cleanStr(req.body.phone,         20);
+    const email        = cleanStr(req.body.email,        200);
     if (!username || !password || !workshopName) {
       return res.status(400).json({ error: 'username, password, and workshopName are required.' });
     }
@@ -1105,8 +1276,10 @@ app.post('/api/admin/partners', requireAdmin, async (req, res) => {
 
 // Toggle partner active/inactive
 app.post('/api/admin/partners/:id/toggle', requireAdmin, async (req, res) => {
+  const id = validId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'Invalid partner ID.' });
   try {
-    const partner = await db.togglePartnerActive(req.params.id);
+    const partner = await db.togglePartnerActive(id);
     if (!partner) return res.status(404).json({ error: 'Partner not found.' });
     res.json({ success: true, partner: { ...partner, passwordHash: undefined } });
   } catch (err) {
@@ -1117,11 +1290,13 @@ app.post('/api/admin/partners/:id/toggle', requireAdmin, async (req, res) => {
 
 // Reset a partner's password (admin only)
 app.post('/api/admin/partners/:id/reset-password', requireAdmin, async (req, res) => {
+  const id = validId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'Invalid partner ID.' });
   try {
-    const { newPassword } = req.body;
+    const newPassword = (req.body.newPassword || '').toString().slice(0, 200); // don't strip chars from passwords
     if (!newPassword || newPassword.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters.' });
     const passwordHash = await bcrypt.hash(newPassword, 10);
-    const partner = await db.updatePartnerPassword(req.params.id, passwordHash);
+    const partner = await db.updatePartnerPassword(id, passwordHash);
     if (!partner) return res.status(404).json({ error: 'Partner not found.' });
     res.json({ success: true });
   } catch (err) {
@@ -1130,8 +1305,11 @@ app.post('/api/admin/partners/:id/reset-password', requireAdmin, async (req, res
   }
 });
 
-// Serve partner portal
+// Serve partner portal — unauthenticated users get the login page only
 app.get('/partner', (req, res) => {
+  if (!req.session || !req.session.partner) {
+    return res.sendFile(path.join(__dirname, 'partner', 'login.html'));
+  }
   res.sendFile(path.join(__dirname, 'partner', 'index.html'));
 });
 
@@ -1162,7 +1340,17 @@ app.post('/api/upload-media', requireAdminOrPartner, upload.single('file'), asyn
 // Log a warranty claim (partner or admin) — higher body limit for photo uploads
 app.post('/api/warranty-claim', express.json({ limit: '10mb' }), requireAdminOrPartner, async (req, res) => {
   try {
-    const { regNo, frameNo, km, symptom, priority, engineDisassembly, defectAgreed, courtesyVehicle, notes, photos, mediaTypes } = req.body;
+    const regNo            = cleanStr(req.body.regNo,    20).toUpperCase();
+    const frameNo          = cleanStr(req.body.frameNo,  50);
+    const km               = cleanInt(req.body.km, 0, 999999);
+    const symptom          = cleanStr(req.body.symptom,  1000);
+    const priority         = cleanStr(req.body.priority,   20);
+    const notes            = cleanStr(req.body.notes,    1000);
+    const engineDisassembly = !!req.body.engineDisassembly;
+    const defectAgreed      = !!req.body.defectAgreed;
+    const courtesyVehicle   = !!req.body.courtesyVehicle;
+    const photos     = Array.isArray(req.body.photos)     ? req.body.photos     : [];
+    const mediaTypes = Array.isArray(req.body.mediaTypes) ? req.body.mediaTypes : [];
     if (!regNo || !symptom) {
       return res.status(400).json({ error: 'Registration number and symptom are required.' });
     }
@@ -1171,8 +1359,7 @@ app.post('/api/warranty-claim', express.json({ limit: '10mb' }), requireAdminOrP
     const claim = await db.createWarrantyClaim({
       regNo, frameNo, km, symptom, priority,
       engineDisassembly, defectAgreed, courtesyVehicle, notes,
-      photos:     Array.isArray(photos)     ? photos     : [],
-      mediaTypes: Array.isArray(mediaTypes) ? mediaTypes : [],
+      photos, mediaTypes,
       partnerId:    partnerInfo ? partnerInfo.id : null,
       partnerName:  partnerInfo ? partnerInfo.workshopName : 'Motowarehouse',
       loggedBy:     partnerInfo ? partnerInfo.workshopName : 'Motowarehouse',
@@ -1211,11 +1398,14 @@ app.get('/api/admin/warranties', requireAdmin, async (req, res) => {
 
 // Update warranty claim status — also emails the partner if they have an email on file
 app.post('/api/admin/warranties/:id/status', requireAdmin, async (req, res) => {
+  const id = validId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'Invalid warranty ID.' });
   try {
-    const { status, adminNotes } = req.body;
+    const status     = cleanStr(req.body.status,     20);
+    const adminNotes = cleanStr(req.body.adminNotes, 1000);
     const valid = ['open', 'approved', 'rejected', 'closed'];
     if (!valid.includes(status)) return res.status(400).json({ error: 'Invalid status.' });
-    const claim = await db.updateWarrantyStatus(req.params.id, status, adminNotes);
+    const claim = await db.updateWarrantyStatus(id, status, adminNotes);
     if (!claim) return res.status(404).json({ error: 'Claim not found.' });
 
     // Notify partner by email if they submitted this claim and have an email address
