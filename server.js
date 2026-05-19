@@ -1700,3 +1700,14 @@ db.initDB()
     console.error('\n❌ Could not initialise database. Server will not start.', err.message);
     process.exit(1);
   });
+    startBackupCron();
+    app.listen(PORT, () => {
+      console.log(`\n✅ Motowarehouse Service Portal running on http://localhost:${PORT}`);
+      console.log(`   Admin panel:    http://localhost:${PORT}/mw-service-solonas`);
+      console.log(`   Partner portal: http://localhost:${PORT}/partner\n`);
+    });
+  })
+  .catch(err => {
+    console.error('\n❌ Could not initialise database. Server will not start.', err.message);
+    process.exit(1);
+  });

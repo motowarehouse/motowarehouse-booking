@@ -526,4 +526,27 @@ async function sendPreviousDayReminderToCustomer(booking) {
             <strong>📍 Motowarehouse – 40 Athinon Str., Strovolos, Nicosia</strong><br>
             <strong>📞 22 328 788</strong>
           </div>
-          <p>Please arrive a few minutes before your scheduled time. If you need to reschedule or cancel, please call us on <strong>22 328 788</strong> as
+          <p>Please arrive a few minutes before your scheduled time. If you need to reschedule or cancel, please call us on <strong>22 328 788</strong> as soon as possible.</p>
+          <p>The Motowarehouse Team</p>
+        </div>
+        <div style="background:#1a1a1a;padding:16px;text-align:center;">
+          <p style="color:#999;font-size:12px;margin:0;">Motowarehouse Ltd – support@motowarehouse.com.cy</p>
+        </div>
+      </div>
+    `
+  });
+}
+
+module.exports = {
+  sendOTPCodeEmail,
+  sendNewBookingAlert,
+  sendConfirmationToCustomer,
+  sendCancellationToCustomer,
+  sendReminderToCustomer,
+  sendRescheduleToCustomer,
+  sendWarrantyAlert,
+  sendWarrantyStatusToPartner,
+  sendOtherRequestAcknowledgement,
+  sendVehicleReadyToCustomer,
+  sendPreviousDayReminderToCustomer
+};
