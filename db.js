@@ -1,15 +1,17 @@
 require('dotenv').config();
 const { Pool } = require('pg');
+const crypto = require('crypto');
 
 // ── Booking reference generator ───────────────────────────────────────────────
 // Produces refs like MW-A7X3K2 — 6 random characters from an unambiguous set
 // (no 0/O or 1/I which look alike). Collision probability is negligible:
 // 30^6 = 729 million combinations.
+// Uses crypto.randomInt() for cryptographically secure randomness.
 const REF_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 function generateRef() {
   let code = '';
   for (let i = 0; i < 6; i++) {
-    code += REF_CHARS[Math.floor(Math.random() * REF_CHARS.length)];
+    code += REF_CHARS[crypto.randomInt(0, REF_CHARS.length)];
   }
   return 'MW-' + code;
 }
@@ -589,6 +591,19 @@ async function getBookingByRef(ref) {
     [(ref || '').toUpperCase().trim()]
   );
   return rowToBooking(rows[0] || null);
+}
+
+async function getBookingsByPlate(plate) {
+  // Normalise: uppercase, strip spaces
+  const normPlate = (plate || '').toUpperCase().replace(/\s/g, '');
+  const { rows } = await pool.query(
+    `SELECT * FROM bookings
+     WHERE UPPER(REPLACE(plate, ' ', '')) = $1
+     ORDER BY created_at DESC
+     LIMIT 10`,
+    [normPlate]
+  );
+  return rows.map(rowToBooking);
 }
 
 async function updateBookingStatus(id, status) {
@@ -1372,6 +1387,25 @@ async function markDayBeforeReminderSent(id) {
 
 // ── Customer Self-Cancel ──────────────────────────────────────────────────────
 
+// Read-only lookup — verifies ref + phone but does NOT cancel.
+// Use this to run pre-cancel checks (e.g. 40-minute window) before mutating.
+async function lookupBookingForCustomer(ref, phone) {
+  const { rows } = await pool.query(
+    `SELECT * FROM bookings WHERE ref = $1 AND status IN ('pending','accepted')`,
+    [ref.toUpperCase().trim()]
+  );
+  if (!rows.length) return { error: 'not-found' };
+
+  const booking = rowToBooking(rows[0]);
+  const normalize = p => (p || '').replace(/\D/g, '');
+  const storedDigits  = normalize(booking.phone);
+  const enteredDigits = normalize(phone);
+  if (!storedDigits.endsWith(enteredDigits) && !enteredDigits.endsWith(storedDigits)) {
+    return { error: 'phone-mismatch' };
+  }
+  return { booking };
+}
+
 async function cancelBookingByCustomer(ref, phone) {
   // Find active booking by reference
   const { rows } = await pool.query(
@@ -1404,7 +1438,7 @@ async function cancelBookingByCustomer(ref, phone) {
 
 module.exports = {
   getSetting, setSetting,
-  createBooking, getAllBookings, getBookingById, getBookingByRef,
+  createBooking, getAllBookings, getBookingById, getBookingByRef, getBookingsByPlate,
   updateBookingStatus, rescheduleBooking, updateContactStatus,
   markReminderSent, getAcceptedBookingsDueForReminder, getBookedSlots,
   getActiveBookingByPlate,
@@ -1418,7 +1452,7 @@ module.exports = {
   createWarrantyClaim, getWarrantyByPlate, getAllWarranties, updateWarrantyStatus,
   updateMechanicNotes,
   updateBookingFields,
-  cancelBookingByCustomer,
+  lookupBookingForCustomer, cancelBookingByCustomer,
   getDurationMins,
   closeOtherRequest,
   updateNcSteps,

@@ -1,11 +1,13 @@
 require('dotenv').config();
 const fs      = require('fs');
+const crypto  = require('crypto');
 const express = require('express');
 const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
 const bcrypt = require('bcryptjs');
 const path = require('path');
 const multer = require('multer');
+const { fileTypeFromBuffer } = require('file-type');
 const { Pool } = require('pg');
 const db = require('./db');
 const emailService = require('./emailService');
@@ -15,10 +17,10 @@ const { startReminderCron } = require('./reminderCron');
 const { startBackupCron } = require('./backupCron');
 const pushService = require('./pushService');
 
-// Multer — memory storage, 100 MB per file, up to 20 files
+// Multer — memory storage, 10 MB per file, up to 10 files
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 100 * 1024 * 1024, files: 20 }
+  limits: { fileSize: 10 * 1024 * 1024, files: 10 }
 });
 
 // Separate pool for the session store (connect-pg-simple manages its own connection)
@@ -83,6 +85,12 @@ const otpIpRateLimit = makeRateLimiter(
   'Too many verification requests. Please try again in an hour or call us on 22 328 788.'
 );
 
+// Booking lookup: max 10 requests / IP / 15 minutes
+const lookupRateLimit = makeRateLimiter(
+  10, 15 * 60 * 1000,
+  'Too many lookup attempts. Please try again later.'
+);
+
 // ── Phone normalisation (shared by OTP routes + /api/book) ───────────────────
 function normalisePhone(raw) {
   if (!raw) return '';
@@ -135,6 +143,30 @@ function cleanInt(val, min, max) {
   return n;
 }
 
+// Validate and sanitise an items array (service checklist items).
+// Each item must be a non-empty string (max 200 chars) or an object with
+// string 'en'/'el' properties. Returns a cleaned array, or null if invalid.
+function cleanItems(raw, maxItems = 50) {
+  if (!Array.isArray(raw)) return null;
+  if (raw.length === 0 || raw.length > maxItems) return null;
+  const cleaned = [];
+  for (const item of raw) {
+    if (typeof item === 'string') {
+      const s = item.trim().slice(0, 200);
+      if (!s) return null; // empty string not allowed
+      cleaned.push(s);
+    } else if (item && typeof item === 'object' && !Array.isArray(item)) {
+      const en = typeof item.en === 'string' ? item.en.trim().slice(0, 200) : '';
+      const el = typeof item.el === 'string' ? item.el.trim().slice(0, 200) : '';
+      if (!en && !el) return null; // object with no meaningful content
+      cleaned.push({ en, el });
+    } else {
+      return null; // unexpected type
+    }
+  }
+  return cleaned;
+}
+
 // Validate that a route :id param is a positive integer.
 function validId(id) {
   const n = parseInt(id, 10);
@@ -157,7 +189,7 @@ async function verifyHcaptcha(token) {
     return data.success === true;
   } catch (e) {
     console.error('[hCaptcha] Verification error:', e.message);
-    return true; // fail open on network error — don't block legitimate users
+    return false; // fail closed — if we cannot verify, do not allow through
   }
 }
 
@@ -187,6 +219,26 @@ function securityHeaders(req, res, next) {
   res.setHeader('X-XSS-Protection',        '1; mode=block');
   res.setHeader('Referrer-Policy',         'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy',      'geolocation=(), microphone=(), camera=()');
+  // Content-Security-Policy — restrict resource origins to trusted sources only.
+  // - hCaptcha requires hcaptcha.com sources for script, frame, and style.
+  // - R2_PUBLIC_URL covers uploaded warranty photos / media.
+  // - Fonts are self-hosted; no external font CDN needed.
+  const r2Origin = (process.env.R2_PUBLIC_URL || '').replace(/\/$/, '');
+  const imgSrc   = `img-src 'self' data: ${r2Origin}`.trim();
+  const csp = [
+    `default-src 'self'`,
+    `script-src 'self' 'unsafe-inline' https://js.hcaptcha.com https://newassets.hcaptcha.com`,
+    `style-src 'self' 'unsafe-inline' https://newassets.hcaptcha.com`,
+    `frame-src https://newassets.hcaptcha.com https://hcaptcha.com`,
+    `connect-src 'self' https://hcaptcha.com https://api.hcaptcha.com`,
+    imgSrc,
+    `font-src 'self'`,
+    `object-src 'none'`,
+    `base-uri 'self'`,
+    `form-action 'self'`,
+    `frame-ancestors 'none'`
+  ].join('; ');
+  res.setHeader('Content-Security-Policy', csp);
   next();
 }
 
@@ -204,7 +256,8 @@ app.get(['/', '/index.html'], (req, res) => {
 // (the route above handles that with runtime config injection).
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'], index: false }));
 if (!process.env.SESSION_SECRET) {
-  console.warn('\n⚠️  SESSION_SECRET is not set. Using insecure default. Set SESSION_SECRET in Railway environment variables.\n');
+  console.error('\n🚨 FATAL: SESSION_SECRET is not set. Refusing to start — sessions cannot be secured without it.\n   Set SESSION_SECRET in your Railway environment variables.\n');
+  process.exit(1);
 }
 app.use(session({
   store: new pgSession({
@@ -218,7 +271,8 @@ app.use(session({
   cookie: {
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days (survives across deployments)
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production'
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict'
   }
 }));
 
@@ -333,7 +387,7 @@ app.post('/api/verify/send', otpIpRateLimit, async (req, res) => {
     }
   }
 
-  const code = String(Math.floor(100000 + Math.random() * 900000));
+  const code = String(100000 + crypto.randomInt(0, 900000));
   const prevCount = (existing && (now - (existing.sendWindowStart || 0)) < HOUR) ? (existing.sendCount || 0) : 0;
 
   otpStore.set(norm, {
@@ -375,7 +429,7 @@ app.post('/api/verify/send', otpIpRateLimit, async (req, res) => {
 });
 
 // ── OTP: confirm code ─────────────────────────────────────────────────────────
-app.post('/api/verify/confirm', (req, res) => {
+app.post('/api/verify/confirm', otpIpRateLimit, (req, res) => {
   const { phone, code } = req.body;
   if (!phone || !code) return res.status(400).json({ error: 'Phone and code required.' });
 
@@ -710,10 +764,11 @@ app.post('/api/admin/bookings/:id/complete', requireAdmin, async (req, res) => {
   try {
     const regNo = cleanStr(req.body.regNo, 20).toUpperCase();
     const km    = cleanInt(req.body.km, 0, 999999);
-    const items = req.body.items;
+    const items = cleanItems(req.body.items);
     const notes = cleanStr(req.body.notes, 1000);
     const date  = cleanStr(req.body.date,    10);
     if (km === null) return res.status(400).json({ error: 'KM reading is required.' });
+    if (!items)      return res.status(400).json({ error: 'A valid items list is required.' });
 
     const result = await db.completeBooking(id, { regNo, km, items, notes, date });
     if (!result) return res.status(404).json({ error: 'Booking not found' });
@@ -1116,10 +1171,10 @@ app.post('/api/service-entry', requireAdminOrPartner, async (req, res) => {
   try {
     const regNo = cleanStr(req.body.regNo, 20).toUpperCase();
     const km    = cleanInt(req.body.km, 0, 999999);
-    const items = req.body.items;
+    const items = cleanItems(req.body.items);
     const notes = cleanStr(req.body.notes, 1000);
     const date  = cleanStr(req.body.date,    10);
-    if (!regNo || km === null || !items || items.length === 0) {
+    if (!regNo || km === null || !items) {
       return res.status(400).json({ error: 'Plate, KM, and at least one service item are required.' });
     }
     if (!await db.getVehicleByPlate(regNo)) {
@@ -1149,8 +1204,9 @@ app.put('/api/service-entry/:id', requireAdminOrPartner, async (req, res) => {
   if (!id) return res.status(400).json({ error: 'Invalid entry ID.' });
   try {
     const km    = cleanInt(req.body.km, 0, 999999);
-    const items = req.body.items;
+    const items = cleanItems(req.body.items);
     const notes = cleanStr(req.body.notes, 1000);
+    if (!items) return res.status(400).json({ error: 'A valid items list is required.' });
 
     // Ownership check for partners
     if (req.session.partner && !req.session.admin) {
@@ -1348,13 +1404,17 @@ app.post('/api/upload-media', requireAdminOrPartner, upload.single('file'), asyn
   try {
     if (!req.file) return res.status(400).json({ error: 'No file provided.' });
 
-    const allowed = ['image/jpeg','image/png','image/webp','image/gif','video/mp4','video/quicktime','video/webm'];
-    if (!allowed.includes(req.file.mimetype)) {
-      return res.status(400).json({ error: 'File type not allowed. Use JPG, PNG, MP4, or MOV.' });
+    // Verify actual file type from magic bytes — do not trust client-supplied Content-Type
+    const allowedMimes = new Set(['image/jpeg','image/png','image/webp','image/gif','video/mp4','video/quicktime','video/webm']);
+    const detected = await fileTypeFromBuffer(req.file.buffer);
+    if (!detected || !allowedMimes.has(detected.mime)) {
+      return res.status(400).json({ error: 'File type not allowed. Use JPG, PNG, WebP, GIF, MP4, MOV, or WebM.' });
     }
 
-    const url = await r2Service.uploadToR2(req.file.buffer, req.file.originalname, req.file.mimetype);
-    const type = req.file.mimetype.startsWith('video') ? 'video' : 'image';
+    // Use the verified MIME type, not the client-supplied one
+    const safeMime = detected.mime;
+    const url = await r2Service.uploadToR2(req.file.buffer, req.file.originalname, safeMime);
+    const type = safeMime.startsWith('video') ? 'video' : 'image';
     res.json({ url, type });
   } catch (err) {
     console.error('[R2 upload error]', err.message);
@@ -1376,8 +1436,14 @@ app.post('/api/warranty-claim', express.json({ limit: '10mb' }), requireAdminOrP
     const engineDisassembly = !!req.body.engineDisassembly;
     const defectAgreed      = !!req.body.defectAgreed;
     const courtesyVehicle   = !!req.body.courtesyVehicle;
-    const photos     = Array.isArray(req.body.photos)     ? req.body.photos     : [];
-    const mediaTypes = Array.isArray(req.body.mediaTypes) ? req.body.mediaTypes : [];
+    // Validate photo URLs — only allow URLs from our own R2 bucket
+    const r2Origin = (process.env.R2_PUBLIC_URL || '').replace(/\/$/, '');
+    const rawPhotos     = Array.isArray(req.body.photos)     ? req.body.photos     : [];
+    const rawMediaTypes = Array.isArray(req.body.mediaTypes) ? req.body.mediaTypes : [];
+    const photos = r2Origin
+      ? rawPhotos.filter(u => typeof u === 'string' && u.startsWith(r2Origin + '/'))
+      : [];
+    const mediaTypes = photos.map((_, i) => rawMediaTypes[i] || 'image');
     if (!regNo || !symptom) {
       return res.status(400).json({ error: 'Registration number and symptom are required.' });
     }
@@ -1473,7 +1539,7 @@ app.get('/api/service-history', requireAdmin, async (req, res) => {
 // Look up a booking — two modes:
 //   Mode A: ref + plate  (customer has their reference)
 //   Mode B: phone + plate (customer lost their reference — phone must match)
-app.get('/api/booking/lookup', async (req, res) => {
+app.get('/api/booking/lookup', lookupRateLimit, async (req, res) => {
   try {
     const ref   = (req.query.ref   || '').toUpperCase().trim();
     const plate = (req.query.plate || '').toUpperCase().replace(/\s/g, '');
@@ -1510,13 +1576,11 @@ app.get('/api/booking/lookup', async (req, res) => {
     }
 
     // Mode B: phone + plate — find most recent booking matching both
-    const allBookings = await db.getAllBookings({});
-    const storedPhone = phone.startsWith('357') ? phone : phone; // normalised already
-    const match = allBookings.find(b => {
-      const bPlate = (b.plate || '').toUpperCase().replace(/\s/g, '');
+    const plateBookings = await db.getBookingsByPlate(plate);
+    const inputPhone = phone.replace(/[\s\+\-]/g, '').replace(/^00357/, '357').replace(/^357/, '');
+    const match = plateBookings.find(b => {
       const bPhone = (b.phone || '').replace(/[\s\+\-]/g, '').replace(/^00357/, '357').replace(/^357/, '');
-      const inputPhone = phone.replace(/^00357/, '357').replace(/^357/, '');
-      return bPlate === plate && (bPhone === inputPhone || bPhone.endsWith(inputPhone));
+      return bPhone === inputPhone || bPhone.endsWith(inputPhone);
     });
 
     if (!match) return res.status(404).json({ error: 'No booking found matching that plate and phone number.' });
@@ -1548,40 +1612,48 @@ app.post('/api/booking/cancel', bookingRateLimit, async (req, res) => {
       return res.status(400).json({ error: 'Booking reference and phone number are required.' });
     }
 
-    const result = await db.cancelBookingByCustomer(ref, phone);
+    // Step 1: Verify identity and retrieve booking WITHOUT modifying the DB
+    const lookup = await db.lookupBookingForCustomer(ref, phone);
 
-    if (result.error === 'not-found') {
+    if (lookup.error === 'not-found') {
       return res.status(404).json({ error: 'No active booking found with that reference number. It may have already been cancelled or completed.' });
     }
-    if (result.error === 'phone-mismatch') {
+    if (lookup.error === 'phone-mismatch') {
       return res.status(403).json({ error: 'The phone number does not match our records for this booking.' });
     }
 
-    const booking = result.booking;
+    const preCancel = lookup.booking;
 
-    // ── 40-minute cancellation window ─────────────────────────────────────────
-    // Accepted bookings with a scheduled time cannot be cancelled within 40 minutes
-    if (booking.status === 'accepted' && booking.date && booking.time) {
+    // Step 2: 40-minute cancellation window check — BEFORE any DB mutation
+    if (preCancel.status === 'accepted' && preCancel.date && preCancel.time) {
       const nowCyprus = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Nicosia' }));
       const todayCyprus = nowCyprus.toISOString().split('T')[0];
 
       // Appointment has already passed
-      if (booking.date < todayCyprus) {
+      if (preCancel.date < todayCyprus) {
         return res.status(403).json({ error: 'This appointment has already passed and cannot be cancelled online.' });
       }
 
       // Appointment is today — check 40-minute window
-      if (booking.date === todayCyprus) {
-        const [ah, am] = booking.time.split(':').map(Number);
+      if (preCancel.date === todayCyprus) {
+        const [ah, am] = preCancel.time.split(':').map(Number);
         const apptMins = ah * 60 + am;
         const nowMins  = nowCyprus.getHours() * 60 + nowCyprus.getMinutes();
         if (apptMins - nowMins < 40) {
           return res.status(403).json({
-            error: `Online cancellation is no longer available within 40 minutes of your appointment (${booking.time}). Please call us directly on 22 328 788.`
+            error: `Online cancellation is no longer available within 40 minutes of your appointment (${preCancel.time}). Please call us directly on 22 328 788.`
           });
         }
       }
     }
+
+    // Step 3: All checks passed — now perform the cancellation
+    const result = await db.cancelBookingByCustomer(ref, phone);
+    if (result.error) {
+      // Rare race condition: booking changed between lookup and cancel
+      return res.status(409).json({ error: 'Unable to cancel. Please call us on 22 328 788.' });
+    }
+    const booking = result.booking;
     console.log(`[Self-Cancel] Booking ${booking.ref} cancelled by customer (phone verified)`);
 
     // Send confirmation email to customer
@@ -1614,7 +1686,7 @@ db.initDB()
     startBackupCron();
     app.listen(PORT, () => {
       console.log(`\n✅ Motowarehouse Service Portal running on http://localhost:${PORT}`);
-      console.log(`   Admin panel: http://localhost:${PORT}/admin`);
+      console.log(`   Admin panel:    http://localhost:${PORT}/mw-service-solonas`);
       console.log(`   Partner portal: http://localhost:${PORT}/partner\n`);
     });
   })

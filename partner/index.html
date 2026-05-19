@@ -785,6 +785,13 @@
 </div>
 
 <script>
+  // ── HTML ESCAPING ─────────────────────────────────────────────────────────────
+  function esc(str) {
+    return String(str == null ? '' : str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
   // ── DATA ─────────────────────────────────────────────────────────────────────
   const SERVICE_ITEMS = [
     { en: 'ENGINE OIL',       el: 'ΛΑΔΙ ΜΗΧΑΝΗΣ' },
@@ -997,13 +1004,13 @@
         return `
           <div class="claim-card">
             <div class="claim-card-header">
-              <span class="claim-reg">${c.regNo}</span>
-              <span class="claim-status ${stClass}">${statusLabel}</span>
+              <span class="claim-reg">${esc(c.regNo)}</span>
+              <span class="claim-status ${stClass}">${esc(statusLabel)}</span>
             </div>
-            <div class="claim-sym">${lang === 'el' ? 'Βλάβη' : 'Fault'}: ${c.symptom || '—'}</div>
-            <div class="claim-sym">${lang === 'el' ? 'Προτεραιότητα' : 'Priority'}: ${priLabel} &nbsp;·&nbsp; ${lang === 'el' ? 'Υποβλήθηκε' : 'Submitted'}: ${date}</div>
+            <div class="claim-sym">${lang === 'el' ? 'Βλάβη' : 'Fault'}: ${esc(c.symptom || '—')}</div>
+            <div class="claim-sym">${lang === 'el' ? 'Προτεραιότητα' : 'Priority'}: ${esc(priLabel)} &nbsp;·&nbsp; ${lang === 'el' ? 'Υποβλήθηκε' : 'Submitted'}: ${esc(date)}</div>
             ${c.adminNotes ? `<div class="claim-note">
-              <strong>${lang === 'el' ? 'Σημειώσεις Motowarehouse:' : 'Motowarehouse Notes:'}</strong><br>${c.adminNotes}
+              <strong>${lang === 'el' ? 'Σημειώσεις Motowarehouse:' : 'Motowarehouse Notes:'}</strong><br>${esc(c.adminNotes)}
             </div>` : ''}
           </div>
         `;

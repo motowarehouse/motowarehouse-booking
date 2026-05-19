@@ -2142,8 +2142,8 @@
         <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
           <div>
             ${plateLabel}
-            <div style="font-size:15px;font-weight:700;margin-top:4px;">${v.year||''} ${v.model||''}</div>
-            <div style="font-size:12px;color:var(--grey);margin-top:4px;">Frame: ${v.frameNo||'—'} &nbsp;|&nbsp; Engine: ${v.engineNo||'—'}</div>
+            <div style="font-size:15px;font-weight:700;margin-top:4px;">${escHtml(v.year||'')} ${escHtml(v.model||'')}</div>
+            <div style="font-size:12px;color:var(--grey);margin-top:4px;">Frame: ${escHtml(v.frameNo||'—')} &nbsp;|&nbsp; Engine: ${escHtml(v.engineNo||'—')}</div>
             ${isStockUnit ? `<div style="font-size:11px;background:rgba(229,144,0,0.12);color:#E59000;padding:4px 10px;border-radius:4px;margin-top:8px;display:inline-block;">Stock unit — no registration plate yet</div>` : ''}
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -2165,13 +2165,13 @@
                 </div>
                 ${e.loggedByAdmin
                   ? `<span style="font-size:11px;font-weight:700;letter-spacing:0.05em;background:rgba(0,155,180,0.12);color:var(--blue);border:1px solid rgba(0,155,180,0.25);padding:2px 10px;border-radius:10px;">🔧 Motowarehouse</span>`
-                  : `<span style="font-size:11px;font-weight:700;letter-spacing:0.05em;background:rgba(229,144,0,0.12);color:#E59000;border:1px solid rgba(229,144,0,0.3);padding:2px 10px;border-radius:10px;">🤝 ${e.partnerName}</span>`
+                  : `<span style="font-size:11px;font-weight:700;letter-spacing:0.05em;background:rgba(229,144,0,0.12);color:#E59000;border:1px solid rgba(229,144,0,0.3);padding:2px 10px;border-radius:10px;">🤝 ${escHtml(e.partnerName)}</span>`
                 }
               </div>
               ${e.items && e.items.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:${e.notes?'8px':'0'};">
-                ${e.items.map(i => `<span style="background:rgba(0,155,180,0.12);color:var(--blue);border-radius:12px;font-size:11px;font-weight:500;padding:3px 10px;">${typeof i === 'object' ? (i.en || i.el || JSON.stringify(i)) : i}</span>`).join('')}
+                ${e.items.map(i => `<span style="background:rgba(0,155,180,0.12);color:var(--blue);border-radius:12px;font-size:11px;font-weight:500;padding:3px 10px;">${escHtml(typeof i === 'object' ? (i.en || i.el || JSON.stringify(i)) : String(i))}</span>`).join('')}
               </div>` : ''}
-              ${e.notes ? `<div style="font-size:13px;color:var(--grey);margin-top:4px;">${e.notes}</div>` : ''}
+              ${e.notes ? `<div style="font-size:13px;color:var(--grey);margin-top:4px;">${escHtml(e.notes)}</div>` : ''}
             </div>` : `
             <div style="border-left:3px solid #E59000;padding:12px 16px;margin-bottom:10px;background:rgba(229,144,0,0.05);border-radius:0 6px 6px 0;">
               <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
@@ -2180,19 +2180,19 @@
                   <div style="font-weight:700;font-size:14px;">${e.date} ${e.km ? `&nbsp;·&nbsp; <span style="color:#E59000;">${Number(e.km).toLocaleString()} km</span>` : ''}</div>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px;">
-                  <span style="font-size:11px;font-weight:600;color:${PRIORITY_COLOR[e.priority]||'var(--blue)'};">${PRIORITY_LABEL[e.priority]||e.priority}</span>
-                  <span style="font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;background:${e.status==='open'?'rgba(229,0,82,0.12)':'rgba(0,200,150,0.12)'};color:${e.status==='open'?'var(--red)':'var(--green)'};">${e.status}</span>
-                  <div style="font-size:12px;color:var(--grey);">${e.loggedBy}</div>
+                  <span style="font-size:11px;font-weight:600;color:${PRIORITY_COLOR[e.priority]||'var(--blue)'};">${escHtml(PRIORITY_LABEL[e.priority]||e.priority)}</span>
+                  <span style="font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;background:${e.status==='open'?'rgba(229,0,82,0.12)':'rgba(0,200,150,0.12)'};color:${e.status==='open'?'var(--red)':'var(--green)'};">${escHtml(e.status)}</span>
+                  <div style="font-size:12px;color:var(--grey);">${escHtml(e.loggedBy)}</div>
                 </div>
               </div>
-              <div style="font-size:13px;font-weight:600;margin-bottom:4px;">${e.symptom}</div>
+              <div style="font-size:13px;font-weight:600;margin-bottom:4px;">${escHtml(e.symptom)}</div>
               ${e.engineDisassembly||e.defectAgreed||e.courtesyVehicle ? `
               <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">
                 ${e.engineDisassembly ? `<span style="font-size:11px;padding:2px 9px;border-radius:10px;background:rgba(229,0,82,0.1);color:var(--red);font-weight:500;">Engine Disassembly</span>` : ''}
                 ${e.defectAgreed ? `<span style="font-size:11px;padding:2px 9px;border-radius:10px;background:rgba(229,144,0,0.1);color:#E59000;font-weight:500;">Defect Agreed</span>` : ''}
                 ${e.courtesyVehicle ? `<span style="font-size:11px;padding:2px 9px;border-radius:10px;background:rgba(0,155,180,0.1);color:var(--blue);font-weight:500;">Courtesy Vehicle</span>` : ''}
               </div>` : ''}
-              ${e.notes ? `<div style="font-size:13px;color:var(--grey);margin-top:6px;">${e.notes}</div>` : ''}
+              ${e.notes ? `<div style="font-size:13px;color:var(--grey);margin-top:6px;">${escHtml(e.notes)}</div>` : ''}
               ${e.photos && e.photos.length ? `
               <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
                 ${e.photos.map((src, i) => `<span onclick="viewPhoto('${src}')" style="cursor:pointer;"><img src="${src}" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:1.5px solid rgba(229,144,0,0.35);" title="Photo ${i+1}"></span>`).join('')}
@@ -2710,31 +2710,31 @@
             }).join('')}
            </div>` : '';
       const adminNotesField = w.status === 'open'
-        ? `<textarea id="anotes-${w.id}" placeholder="Internal notes (optional)…" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--white);font-family:inherit;font-size:12px;padding:8px 10px;resize:vertical;min-height:56px;margin-top:10px;">${w.adminNotes||''}</textarea>` : '';
+        ? `<textarea id="anotes-${w.id}" placeholder="Internal notes (optional)…" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--white);font-family:inherit;font-size:12px;padding:8px 10px;resize:vertical;min-height:56px;margin-top:10px;">${escHtml(w.adminNotes||'')}</textarea>` : '';
       const actionBtns = w.status === 'open'
         ? `<div style="display:flex;gap:8px;margin-top:10px;">
             <button onclick="setWarrantyStatus(${w.id},'approved')" style="flex:1;padding:8px;border-radius:6px;border:1px solid rgba(0,200,150,0.4);background:rgba(0,200,150,0.1);color:var(--green);cursor:pointer;font-family:inherit;font-weight:700;font-size:12px;">✓ Approve</button>
             <button onclick="setWarrantyStatus(${w.id},'rejected')" style="flex:1;padding:8px;border-radius:6px;border:1px solid rgba(229,0,82,0.4);background:rgba(229,0,82,0.1);color:var(--red);cursor:pointer;font-family:inherit;font-weight:700;font-size:12px;">✕ Reject</button>
            </div>`
         : `<div style="margin-top:8px;font-size:12px;color:var(--grey);">
-            ${w.adminNotes ? `<em>${w.adminNotes}</em><br>` : ''}
+            ${w.adminNotes ? `<em>${escHtml(w.adminNotes)}</em><br>` : ''}
             <button onclick="setWarrantyStatus(${w.id},'open')" style="margin-top:6px;padding:5px 12px;border-radius:5px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:var(--grey);cursor:pointer;font-family:inherit;font-size:11px;">↩ Reopen</button>
            </div>`;
       return `
         <div style="border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:16px 18px;margin-bottom:12px;background:rgba(255,255,255,0.02);">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
             <div>
-              <div style="font-size:16px;font-weight:700;color:var(--white);">${w.regNo}</div>
-              <div style="font-size:12px;color:var(--grey);margin-top:2px;">${w.loggedBy || 'Motowarehouse'} &nbsp;·&nbsp; ${date}</div>
+              <div style="font-size:16px;font-weight:700;color:var(--white);">${escHtml(w.regNo)}</div>
+              <div style="font-size:12px;color:var(--grey);margin-top:2px;">${escHtml(w.loggedBy || 'Motowarehouse')} &nbsp;·&nbsp; ${date}</div>
             </div>
             <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-              <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;padding:3px 10px;border-radius:4px;text-transform:uppercase;border:1px solid ${priColor};color:${priColor};background:${priColor}22;">${w.priority||'normal'}</span>
-              <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;padding:3px 10px;border-radius:4px;text-transform:uppercase;border:1px solid ${stColor};color:${stColor};background:${stColor}22;">${w.status}</span>
+              <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;padding:3px 10px;border-radius:4px;text-transform:uppercase;border:1px solid ${priColor};color:${priColor};background:${priColor}22;">${escHtml(w.priority||'normal')}</span>
+              <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;padding:3px 10px;border-radius:4px;text-transform:uppercase;border:1px solid ${stColor};color:${stColor};background:${stColor}22;">${escHtml(w.status)}</span>
             </div>
           </div>
-          <div style="margin-top:10px;font-size:13px;line-height:1.5;color:rgba(255,255,255,0.85);">${w.symptom}</div>
-          ${w.frameNo ? `<div style="font-size:11px;color:var(--grey);margin-top:4px;">Frame: ${w.frameNo}${w.km ? ' &nbsp;·&nbsp; ' + Number(w.km).toLocaleString() + ' km' : ''}</div>` : ''}
-          ${w.notes   ? `<div style="font-size:12px;color:var(--grey);margin-top:6px;font-style:italic;">${w.notes}</div>` : ''}
+          <div style="margin-top:10px;font-size:13px;line-height:1.5;color:rgba(255,255,255,0.85);">${escHtml(w.symptom)}</div>
+          ${w.frameNo ? `<div style="font-size:11px;color:var(--grey);margin-top:4px;">Frame: ${escHtml(w.frameNo)}${w.km ? ' &nbsp;·&nbsp; ' + Number(w.km).toLocaleString() + ' km' : ''}</div>` : ''}
+          ${w.notes   ? `<div style="font-size:12px;color:var(--grey);margin-top:6px;font-style:italic;">${escHtml(w.notes)}</div>` : ''}
           ${photoBar}
           ${adminNotesField}
           ${actionBtns}
@@ -2767,14 +2767,14 @@
       el.innerHTML = partners.map(p => `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;gap:8px;">
           <div>
-            <div style="font-weight:700;font-size:14px;">${p.workshopName}</div>
-            <div style="font-size:12px;color:var(--grey);margin-top:2px;">@${p.username}${p.phone?' · '+p.phone:''}</div>
+            <div style="font-weight:700;font-size:14px;">${escHtml(p.workshopName)}</div>
+            <div style="font-size:12px;color:var(--grey);margin-top:2px;">@${escHtml(p.username)}${p.phone?' · '+escHtml(p.phone):''}</div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
             <span style="font-size:12px;padding:3px 10px;border-radius:12px;font-weight:600;
               background:${p.active?'rgba(0,200,150,0.12)':'rgba(229,0,82,0.1)'};
               color:${p.active?'var(--green)':'var(--red)'};">${p.active?'Active':'Disabled'}</span>
-            <button class="btn-reschedule" style="padding:5px 12px;font-size:12px;" onclick="openResetPassword(${p.id},'${p.workshopName.replace(/'/g,"\\'")}')">
+            <button class="btn-reschedule" style="padding:5px 12px;font-size:12px;" onclick="openResetPassword(${p.id},${escHtml(JSON.stringify(p.workshopName))})">
               🔑 Reset Password
             </button>
             <button class="btn-cancel-booking" style="padding:5px 12px;font-size:12px;" onclick="togglePartner(${p.id})">
