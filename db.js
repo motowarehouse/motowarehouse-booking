@@ -1489,21 +1489,3 @@ module.exports = {
   markDayBeforeReminderSent,
   initDB
 };
-  importVehicles, getVehicleByPlate, getAllVehicles, searchVehicles,
-  createPartner, getPartnerByUsername, getPartnerById, getAllPartners, togglePartnerActive, updatePartnerPassword,
-  getMechanicOffDays, addMechanicOffDay, removeMechanicOffDay,
-  createServiceEntry, getServiceEntryById, updateServiceEntry, deleteServiceEntry, getServiceHistoryByPlate, DEFAULT_SERVICE_ITEMS,
-  createWarrantyClaim, getWarrantyByPlate, getAllWarranties, getWarrantiesByPartnerId, updateWarrantyStatus,
-  updateMechanicNotes,
-  updateBookingFields,
-  lookupBookingForCustomer, cancelBookingByCustomer,
-  getDurationMins,
-  closeOtherRequest,
-  updateNcSteps,
-  closeDates,
-  deleteOldBookings,
-  expirePendingBookings,
-  getBookingsDueForDayBeforeReminder,
-  markDayBeforeReminderSent,
-  initDB
-};
