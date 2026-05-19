@@ -25,6 +25,19 @@ function formatDateHuman(dateStr) {
   }
 }
 
+// ── HTML escape for email templates ──────────────────────────────────────────
+// Prevents HTML injection in outbound email bodies. Email clients render HTML
+// but sandbox scripts; still, unescaped user data can inject spoofed links or
+// content into admin/customer notification emails.
+function escE(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 const SENDER    = { name: 'Motowarehouse', email: 'support@motowarehouse.com.cy' };
 const SITE_URL  = process.env.SITE_URL || '';
 
@@ -111,12 +124,12 @@ async function sendSelfCancelAlert(booking) {
         <div style="padding:32px;background:#fff;">
           <p>The customer cancelled their own booking via the cancellation link.</p>
           <table style="border-collapse:collapse;width:100%;font-size:14px;">
-            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;width:160px;">Reference</td><td style="padding:10px;">${booking.ref}</td></tr>
-            <tr><td style="padding:10px;font-weight:bold;">Name</td><td style="padding:10px;">${booking.name}</td></tr>
-            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Phone</td><td style="padding:10px;">${booking.phone}</td></tr>
-            <tr><td style="padding:10px;font-weight:bold;">Service</td><td style="padding:10px;">${SERVICE_LABELS[booking.serviceType] || booking.serviceType}</td></tr>
-            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Date &amp; Time</td><td style="padding:10px;">${booking.date} at ${booking.time}</td></tr>
-            <tr><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${booking.year} ${booking.model} – ${booking.plate}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;width:160px;">Reference</td><td style="padding:10px;">${escE(booking.ref)}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Name</td><td style="padding:10px;">${escE(booking.name)}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Phone</td><td style="padding:10px;">${escE(booking.phone)}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Service</td><td style="padding:10px;">${escE(SERVICE_LABELS[booking.serviceType] || booking.serviceType)}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Date &amp; Time</td><td style="padding:10px;">${escE(booking.date)} at ${escE(booking.time)}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${escE(booking.year)} ${escE(booking.model)} – ${escE(booking.plate)}</td></tr>
           </table>
           <p style="margin-top:20px;background:#fff3cd;padding:12px;border-radius:4px;color:#856404;font-size:13px;">
             <strong>Note:</strong> The slot for this booking is now free. No action required unless you want to follow up.
@@ -152,19 +165,19 @@ async function sendNewBookingAlert(booking) {
     html: `
       <h2 style="color:${headerColor};">${headerText}</h2>
       <table style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif;">
-        <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Reference</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.ref}</td></tr>
-        <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Name</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.name}</td></tr>
-        <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Phone</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.phone}</td></tr>
-        <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Email</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.email || '—'}</td></tr>
-        <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Service</td><td style="padding:8px;border-bottom:1px solid #eee;">${SERVICE_LABELS[booking.serviceType] || booking.serviceType}</td></tr>
+        <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Reference</td><td style="padding:8px;border-bottom:1px solid #eee;">${escE(booking.ref)}</td></tr>
+        <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Name</td><td style="padding:8px;border-bottom:1px solid #eee;">${escE(booking.name)}</td></tr>
+        <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Phone</td><td style="padding:8px;border-bottom:1px solid #eee;">${escE(booking.phone)}</td></tr>
+        <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Email</td><td style="padding:8px;border-bottom:1px solid #eee;">${escE(booking.email || '—')}</td></tr>
+        <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Service</td><td style="padding:8px;border-bottom:1px solid #eee;">${escE(SERVICE_LABELS[booking.serviceType] || booking.serviceType)}</td></tr>
         ${isOther
-          ? `<tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Description</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.description || '—'}</td></tr>`
-          : `<tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Date &amp; Time</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.date} at ${booking.time}</td></tr>`
+          ? `<tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Description</td><td style="padding:8px;border-bottom:1px solid #eee;">${escE(booking.description || '—')}</td></tr>`
+          : `<tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Date &amp; Time</td><td style="padding:8px;border-bottom:1px solid #eee;">${escE(booking.date)} at ${escE(booking.time)}</td></tr>`
         }
-        <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Vehicle</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.year} ${booking.model}</td></tr>
-        <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Plate</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.plate}</td></tr>
+        <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Vehicle</td><td style="padding:8px;border-bottom:1px solid #eee;">${escE(String(booking.year))} ${escE(booking.model)}</td></tr>
+        <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Plate</td><td style="padding:8px;border-bottom:1px solid #eee;">${escE(booking.plate)}</td></tr>
         <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Current KM</td><td style="padding:8px;border-bottom:1px solid #eee;">${booking.km ? Number(booking.km).toLocaleString() + ' km' : '—'}</td></tr>
-        <tr><td style="padding:8px;font-weight:bold;">Notes</td><td style="padding:8px;">${booking.notes || '—'}</td></tr>
+        <tr><td style="padding:8px;font-weight:bold;">Notes</td><td style="padding:8px;">${escE(booking.notes || '—')}</td></tr>
       </table>
       ${isOther ? `<p style="margin-top:16px;background:#fff3cd;padding:12px;border-radius:4px;color:#856404;font-family:Arial;"><strong>⚠️ Action required:</strong> This customer needs to be called to schedule a date and time.</p>` : ''}
       <p style="margin-top:20px;">
@@ -191,15 +204,15 @@ async function sendConfirmationToCustomer(booking) {
           <h1 style="color:white;margin:0;font-size:24px;">Appointment Confirmed</h1>
         </div>
         <div style="padding:32px;background:#fff;">
-          <p>Dear ${booking.name},</p>
+          <p>Dear ${escE(booking.name)},</p>
           <p>Your service appointment at <strong>Motowarehouse</strong> has been confirmed. Here are your details:</p>
           <table style="border-collapse:collapse;width:100%;margin:20px 0;">
-            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Booking Reference</td><td style="padding:10px;">${booking.ref}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Booking Reference</td><td style="padding:10px;">${escE(booking.ref)}</td></tr>
             <tr><td style="padding:10px;font-weight:bold;">Service</td><td style="padding:10px;">${SERVICE_LABELS[booking.serviceType]}</td></tr>
             <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Date</td><td style="padding:10px;">${formatDateHuman(booking.date)}</td></tr>
-            <tr><td style="padding:10px;font-weight:bold;">Time</td><td style="padding:10px;">${booking.time}</td></tr>
-            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${booking.year} ${booking.model}</td></tr>
-            <tr><td style="padding:10px;font-weight:bold;">Plate Number</td><td style="padding:10px;">${booking.plate}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Time</td><td style="padding:10px;">${escE(booking.time)}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${escE(String(booking.year))} ${escE(booking.model)}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Plate Number</td><td style="padding:10px;">${escE(booking.plate)}</td></tr>
             <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Current KM</td><td style="padding:10px;">${booking.km ? Number(booking.km).toLocaleString() + ' km' : '—'}</td></tr>
           </table>
           <div style="background:#f0fbfd;border-left:4px solid #009BB4;padding:16px;margin:20px 0;">
@@ -219,7 +232,7 @@ async function sendConfirmationToCustomer(booking) {
             Need to cancel? You can cancel your booking online using your reference number:<br>
             <a href="${SITE_URL}/cancel?ref=${booking.ref}"
                style="color:#E50052;word-break:break-all;">
-              Cancel booking ${booking.ref}
+              Cancel booking ${escE(booking.ref)}
             </a>
           </div>
           <p>The Motowarehouse Team</p>
@@ -245,7 +258,7 @@ async function sendCancellationToCustomer(booking) {
           <h1 style="color:#009BB4;margin:0;font-size:24px;">Booking Cancelled</h1>
         </div>
         <div style="padding:32px;background:#fff;">
-          <p>Dear ${booking.name},</p>
+          <p>Dear ${escE(booking.name)},</p>
           <p>Unfortunately, we are unable to accommodate your booking <strong>${booking.ref}</strong> on <strong>${formatDateHuman(booking.date)} at ${booking.time}</strong>.</p>
           <p>Please contact us to arrange a more suitable time:</p>
           <div style="background:#f0fbfd;border-left:4px solid #009BB4;padding:16px;margin:20px 0;">
@@ -273,11 +286,11 @@ async function sendReminderToCustomer(booking) {
           <h1 style="color:white;margin:0;font-size:24px;">Appointment Reminder</h1>
         </div>
         <div style="padding:32px;background:#fff;">
-          <p>Dear ${booking.name},</p>
+          <p>Dear ${escE(booking.name)},</p>
           <p>This is a reminder that your <strong>${SERVICE_LABELS[booking.serviceType]}</strong> appointment is in approximately <strong>2 hours</strong>.</p>
           <table style="border-collapse:collapse;width:100%;margin:20px 0;">
-            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Time</td><td style="padding:10px;">${booking.time}</td></tr>
-            <tr><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${booking.year} ${booking.model}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Time</td><td style="padding:10px;">${escE(booking.time)}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${escE(String(booking.year))} ${escE(booking.model)}</td></tr>
           </table>
           <div style="background:#f0fbfd;border-left:4px solid #009BB4;padding:16px;">
             <strong>Motowarehouse – 40 Athinon Str., Strovolos, Nicosia</strong><br>
@@ -306,15 +319,15 @@ async function sendRescheduleToCustomer(booking) {
           <h1 style="color:white;margin:0;font-size:24px;">Appointment Rescheduled</h1>
         </div>
         <div style="padding:32px;background:#fff;">
-          <p>Dear ${booking.name},</p>
+          <p>Dear ${escE(booking.name)},</p>
           <p>Your service appointment at <strong>Motowarehouse</strong> has been rescheduled. Here are your updated details:</p>
           <table style="border-collapse:collapse;width:100%;margin:20px 0;">
-            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Booking Reference</td><td style="padding:10px;">${booking.ref}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Booking Reference</td><td style="padding:10px;">${escE(booking.ref)}</td></tr>
             <tr><td style="padding:10px;font-weight:bold;">Service</td><td style="padding:10px;">${SERVICE_LABELS[booking.serviceType]}</td></tr>
             <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">New Date</td><td style="padding:10px;">${formatDateHuman(booking.date)}</td></tr>
-            <tr><td style="padding:10px;font-weight:bold;">New Time</td><td style="padding:10px;">${booking.time}</td></tr>
-            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${booking.year} ${booking.model}</td></tr>
-            <tr><td style="padding:10px;font-weight:bold;">Plate Number</td><td style="padding:10px;">${booking.plate}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">New Time</td><td style="padding:10px;">${escE(booking.time)}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${escE(String(booking.year))} ${escE(booking.model)}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Plate Number</td><td style="padding:10px;">${escE(booking.plate)}</td></tr>
           </table>
           <div style="background:#f0fbfd;border-left:4px solid #009BB4;padding:16px;margin:20px 0;">
             <strong>Location:</strong><br>
@@ -350,13 +363,13 @@ async function sendWarrantyAlert(claim) {
         </div>
         <div style="padding:32px;background:#fff;">
           <table style="border-collapse:collapse;width:100%;font-size:14px;">
-            <tr><td style="padding:8px 0;color:#666;width:140px;">Registration</td><td style="padding:8px 0;font-weight:bold;font-size:18px;">${claim.regNo}</td></tr>
-            <tr><td style="padding:8px 0;color:#666;">Workshop</td><td style="padding:8px 0;">${claim.loggedBy || 'Unknown'}</td></tr>
+            <tr><td style="padding:8px 0;color:#666;width:140px;">Registration</td><td style="padding:8px 0;font-weight:bold;font-size:18px;">${escE(claim.regNo)}</td></tr>
+            <tr><td style="padding:8px 0;color:#666;">Workshop</td><td style="padding:8px 0;">${escE(claim.loggedBy || 'Unknown')}</td></tr>
             <tr><td style="padding:8px 0;color:#666;">Priority</td><td style="padding:8px 0;"><span style="background:${priorityColor};color:#fff;padding:2px 10px;border-radius:4px;font-size:12px;font-weight:bold;">${priorityLabel}</span></td></tr>
-            ${claim.frameNo ? `<tr><td style="padding:8px 0;color:#666;">Frame No.</td><td style="padding:8px 0;">${claim.frameNo}</td></tr>` : ''}
+            ${claim.frameNo ? `<tr><td style="padding:8px 0;color:#666;">Frame No.</td><td style="padding:8px 0;">${escE(claim.frameNo)}</td></tr>` : ''}
             ${claim.km     ? `<tr><td style="padding:8px 0;color:#666;">KM</td><td style="padding:8px 0;">${Number(claim.km).toLocaleString()} km</td></tr>` : ''}
-            <tr><td style="padding:8px 0;color:#666;vertical-align:top;">Fault</td><td style="padding:8px 0;">${claim.symptom}</td></tr>
-            ${claim.notes  ? `<tr><td style="padding:8px 0;color:#666;vertical-align:top;">Notes</td><td style="padding:8px 0;">${claim.notes}</td></tr>` : ''}
+            <tr><td style="padding:8px 0;color:#666;vertical-align:top;">Fault</td><td style="padding:8px 0;">${escE(claim.symptom)}</td></tr>
+            ${claim.notes  ? `<tr><td style="padding:8px 0;color:#666;vertical-align:top;">Notes</td><td style="padding:8px 0;">${escE(claim.notes)}</td></tr>` : ''}
           </table>
           ${claim.photos && claim.photos.length ? `<p style="margin-top:16px;color:#666;font-size:13px;">${claim.photos.length} photo(s) attached — view in the admin panel.</p>` : ''}
           <div style="margin-top:24px;">
@@ -390,16 +403,16 @@ async function sendWarrantyStatusToPartner(claim, partnerEmail, workshopName) {
           <h1 style="color:#E59000;margin:0;font-size:22px;">🛡️ Warranty Claim Update</h1>
         </div>
         <div style="padding:32px;background:#fff;">
-          <p>Dear ${workshopName || 'Partner'},</p>
-          <p>Your warranty claim for <strong>${claim.regNo}</strong> has been updated.</p>
+          <p>Dear ${escE(workshopName || 'Partner')},</p>
+          <p>Your warranty claim for <strong>${escE(claim.regNo)}</strong> has been updated.</p>
           <div style="text-align:center;margin:24px 0;padding:20px;background:#f5f5f5;border-radius:8px;">
             <div style="font-size:48px;">${s.icon}</div>
             <div style="font-size:24px;font-weight:bold;color:${s.color};margin-top:8px;">${s.label}</div>
           </div>
           <table style="border-collapse:collapse;width:100%;font-size:14px;">
-            <tr><td style="padding:8px 0;color:#666;width:140px;">Registration</td><td style="padding:8px 0;font-weight:bold;">${claim.regNo}</td></tr>
-            <tr><td style="padding:8px 0;color:#666;">Fault Reported</td><td style="padding:8px 0;">${claim.symptom}</td></tr>
-            ${claim.adminNotes ? `<tr><td style="padding:8px 0;color:#666;vertical-align:top;">Admin Notes</td><td style="padding:8px 0;">${claim.adminNotes}</td></tr>` : ''}
+            <tr><td style="padding:8px 0;color:#666;width:140px;">Registration</td><td style="padding:8px 0;font-weight:bold;">${escE(claim.regNo)}</td></tr>
+            <tr><td style="padding:8px 0;color:#666;">Fault Reported</td><td style="padding:8px 0;">${escE(claim.symptom)}</td></tr>
+            ${claim.adminNotes ? `<tr><td style="padding:8px 0;color:#666;vertical-align:top;">Admin Notes</td><td style="padding:8px 0;">${escE(claim.adminNotes)}</td></tr>` : ''}
           </table>
           <p style="margin-top:24px;font-size:13px;color:#666;">
             If you have any questions, please contact Motowarehouse on <strong>22 328 788</strong>
@@ -426,18 +439,18 @@ async function sendOtherRequestAcknowledgement(booking) {
           <h1 style="color:white;margin:0;font-size:22px;">Service Request Received</h1>
         </div>
         <div style="padding:32px;background:#fff;">
-          <p>Dear ${booking.name},</p>
+          <p>Dear ${escE(booking.name)},</p>
           <p>We have received your service request and a member of our team will call you shortly to arrange a suitable date and time.</p>
           <table style="border-collapse:collapse;width:100%;margin:20px 0;font-size:14px;">
-            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Reference</td><td style="padding:10px;">${booking.ref}</td></tr>
-            <tr><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${booking.year} ${booking.model} – ${booking.plate}</td></tr>
-            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Your Request</td><td style="padding:10px;">${booking.description || '—'}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Reference</td><td style="padding:10px;">${escE(booking.ref)}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${escE(String(booking.year))} ${escE(booking.model)} – ${escE(booking.plate)}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Your Request</td><td style="padding:10px;">${escE(booking.description || '—')}</td></tr>
           </table>
           <div style="background:#f0fbfd;border-left:4px solid #009BB4;padding:16px;margin:20px 0;">
             <strong>📞 22 328 788</strong> &nbsp;|&nbsp; support@motowarehouse.com.cy<br>
             40 Athinon Str., Strovolos, Nicosia
           </div>
-          <p style="font-size:13px;color:#666;">Please keep your reference number <strong>${booking.ref}</strong> handy when we call.</p>
+          <p style="font-size:13px;color:#666;">Please keep your reference number <strong>${escE(booking.ref)}</strong> handy when we call.</p>
           <p>The Motowarehouse Team</p>
         </div>
         <div style="background:#1a1a1a;padding:16px;text-align:center;">
@@ -461,13 +474,13 @@ async function sendVehicleReadyToCustomer(booking) {
           <h1 style="color:white;margin:0;font-size:24px;">✅ Your Vehicle is Ready</h1>
         </div>
         <div style="padding:32px;background:#fff;">
-          <p>Dear ${booking.name},</p>
+          <p>Dear ${escE(booking.name)},</p>
           <p>Your <strong>${SERVICE_LABELS[booking.serviceType] || 'service'}</strong> has been completed and your vehicle is ready for collection.</p>
           <table style="border-collapse:collapse;width:100%;margin:20px 0;font-size:14px;">
-            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Booking Reference</td><td style="padding:10px;">${booking.ref}</td></tr>
-            <tr><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${booking.year} ${booking.model}</td></tr>
-            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Plate Number</td><td style="padding:10px;">${booking.plate}</td></tr>
-            <tr><td style="padding:10px;font-weight:bold;">Service</td><td style="padding:10px;">${SERVICE_LABELS[booking.serviceType] || booking.serviceType}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Booking Reference</td><td style="padding:10px;">${escE(booking.ref)}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${escE(String(booking.year))} ${escE(booking.model)}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Plate Number</td><td style="padding:10px;">${escE(booking.plate)}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Service</td><td style="padding:10px;">${escE(SERVICE_LABELS[booking.serviceType] || booking.serviceType)}</td></tr>
           </table>
           <div style="background:#f0fbfd;border-left:4px solid #00c896;padding:16px;margin:20px 0;">
             <strong>📍 Motowarehouse</strong><br>
@@ -499,41 +512,18 @@ async function sendPreviousDayReminderToCustomer(booking) {
           <h1 style="color:white;margin:0;font-size:24px;">Appointment Reminder</h1>
         </div>
         <div style="padding:32px;background:#fff;">
-          <p>Dear ${booking.name},</p>
+          <p>Dear ${escE(booking.name)},</p>
           <p>This is a friendly reminder that you have a service appointment <strong>tomorrow morning</strong> at <strong>Motowarehouse</strong>.</p>
           <table style="border-collapse:collapse;width:100%;margin:20px 0;">
             <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Date</td><td style="padding:10px;">${formatDateHuman(booking.date)}</td></tr>
-            <tr><td style="padding:10px;font-weight:bold;">Time</td><td style="padding:10px;">${booking.time}</td></tr>
-            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Service</td><td style="padding:10px;">${SERVICE_LABELS[booking.serviceType] || booking.serviceType}</td></tr>
-            <tr><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${booking.year} ${booking.model}</td></tr>
-            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Plate</td><td style="padding:10px;">${booking.plate}</td></tr>
-            <tr><td style="padding:10px;font-weight:bold;">Reference</td><td style="padding:10px;">${booking.ref}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Time</td><td style="padding:10px;">${escE(booking.time)}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Service</td><td style="padding:10px;">${escE(SERVICE_LABELS[booking.serviceType] || booking.serviceType)}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Vehicle</td><td style="padding:10px;">${escE(String(booking.year))} ${escE(booking.model)}</td></tr>
+            <tr style="background:#f5f5f5;"><td style="padding:10px;font-weight:bold;">Plate</td><td style="padding:10px;">${escE(booking.plate)}</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Reference</td><td style="padding:10px;">${escE(booking.ref)}</td></tr>
           </table>
           <div style="background:#f0fbfd;border-left:4px solid #009BB4;padding:16px;margin:20px 0;">
             <strong>📍 Motowarehouse – 40 Athinon Str., Strovolos, Nicosia</strong><br>
             <strong>📞 22 328 788</strong>
           </div>
-          <p>Please arrive a few minutes before your scheduled time. If you need to reschedule or cancel, please call us on <strong>22 328 788</strong> as soon as possible.</p>
-          <p>The Motowarehouse Team</p>
-        </div>
-        <div style="background:#1a1a1a;padding:16px;text-align:center;">
-          <p style="color:#999;font-size:12px;margin:0;">Motowarehouse Ltd – support@motowarehouse.com.cy</p>
-        </div>
-      </div>
-    `
-  });
-}
-
-module.exports = {
-  sendOTPCodeEmail,
-  sendNewBookingAlert,
-  sendConfirmationToCustomer,
-  sendCancellationToCustomer,
-  sendReminderToCustomer,
-  sendRescheduleToCustomer,
-  sendWarrantyAlert,
-  sendWarrantyStatusToPartner,
-  sendOtherRequestAcknowledgement,
-  sendVehicleReadyToCustomer,
-  sendPreviousDayReminderToCustomer
-};
+          <p>Please arrive a few minutes before your scheduled time. If you need to reschedule or cancel, please call us on <strong>22 328 788</strong> as

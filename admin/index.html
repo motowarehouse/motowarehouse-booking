@@ -2195,7 +2195,7 @@
               ${e.notes ? `<div style="font-size:13px;color:var(--grey);margin-top:6px;">${escHtml(e.notes)}</div>` : ''}
               ${e.photos && e.photos.length ? `
               <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
-                ${e.photos.map((src, i) => `<span onclick="viewPhoto('${src}')" style="cursor:pointer;"><img src="${src}" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:1.5px solid rgba(229,144,0,0.35);" title="Photo ${i+1}"></span>`).join('')}
+                ${e.photos.map((src, i) => `<span onclick="viewPhoto('${escHtml(src)}')" style="cursor:pointer;"><img src="${escHtml(src)}" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:1.5px solid rgba(229,144,0,0.35);" title="Photo ${i+1}"></span>`).join('')}
               </div>` : ''}
             </div>`
           ).join('')
@@ -2699,14 +2699,15 @@
         ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
             ${w.photos.map((src, i) => {
               const isVideo = mediaTypes[i] === 'video' || /\.(mp4|mov|avi|webm)(\?|$)/i.test(src);
+              const safeSrc = escHtml(src);
               return isVideo
-                ? `<span onclick="viewPhoto('${src}','video')" style="cursor:pointer;position:relative;display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:5px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);background:#000;">
-                     <video src="${src}" style="width:100%;height:100%;object-fit:cover;" muted></video>
+                ? `<span onclick="viewPhoto('${safeSrc}','video')" style="cursor:pointer;position:relative;display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:5px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);background:#000;">
+                     <video src="${safeSrc}" style="width:100%;height:100%;object-fit:cover;" muted></video>
                      <span style="position:absolute;background:rgba(0,0,0,0.55);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;pointer-events:none;">
                        <svg viewBox="0 0 24 24" width="10" height="10" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                      </span>
                    </span>`
-                : `<span onclick="viewPhoto('${src}','image')" style="cursor:pointer;"><img src="${src}" style="width:56px;height:56px;object-fit:cover;border-radius:5px;border:1px solid rgba(255,255,255,0.1);"></span>`;
+                : `<span onclick="viewPhoto('${safeSrc}','image')" style="cursor:pointer;"><img src="${safeSrc}" style="width:56px;height:56px;object-fit:cover;border-radius:5px;border:1px solid rgba(255,255,255,0.1);"></span>`;
             }).join('')}
            </div>` : '';
       const adminNotesField = w.status === 'open'
@@ -4472,10 +4473,11 @@
   function viewPhoto(src, type) {
     const w = window.open('', '_blank');
     if (!w) return;
+    const safeSrc = escHtml(src);
     const isVideo = type === 'video' || /\.(mp4|mov|avi|webm)(\?|$)/i.test(src);
     const content = isVideo
-      ? `<video src="${src}" controls autoplay style="max-width:100%;max-height:100vh;object-fit:contain;"></video>`
-      : `<img src="${src}" style="max-width:100%;max-height:100vh;object-fit:contain;">`;
+      ? `<video src="${safeSrc}" controls autoplay style="max-width:100%;max-height:100vh;object-fit:contain;"></video>`
+      : `<img src="${safeSrc}" style="max-width:100%;max-height:100vh;object-fit:contain;">`;
     w.document.write(`<!DOCTYPE html><html><head><title>Media</title></head><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;">${content}</body></html>`);
     w.document.close();
   }
@@ -4517,13 +4519,13 @@
 
     const rows = allItems.map(item => `
       <tr style="${item._type==='block' ? 'background:#f5f0ff;' : ''}">
-        <td style="font-weight:700;">${item.time}</td>
-        <td>${item.name}</td>
-        <td>${item.phone}</td>
-        <td>${item.vehicle}<br><span style="font-size:11px;color:#666;">${item.plate}</span></td>
-        <td>${item.service}</td>
-        <td>${item.mechanic}</td>
-        <td style="font-style:italic;color:#555;">${item.notes}</td>
+        <td style="font-weight:700;">${escHtml(item.time)}</td>
+        <td>${escHtml(item.name)}</td>
+        <td>${escHtml(item.phone)}</td>
+        <td>${escHtml(item.vehicle)}<br><span style="font-size:11px;color:#666;">${escHtml(item.plate)}</span></td>
+        <td>${escHtml(item.service)}</td>
+        <td>${escHtml(item.mechanic)}</td>
+        <td style="font-style:italic;color:#555;">${escHtml(item.notes)}</td>
       </tr>`).join('');
 
     const html = `<!DOCTYPE html><html><head><title>Schedule – ${dateLabel}</title>
@@ -4785,14 +4787,14 @@
     const SVC_LABELS = { 'small-service':'Small Service', 'full-service':'Full Service', 'other':'Service Request' };
     const rows = todayBookings.map(b =>
       `<tr>
-        <td>${b.time || '—'}</td>
-        <td>${b.ref}</td>
-        <td>${b.plate}</td>
-        <td>${b.model} ${b.year}</td>
-        <td>${SVC_LABELS[b.serviceType] || b.serviceType}</td>
-        <td>${b.name}</td>
-        <td>${b.phone}</td>
-        <td>${b.status.toUpperCase()}</td>
+        <td>${escHtml(b.time || '—')}</td>
+        <td>${escHtml(b.ref)}</td>
+        <td>${escHtml(b.plate)}</td>
+        <td>${escHtml(b.model)} ${escHtml(String(b.year))}</td>
+        <td>${escHtml(SVC_LABELS[b.serviceType] || b.serviceType)}</td>
+        <td>${escHtml(b.name)}</td>
+        <td>${escHtml(b.phone)}</td>
+        <td>${escHtml(b.status.toUpperCase())}</td>
         <td style="width:120px;border-bottom:1px solid #ccc;"> </td>
       </tr>`
     ).join('');

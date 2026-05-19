@@ -998,6 +998,24 @@ async function getAllVehicles() {
   return rows.map(rowToVehicle);
 }
 
+async function searchVehicles(q) {
+  if (!q) {
+    const { rows } = await pool.query('SELECT * FROM vehicles ORDER BY reg_no LIMIT 50');
+    return rows.map(rowToVehicle);
+  }
+  const search = q.toUpperCase().trim();
+  const { rows } = await pool.query(
+    `SELECT * FROM vehicles
+     WHERE UPPER(REPLACE(reg_no, ' ', '')) LIKE $1
+        OR UPPER(model) LIKE $1
+        OR UPPER(frame_no) LIKE $1
+     ORDER BY reg_no
+     LIMIT 50`,
+    [`%${search}%`]
+  );
+  return rows.map(rowToVehicle);
+}
+
 // ── Partners ──────────────────────────────────────────────────────────────────
 
 async function createPartner(data) {
@@ -1200,6 +1218,14 @@ async function getWarrantyByPlate(regNo) {
 async function getAllWarranties() {
   const { rows } = await pool.query(
     'SELECT * FROM warranty_history ORDER BY created_at DESC'
+  );
+  return rows.map(rowToWarranty);
+}
+
+async function getWarrantiesByPartnerId(partnerId) {
+  const { rows } = await pool.query(
+    'SELECT * FROM warranty_history WHERE partner_id = $1 ORDER BY created_at DESC',
+    [parseInt(partnerId)]
   );
   return rows.map(rowToWarranty);
 }
@@ -1445,11 +1471,11 @@ module.exports = {
   completeBooking, markNoShow,
   createBlock, getAllBlocks, deleteBlock,
   getHours, saveHours, DEFAULT_HOURS,
-  importVehicles, getVehicleByPlate, getAllVehicles,
+  importVehicles, getVehicleByPlate, getAllVehicles, searchVehicles,
   createPartner, getPartnerByUsername, getPartnerById, getAllPartners, togglePartnerActive, updatePartnerPassword,
   getMechanicOffDays, addMechanicOffDay, removeMechanicOffDay,
   createServiceEntry, getServiceEntryById, updateServiceEntry, deleteServiceEntry, getServiceHistoryByPlate, DEFAULT_SERVICE_ITEMS,
-  createWarrantyClaim, getWarrantyByPlate, getAllWarranties, updateWarrantyStatus,
+  createWarrantyClaim, getWarrantyByPlate, getAllWarranties, getWarrantiesByPartnerId, updateWarrantyStatus,
   updateMechanicNotes,
   updateBookingFields,
   lookupBookingForCustomer, cancelBookingByCustomer,

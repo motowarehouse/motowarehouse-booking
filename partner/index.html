@@ -1109,11 +1109,11 @@
   function showVehicle(v) {
     document.getElementById('vehicle-result').innerHTML = `
       <div class="vehicle-card">
-        <div class="vehicle-reg">${v.regNo}</div>
-        <div class="vehicle-model">${v.model || '—'}${v.year ? ' · ' + v.year : ''}</div>
+        <div class="vehicle-reg">${esc(v.regNo)}</div>
+        <div class="vehicle-model">${esc(v.model || '—')}${v.year ? ' · ' + esc(String(v.year)) : ''}</div>
         <div class="vehicle-meta">
-          ${v.frameNo  ? `<span class="vehicle-tag">Frame: ${v.frameNo}</span>` : ''}
-          ${v.engineNo ? `<span class="vehicle-tag">Engine: ${v.engineNo}</span>` : ''}
+          ${v.frameNo  ? `<span class="vehicle-tag">Frame: ${esc(v.frameNo)}</span>` : ''}
+          ${v.engineNo ? `<span class="vehicle-tag">Engine: ${esc(v.engineNo)}</span>` : ''}
         </div>
       </div>`;
 

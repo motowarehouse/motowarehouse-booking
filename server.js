@@ -91,6 +91,12 @@ const lookupRateLimit = makeRateLimiter(
   'Too many lookup attempts. Please try again later.'
 );
 
+// Vehicle lookup (public): max 20 requests / IP / 10 minutes
+const vehicleLookupRateLimit = makeRateLimiter(
+  20, 10 * 60 * 1000,
+  'Too many vehicle lookup requests. Please try again later.'
+);
+
 // ── Phone normalisation (shared by OTP routes + /api/book) ───────────────────
 function normalisePhone(raw) {
   if (!raw) return '';
@@ -531,6 +537,15 @@ app.post('/api/book', bookingRateLimit, async (req, res) => {
     if (!email || !date || !time) {
       return res.status(400).json({ error: 'All required fields must be filled.' });
     }
+    // Validate date is a real calendar date in YYYY-MM-DD format
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return res.status(400).json({ error: 'Invalid date format.' });
+    }
+    const [dy, dm, dd] = date.split('-').map(Number);
+    const parsedDate = new Date(dy, dm - 1, dd);
+    if (parsedDate.getFullYear() !== dy || parsedDate.getMonth() !== dm - 1 || parsedDate.getDate() !== dd) {
+      return res.status(400).json({ error: 'Invalid date.' });
+    }
     // Duration-aware slot double-check (same logic as the calendar uses)
     const durationMins = db.getDurationMins(model, serviceType);
     const booked = await db.getBookedSlots(date, durationMins);
@@ -568,7 +583,7 @@ app.post('/api/book', bookingRateLimit, async (req, res) => {
 });
 
 // ── Public plate lookup (used by booking form for auto-fill) ─────────────────
-app.get('/api/booking/vehicle-lookup', async (req, res) => {
+app.get('/api/booking/vehicle-lookup', vehicleLookupRateLimit, async (req, res) => {
   try {
     const plate = (req.query.plate || '').trim().toUpperCase();
     if (!plate) return res.status(400).json({ error: 'plate required' });
@@ -1286,20 +1301,12 @@ app.post('/api/admin/vehicles/import', requireAdmin, async (req, res) => {
   }
 });
 
-// Get all vehicles (paginated search)
+// Get all vehicles (paginated search — filtering pushed to SQL)
 app.get('/api/admin/vehicles', requireAdmin, async (req, res) => {
   try {
     const { q } = req.query;
-    let vehicles = await db.getAllVehicles();
-    if (q) {
-      const search = q.toUpperCase().trim();
-      vehicles = vehicles.filter(v =>
-        v.regNo.includes(search) ||
-        v.model.toUpperCase().includes(search) ||
-        v.frameNo.toUpperCase().includes(search)
-      );
-    }
-    res.json(vehicles.slice(0, 50));
+    const vehicles = await db.searchVehicles(q ? cleanStr(q, 100) : '');
+    res.json(vehicles);
   } catch (err) {
     console.error('[Get vehicles error]', err);
     res.status(500).json({ error: 'Failed to load vehicles.' });
@@ -1466,12 +1473,11 @@ app.post('/api/warranty-claim', express.json({ limit: '10mb' }), requireAdminOrP
   }
 });
 
-// Get warranty claims submitted by the logged-in partner (own claims only)
+// Get warranty claims submitted by the logged-in partner (own claims only — targeted SQL query)
 app.get('/api/partner/warranties', requirePartner, async (req, res) => {
   try {
-    const partnerId = String(req.session.partner.id);
-    const all = await db.getAllWarranties();
-    const mine = all.filter(c => String(c.partnerId) === partnerId);
+    const partnerId = req.session.partner.id;
+    const mine = await db.getWarrantiesByPartnerId(partnerId);
     res.json(mine);
   } catch (err) {
     console.error('[Partner warranties error]', err);
