@@ -233,7 +233,7 @@ function securityHeaders(req, res, next) {
   const imgSrc   = `img-src 'self' data: ${r2Origin}`.trim();
   const csp = [
     `default-src 'self'`,
-    `script-src 'self' 'unsafe-inline' https://js.hcaptcha.com https://newassets.hcaptcha.com`,
+    `script-src 'self' 'unsafe-inline' https://js.hcaptcha.com https://newassets.hcaptcha.com https://cdnjs.cloudflare.com`,
     `style-src 'self' 'unsafe-inline' https://newassets.hcaptcha.com`,
     `frame-src https://newassets.hcaptcha.com https://hcaptcha.com`,
     `connect-src 'self' https://hcaptcha.com https://api.hcaptcha.com`,
