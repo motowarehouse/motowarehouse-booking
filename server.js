@@ -7,7 +7,31 @@ const pgSession = require('connect-pg-simple')(session);
 const bcrypt = require('bcryptjs');
 const path = require('path');
 const multer = require('multer');
-const { fileTypeFromBuffer } = require('file-type');
+// Inline magic-byte detector — replaces the file-type package (avoids ASF parser CVE).
+// Only detects the exact MIME types we accept; everything else returns null.
+function detectMimeFromBuffer(buf) {
+  if (!buf || buf.length < 12) return null;
+  // JPEG
+  if (buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) return 'image/jpeg';
+  // PNG
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47 &&
+      buf[4] === 0x0D && buf[5] === 0x0A && buf[6] === 0x1A && buf[7] === 0x0A) return 'image/png';
+  // GIF87a / GIF89a
+  if (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x38 &&
+      (buf[4] === 0x37 || buf[4] === 0x39) && buf[5] === 0x61) return 'image/gif';
+  // WebP  (RIFF....WEBP)
+  if (buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 &&
+      buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50) return 'image/webp';
+  // WebM  (EBML header)
+  if (buf[0] === 0x1A && buf[1] === 0x45 && buf[2] === 0xDF && buf[3] === 0xA3) return 'video/webm';
+  // MP4 / MOV — ISO base media (ftyp box sits at byte offset 4)
+  if (buf[4] === 0x66 && buf[5] === 0x74 && buf[6] === 0x79 && buf[7] === 0x70) {
+    const brand = buf.slice(8, 12).toString('latin1');
+    if (brand.startsWith('qt')) return 'video/quicktime';   // QuickTime .mov
+    return 'video/mp4';                                      // everything else (isom, mp41, mp42 …)
+  }
+  return null;
+}
 const { Pool } = require('pg');
 const db = require('./db');
 const emailService = require('./emailService');
@@ -1413,13 +1437,13 @@ app.post('/api/upload-media', requireAdminOrPartner, upload.single('file'), asyn
 
     // Verify actual file type from magic bytes — do not trust client-supplied Content-Type
     const allowedMimes = new Set(['image/jpeg','image/png','image/webp','image/gif','video/mp4','video/quicktime','video/webm']);
-    const detected = await fileTypeFromBuffer(req.file.buffer);
-    if (!detected || !allowedMimes.has(detected.mime)) {
+    const detectedMime = detectMimeFromBuffer(req.file.buffer);
+    if (!detectedMime || !allowedMimes.has(detectedMime)) {
       return res.status(400).json({ error: 'File type not allowed. Use JPG, PNG, WebP, GIF, MP4, MOV, or WebM.' });
     }
 
     // Use the verified MIME type, not the client-supplied one
-    const safeMime = detected.mime;
+    const safeMime = detectedMime;
     const url = await r2Service.uploadToR2(req.file.buffer, req.file.originalname, safeMime);
     const type = safeMime.startsWith('video') ? 'video' : 'image';
     res.json({ url, type });
@@ -1691,12 +1715,13 @@ db.initDB()
     startReminderCron();
     startBackupCron();
     app.listen(PORT, () => {
-      console.log(`\n✅ Motowarehouse Service Portal running on http://localhost:${PORT}`);
+      console.log(`
+✅ Motowarehouse Service Portal running on http://localhost:${PORT}`);
       console.log(`   Admin panel:    http://localhost:${PORT}/mw-service-solonas`);
       console.log(`   Partner portal: http://localhost:${PORT}/partner\n`);
     });
   })
   .catch(err => {
-    console.error('\n❌ Could not initialise database. Server will not start.', err.message);
+    console.error('\n\u274C Could not initialise database. Server will not start.', err.message);
     process.exit(1);
   });
