@@ -1095,37 +1095,15 @@
 
     @media (max-width: 1100px) { .step-tracker { display: none; } }
 
-    /* ── FLOATING BACKGROUND SHAPES ── */
-    .bg-shapes {
+    /* ── CANVAS BACKGROUND ── */
+    #moto-canvas {
       position: fixed;
       inset: 0;
+      width: 100%;
+      height: 100%;
       pointer-events: none;
       z-index: 0;
-      overflow: hidden;
     }
-
-    .bg-shape {
-      position: absolute;
-      border-radius: 50%;
-      opacity: 0;
-      animation: shapeFloat linear infinite;
-      transition: opacity 1s;
-    }
-
-    .bg-shape.show { opacity: 1; }
-
-    @keyframes shapeFloat {
-      0%   { transform: translateY(0px) rotate(0deg); }
-      50%  { transform: translateY(-30px) rotate(180deg); }
-      100% { transform: translateY(0px) rotate(360deg); }
-    }
-
-    /* ── HERO PULSE ── */
-    @keyframes heroPulse {
-      0%, 100% { opacity: 0.07; transform: translateX(-50%) scale(1); }
-      50%       { opacity: 0.14; transform: translateX(-50%) scale(1.1); }
-    }
-    .hero::before { animation: heroPulse 6s ease-in-out infinite; }
 
     /* ── HERO TITLE ── */
     .hero h1 span {
@@ -1269,8 +1247,8 @@
   </div>
 </div>
 
-<!-- FLOATING BG SHAPES -->
-<div class="bg-shapes" id="bg-shapes"></div>
+<!-- CANVAS BACKGROUND: THE MACHINE -->
+<canvas id="moto-canvas" aria-hidden="true"></canvas>
 
 <!-- HEADER -->
 <header>
@@ -2482,82 +2460,352 @@
     }, 35);
   }
 
-  // 4. Motorcycle-themed floating background SVGs
-  const MOTO_SVGS = {
-    gear: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <path d="M43,2 L57,2 L60,18 C64,19 68,21 71,24 L87,18 L96,30 L84,42
-               C86,46 87,50 87,54 L103,57 L103,71 L87,74 C86,78 84,82 81,85
-               L87,101 L75,110 L63,98 C59,100 55,101 51,101 L48,117 L34,117
-               L31,101 C27,100 23,98 20,95 L4,101 L-5,89 L7,77
-               C5,73 4,69 4,65 L-12,62 L-12,48 L4,45
-               C5,41 7,37 10,34 L4,18 L16,9 L28,21
-               C32,19 36,18 40,17 Z M50,35 A15,15 0 1,0 50,65 A15,15 0 1,0 50,35Z"
-            fill="none" stroke="currentColor" stroke-width="3"/>
-    </svg>`,
-    wheel: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="3"/>
-      <circle cx="50" cy="50" r="8"  fill="none" stroke="currentColor" stroke-width="2.5"/>
-      <circle cx="50" cy="50" r="32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 6"/>
-      <line x1="50" y1="4"  x2="50" y2="42" stroke="currentColor" stroke-width="1.5"/>
-      <line x1="50" y1="58" x2="50" y2="96" stroke="currentColor" stroke-width="1.5"/>
-      <line x1="4"  y1="50" x2="42" y2="50" stroke="currentColor" stroke-width="1.5"/>
-      <line x1="58" y1="50" x2="96" y2="50" stroke="currentColor" stroke-width="1.5"/>
-      <line x1="18" y1="18" x2="44" y2="44" stroke="currentColor" stroke-width="1.5"/>
-      <line x1="56" y1="56" x2="82" y2="82" stroke="currentColor" stroke-width="1.5"/>
-      <line x1="82" y1="18" x2="56" y2="44" stroke="currentColor" stroke-width="1.5"/>
-      <line x1="44" y1="56" x2="18" y2="82" stroke="currentColor" stroke-width="1.5"/>
-    </svg>`,
-    wrench: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <path d="M72,8 C58,8 47,19 47,33 C47,37 48,40 50,43 L12,81
-               C9,84 9,89 12,92 C15,95 20,95 23,92 L61,54
-               C64,56 68,57 72,57 C86,57 97,46 97,32 C97,28 96,24 94,21
-               L80,35 L70,35 L65,25 L79,11 C77,9 75,8 72,8 Z"
-            fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round"/>
-    </svg>`,
-    chain: `<svg viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2"  y="8"  width="28" height="24" rx="12" fill="none" stroke="currentColor" stroke-width="3"/>
-      <rect x="22" y="12" width="20" height="16" rx="4"  fill="none" stroke="currentColor" stroke-width="2"/>
-      <rect x="34" y="8"  width="28" height="24" rx="12" fill="none" stroke="currentColor" stroke-width="3"/>
-      <rect x="54" y="12" width="20" height="16" rx="4"  fill="none" stroke="currentColor" stroke-width="2"/>
-      <rect x="66" y="8"  width="28" height="24" rx="12" fill="none" stroke="currentColor" stroke-width="3"/>
-      <rect x="86" y="12" width="20" height="16" rx="4"  fill="none" stroke="currentColor" stroke-width="2"/>
-    </svg>`,
-    piston: `<svg viewBox="0 0 60 100" xmlns="http://www.w3.org/2000/svg">
-      <rect x="8"  y="10" width="44" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="3"/>
-      <rect x="18" y="40" width="24" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2.5"/>
-      <line x1="30" y1="50" x2="30" y2="75" stroke="currentColor" stroke-width="3"/>
-      <rect x="12" y="75" width="36" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="3"/>
-    </svg>`
-  };
+  // 4. THE MACHINE — Canvas background animation
+  (function() {
+    'use strict';
+    const canvas = document.getElementById('moto-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
 
-  function createShapes() {
-    const container = document.getElementById('bg-shapes');
-    const placements = [
-      { type:'wheel',  size:160, top:'8%',   side:'left',  offset:'-55px', color:'rgba(0,155,180,0.07)',  dur:22, delay:0 },
-      { type:'gear',   size:130, top:'30%',  side:'right', offset:'-45px', color:'rgba(0,239,209,0.065)', dur:28, delay:5 },
-      { type:'wrench', size:110, top:'52%',  side:'left',  offset:'-36px', color:'rgba(0,155,180,0.06)',  dur:18, delay:2 },
-      { type:'chain',  size:160, top:'68%',  side:'right', offset:'-60px', color:'rgba(0,239,209,0.055)', dur:32, delay:8 },
-      { type:'piston', size: 90, top:'82%',  side:'left',  offset:'-28px', color:'rgba(0,155,180,0.065)', dur:20, delay:4 },
-      { type:'gear',   size: 80, top:'92%',  side:'right', offset:'-25px', color:'rgba(0,239,209,0.05)',  dur:24, delay:11},
-    ];
-    placements.forEach(p => {
-      const wrap = document.createElement('div');
-      wrap.className = 'bg-shape';
-      wrap.style.cssText = `
-        width:${p.size}px; height:${p.size}px;
-        top:${p.top};
-        ${p.side}:${p.offset};
-        color:${p.color};
-        animation-duration:${p.dur}s;
-        animation-delay:-${p.delay}s;
-        display:flex; align-items:center; justify-content:center;
-      `;
-      wrap.innerHTML = MOTO_SVGS[p.type];
-      container.appendChild(wrap);
-      setTimeout(() => wrap.classList.add('show'), 600);
-    });
-  }
-  createShapes();
+    // ── Sizing ───────────────────────────────────────────────────────────
+    function resize() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize, { passive: true });
+
+    // ── Utilities ────────────────────────────────────────────────────────
+    function lerp(a, b, t)    { return a + (b - a) * t; }
+    function easeOut(t)       { return 1 - Math.pow(1 - t, 2); }
+    function rand(min, max)   { return min + Math.random() * (max - min); }
+    function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+    // ── Engine state machine ─────────────────────────────────────────────
+    const eng = {
+      state:         'startup',
+      rpm:           0,
+      targetRpm:     0,
+      stateTimer:    0,
+      stateDuration: 2600,
+      sparkTimer:    0,
+      sparkInterval: 9999,
+    };
+
+    function transitionTo(state) {
+      eng.state      = state;
+      eng.stateTimer = 0;
+      if (state === 'startup') {
+        eng.stateDuration = 2600;
+        eng.targetRpm     = 0.18;
+      } else if (state === 'idle') {
+        eng.stateDuration = rand(5000, 9500);
+        eng.targetRpm     = rand(0.12, 0.20);
+        eng.sparkTimer    = 0;
+        eng.sparkInterval = rand(2400, 3600);
+      } else if (state === 'revving') {
+        eng.stateDuration = rand(2200, 3800);
+        eng.targetRpm     = rand(0.55, 0.92);
+        eng.sparkTimer    = 0;
+        eng.sparkInterval = rand(190, 320);
+      } else if (state === 'settling') {
+        eng.stateDuration = rand(2200, 2800);
+        eng.targetRpm     = rand(0.12, 0.18);
+      }
+    }
+
+    // ── Vanishing-point speed particles ──────────────────────────────────
+    const PCOUNT = 200;
+    const parts  = [];
+
+    function resetParticle(p, randomRadius) {
+      p.angle   = Math.random() * Math.PI * 2;
+      p.speed   = rand(0.35, 1.8);
+      p.r       = randomRadius ? rand(0, 380) : 0;
+      p.useBlue = Math.random() > 0.42;
+      p.trailK  = rand(2.5, 9);
+    }
+
+    for (let i = 0; i < PCOUNT; i++) {
+      const p = { angle:0, speed:0, r:0, useBlue:true, trailK:0 };
+      resetParticle(p, true);
+      parts.push(p);
+    }
+
+    // ── Ghost tachometer ─────────────────────────────────────────────────
+    const TACHO_START = Math.PI * 0.72;
+    const TACHO_END   = Math.PI * 2.28;
+    const TACHO_SPAN  = TACHO_END - TACHO_START;
+
+    function drawTacho(cx, cy, R, rpm) {
+      ctx.save();
+      ctx.globalAlpha = 0.055;
+
+      // Outer ring
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, TACHO_START, TACHO_END);
+      ctx.strokeStyle = 'rgba(0,155,180,1)';
+      ctx.lineWidth   = 1.5;
+      ctx.stroke();
+
+      // Inner ring
+      ctx.beginPath();
+      ctx.arc(cx, cy, R * 0.875, TACHO_START, TACHO_END);
+      ctx.strokeStyle = 'rgba(0,155,180,0.45)';
+      ctx.lineWidth   = 0.7;
+      ctx.stroke();
+
+      // Redline arc (last 17%)
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, TACHO_START + TACHO_SPAN * 0.83, TACHO_END);
+      ctx.strokeStyle = 'rgba(229,144,0,1)';
+      ctx.lineWidth   = 3;
+      ctx.stroke();
+
+      // Tick marks (48 total)
+      for (let i = 0; i <= 48; i++) {
+        const a      = TACHO_START + (TACHO_SPAN * i) / 48;
+        const major  = (i % 4 === 0);
+        const medium = (i % 2 === 0);
+        const innerR = major ? R * 0.87 : medium ? R * 0.91 : R * 0.945;
+        const inRed  = (i / 48) > 0.83;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * R,      cy + Math.sin(a) * R);
+        ctx.lineTo(cx + Math.cos(a) * innerR, cy + Math.sin(a) * innerR);
+        ctx.strokeStyle = inRed ? 'rgba(229,144,0,0.75)'
+          : `rgba(0,155,180,${major ? 0.9 : medium ? 0.5 : 0.25})`;
+        ctx.lineWidth = major ? 1.5 : 0.7;
+        ctx.stroke();
+      }
+
+      // RPM number labels
+      const LABELS = [0, 2, 4, 6, 8, 10, 12];
+      ctx.font = `bold ${Math.round(R * 0.055)}px Inter, Arial, sans-serif`;
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle    = 'rgba(0,155,180,0.7)';
+      LABELS.forEach(function(lbl, idx) {
+        const t = idx / (LABELS.length - 1);
+        const a = TACHO_START + TACHO_SPAN * t;
+        ctx.fillText(String(lbl), cx + Math.cos(a) * R * 0.788, cy + Math.sin(a) * R * 0.788);
+      });
+
+      // ×1000 sub-label
+      ctx.font      = `${Math.round(R * 0.046)}px Inter, Arial, sans-serif`;
+      ctx.fillStyle = 'rgba(0,155,180,0.35)';
+      ctx.fillText('×1000 r/min', cx, cy + R * 0.56);
+
+      ctx.restore();
+
+      // Needle — separate pass, higher alpha
+      ctx.save();
+      ctx.globalAlpha = 0.22;
+      const na    = TACHO_START + TACHO_SPAN * clamp(rpm, 0, 1);
+      const nTipX = cx + Math.cos(na) * R * 0.82;
+      const nTipY = cy + Math.sin(na) * R * 0.82;
+      const nTlX  = cx + Math.cos(na + Math.PI) * R * 0.11;
+      const nTlY  = cy + Math.sin(na + Math.PI) * R * 0.11;
+      ctx.beginPath();
+      ctx.moveTo(nTlX, nTlY);
+      ctx.lineTo(nTipX, nTipY);
+      ctx.strokeStyle = 'rgba(0,239,209,1)';
+      ctx.lineWidth   = 1.8;
+      ctx.lineCap     = 'round';
+      ctx.stroke();
+      // Hub dot
+      ctx.beginPath();
+      ctx.arc(cx, cy, R * 0.028, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,239,209,1)';
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // ── Spark ignition events ────────────────────────────────────────────
+    const sparks = [];
+
+    function fireSpark() {
+      const vw = canvas.width, vh = canvas.height;
+      const positions = [
+        { x: vw * 0.14, y: vh * 0.28 },
+        { x: vw * 0.35, y: vh * 0.67 },
+        { x: vw * 0.65, y: vh * 0.38 },
+        { x: vw * 0.86, y: vh * 0.62 },
+      ];
+      const pos = positions[Math.floor(Math.random() * positions.length)];
+      const spk = { x: pos.x, y: pos.y, age: 0, maxAge: 950, rings: [], pts: [] };
+
+      // 3 expanding rings
+      for (let i = 0; i < 3; i++) {
+        spk.rings.push({ maxR: 22 + i * 20, alpha: 0.55 - i * 0.11 });
+      }
+      // Burst particles — more during high RPM
+      const count = 10 + Math.floor(eng.rpm * 10);
+      for (let i = 0; i < count; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const s = rand(1.2, 3.8);
+        spk.pts.push({ x:0, y:0, vx: Math.cos(a)*s, vy: Math.sin(a)*s - 1.2, alpha:0.9, r: rand(1.2, 2.5) });
+      }
+      sparks.push(spk);
+    }
+
+    // ── Main render loop ─────────────────────────────────────────────────
+    let lastTs = 0, totalMs = 0;
+
+    function frame(ts) {
+      const dt = Math.min(ts - lastTs, 50);
+      lastTs  = ts;
+      totalMs += dt;
+
+      const vw = canvas.width;
+      const vh = canvas.height;
+      const cx = vw * 0.5;
+      const cy = vh * 0.40;
+
+      // Engine update
+      eng.stateTimer += dt;
+      eng.sparkTimer += dt;
+
+      switch (eng.state) {
+        case 'startup': {
+          const p = clamp(eng.stateTimer / eng.stateDuration, 0, 1);
+          eng.rpm = easeOut(p) * 0.18;
+          if (p >= 1) transitionTo('idle');
+          break;
+        }
+        case 'idle': {
+          const wobble = Math.sin(totalMs * 0.0008) * 0.012;
+          eng.rpm = lerp(eng.rpm, eng.targetRpm + wobble, 0.025);
+          if (eng.sparkTimer >= eng.sparkInterval) {
+            fireSpark();
+            eng.sparkTimer    = 0;
+            eng.sparkInterval = rand(2400, 3600);
+          }
+          if (eng.stateTimer >= eng.stateDuration) transitionTo('revving');
+          break;
+        }
+        case 'revving': {
+          eng.rpm = lerp(eng.rpm, eng.targetRpm, 0.022);
+          if (eng.sparkTimer >= eng.sparkInterval) {
+            fireSpark();
+            eng.sparkTimer    = 0;
+            eng.sparkInterval = rand(190, 340);
+          }
+          if (eng.stateTimer >= eng.stateDuration) transitionTo('settling');
+          break;
+        }
+        case 'settling': {
+          eng.rpm = lerp(eng.rpm, eng.targetRpm, 0.014);
+          if (eng.stateTimer >= eng.stateDuration) transitionTo('idle');
+          break;
+        }
+      }
+
+      // Clear
+      ctx.clearRect(0, 0, vw, vh);
+
+      // Ghost tachometer
+      const tachoR = Math.min(vw, vh) * 0.40;
+      drawTacho(cx, cy + tachoR * 0.12, tachoR, eng.rpm);
+
+      // Speed particles
+      const speedMult = 0.5 + eng.rpm * 2.8;
+      const maxR = Math.sqrt(
+        Math.max(cx, vw - cx) * Math.max(cx, vw - cx) +
+        Math.max(cy, vh - cy) * Math.max(cy, vh - cy)
+      ) * 1.05;
+
+      for (var pi = 0; pi < parts.length; pi++) {
+        var p = parts[pi];
+        p.r += p.speed * speedMult * dt * 0.065;
+        if (p.r > maxR) { resetParticle(p, false); continue; }
+
+        var fadeIn  = clamp(p.r / 55, 0, 1);
+        var fadeOut = clamp(1 - (p.r / maxR) * 1.2, 0, 1);
+        var fade    = fadeIn * fadeOut;
+        if (fade < 0.01) continue;
+
+        var px = cx + Math.cos(p.angle) * p.r;
+        var py = cy + Math.sin(p.angle) * p.r;
+        var tR = Math.max(0, p.r - p.trailK * speedMult * 1.6);
+        var tx = cx + Math.cos(p.angle) * tR;
+        var ty = cy + Math.sin(p.angle) * tR;
+
+        var alpha = fade * 0.48 * (0.45 + eng.rpm * 0.55);
+        if (alpha < 0.01) continue;
+
+        var C = p.useBlue ? '0,155,180' : '0,239,209';
+        var grad = ctx.createLinearGradient(tx, ty, px, py);
+        grad.addColorStop(0, 'rgba(' + C + ',0)');
+        grad.addColorStop(1, 'rgba(' + C + ',' + alpha.toFixed(3) + ')');
+
+        ctx.beginPath();
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(px, py);
+        ctx.strokeStyle = grad;
+        ctx.lineWidth   = 0.8 + fade * 0.9;
+        ctx.stroke();
+      }
+
+      // Sparks
+      for (var si = sparks.length - 1; si >= 0; si--) {
+        var s    = sparks[si];
+        s.age   += dt;
+        if (s.age > s.maxAge) { sparks.splice(si, 1); continue; }
+
+        var prog  = s.age / s.maxAge;
+        var flash = clamp(1 - prog * 3.2, 0, 1);
+
+        if (flash > 0.01) {
+          var grd = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, 32);
+          grd.addColorStop(0,    'rgba(255,255,255,' + (flash * 0.5).toFixed(3)  + ')');
+          grd.addColorStop(0.35, 'rgba(0,239,209,'  + (flash * 0.15).toFixed(3) + ')');
+          grd.addColorStop(1,    'rgba(0,155,180,0)');
+          ctx.fillStyle = grd;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, 32, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        for (var ri = 0; ri < s.rings.length; ri++) {
+          var ring  = s.rings[ri];
+          var ringR = ring.maxR * easeOut(prog);
+          var rA    = ring.alpha * (1 - prog);
+          if (rA < 0.008) continue;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, ringR, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(0,239,209,' + rA.toFixed(3) + ')';
+          ctx.lineWidth   = 1.1;
+          ctx.stroke();
+        }
+
+        for (var pti = 0; pti < s.pts.length; pti++) {
+          var pt  = s.pts[pti];
+          pt.x   += pt.vx * dt * 0.065;
+          pt.y   += pt.vy * dt * 0.065;
+          pt.vy  += 0.045 * dt * 0.065;
+          pt.alpha = Math.max(0, pt.alpha - dt * 0.0019);
+          if (pt.alpha < 0.02) continue;
+          var t2 = 1 - pt.alpha / 0.9;
+          var pr = Math.round(lerp(255, 0,   t2));
+          var pg = Math.round(lerp(255, 239, t2));
+          var pb = Math.round(lerp(255, 209, t2));
+          ctx.beginPath();
+          ctx.arc(s.x + pt.x, s.y + pt.y, pt.r * pt.alpha, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(' + pr + ',' + pg + ',' + pb + ',' + pt.alpha.toFixed(3) + ')';
+          ctx.fill();
+        }
+      }
+
+      requestAnimationFrame(frame);
+    }
+
+    // Startup ignition sparks
+    setTimeout(fireSpark, 700);
+    setTimeout(fireSpark, 1200);
+    setTimeout(fireSpark, 1800);
+
+    requestAnimationFrame(frame);
+  })();
 
   // 5. Vehicle section reveal
   function revealVehicleSection() {
