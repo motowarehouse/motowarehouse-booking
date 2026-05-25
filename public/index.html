@@ -2463,346 +2463,361 @@
   // 4. THE MACHINE — Canvas background animation
   (function() {
     'use strict';
-    const canvas = document.getElementById('moto-canvas');
+    var canvas = document.getElementById('moto-canvas');
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    var ctx = canvas.getContext('2d');
 
-    // ── Sizing ───────────────────────────────────────────────────────────
-    function resize() {
-      canvas.width  = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
     resize();
     window.addEventListener('resize', resize, { passive: true });
 
-    // ── Utilities ────────────────────────────────────────────────────────
-    function lerp(a, b, t)    { return a + (b - a) * t; }
-    function easeOut(t)       { return 1 - Math.pow(1 - t, 2); }
     function rand(min, max)   { return min + Math.random() * (max - min); }
     function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
-    // ── Engine state machine ─────────────────────────────────────────────
-    const eng = {
-      state:         'startup',
-      rpm:           0,
-      targetRpm:     0,
-      stateTimer:    0,
-      stateDuration: 2600,
-      sparkTimer:    0,
-      sparkInterval: 9999,
-    };
+    // ── Scroll tracking ───────────────────────────────────────────────────
+    var scrollProg  = 0;
+    var smoothProg  = 0;
 
-    function transitionTo(state) {
-      eng.state      = state;
-      eng.stateTimer = 0;
-      if (state === 'startup') {
-        eng.stateDuration = 2600;
-        eng.targetRpm     = 0.18;
-      } else if (state === 'idle') {
-        eng.stateDuration = rand(5000, 9500);
-        eng.targetRpm     = rand(0.12, 0.20);
-        eng.sparkTimer    = 0;
-        eng.sparkInterval = rand(2400, 3600);
-      } else if (state === 'revving') {
-        eng.stateDuration = rand(2200, 3800);
-        eng.targetRpm     = rand(0.55, 0.92);
-        eng.sparkTimer    = 0;
-        eng.sparkInterval = rand(190, 320);
-      } else if (state === 'settling') {
-        eng.stateDuration = rand(2200, 2800);
-        eng.targetRpm     = rand(0.12, 0.18);
-      }
+    function updateScroll() {
+      var maxSc = Math.max(1, document.body.scrollHeight - window.innerHeight);
+      scrollProg = clamp(window.scrollY / maxSc, 0, 1);
     }
+    window.addEventListener('scroll', updateScroll, { passive: true });
+    updateScroll();
 
-    // ── Vanishing-point speed particles ──────────────────────────────────
-    const PCOUNT = 200;
-    const parts  = [];
+    // ── Ghost tachometer (needle tracks scroll) ───────────────────────────
+    var TS = Math.PI * 0.72, TE = Math.PI * 2.28, TSPAN = TE - TS;
 
-    function resetParticle(p, randomRadius) {
-      p.angle   = Math.random() * Math.PI * 2;
-      p.speed   = rand(0.35, 1.8);
-      p.r       = randomRadius ? rand(0, 380) : 0;
-      p.useBlue = Math.random() > 0.42;
-      p.trailK  = rand(2.5, 9);
-    }
-
-    for (let i = 0; i < PCOUNT; i++) {
-      const p = { angle:0, speed:0, r:0, useBlue:true, trailK:0 };
-      resetParticle(p, true);
-      parts.push(p);
-    }
-
-    // ── Ghost tachometer ─────────────────────────────────────────────────
-    const TACHO_START = Math.PI * 0.72;
-    const TACHO_END   = Math.PI * 2.28;
-    const TACHO_SPAN  = TACHO_END - TACHO_START;
-
-    function drawTacho(cx, cy, R, rpm) {
+    function drawTacho(cx, cy, R, t) {
       ctx.save();
-      ctx.globalAlpha = 0.055;
+      ctx.globalAlpha = 0.13;
 
-      // Outer ring
-      ctx.beginPath();
-      ctx.arc(cx, cy, R, TACHO_START, TACHO_END);
-      ctx.strokeStyle = 'rgba(0,155,180,1)';
-      ctx.lineWidth   = 1.5;
-      ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, R, TS, TE);
+      ctx.strokeStyle = 'rgba(0,155,180,1)'; ctx.lineWidth = 1.5; ctx.stroke();
 
-      // Inner ring
-      ctx.beginPath();
-      ctx.arc(cx, cy, R * 0.875, TACHO_START, TACHO_END);
-      ctx.strokeStyle = 'rgba(0,155,180,0.45)';
-      ctx.lineWidth   = 0.7;
-      ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, R * 0.875, TS, TE);
+      ctx.strokeStyle = 'rgba(0,155,180,0.4)'; ctx.lineWidth = 0.7; ctx.stroke();
 
-      // Redline arc (last 17%)
-      ctx.beginPath();
-      ctx.arc(cx, cy, R, TACHO_START + TACHO_SPAN * 0.83, TACHO_END);
-      ctx.strokeStyle = 'rgba(229,144,0,1)';
-      ctx.lineWidth   = 3;
-      ctx.stroke();
+      ctx.globalAlpha = 0.28;
+      ctx.beginPath(); ctx.arc(cx, cy, R, TS + TSPAN * 0.83, TE);
+      ctx.strokeStyle = 'rgba(229,144,0,1)'; ctx.lineWidth = 3.5; ctx.stroke();
+      ctx.globalAlpha = 0.13;
 
-      // Tick marks (48 total)
-      for (let i = 0; i <= 48; i++) {
-        const a      = TACHO_START + (TACHO_SPAN * i) / 48;
-        const major  = (i % 4 === 0);
-        const medium = (i % 2 === 0);
-        const innerR = major ? R * 0.87 : medium ? R * 0.91 : R * 0.945;
-        const inRed  = (i / 48) > 0.83;
+      for (var i = 0; i <= 48; i++) {
+        var a = TS + (TSPAN * i) / 48, maj = (i % 4 === 0), med = (i % 2 === 0);
+        var ir = maj ? R*0.86 : med ? R*0.91 : R*0.945, inRed = (i/48) > 0.83;
         ctx.beginPath();
-        ctx.moveTo(cx + Math.cos(a) * R,      cy + Math.sin(a) * R);
-        ctx.lineTo(cx + Math.cos(a) * innerR, cy + Math.sin(a) * innerR);
-        ctx.strokeStyle = inRed ? 'rgba(229,144,0,0.75)'
-          : `rgba(0,155,180,${major ? 0.9 : medium ? 0.5 : 0.25})`;
-        ctx.lineWidth = major ? 1.5 : 0.7;
-        ctx.stroke();
+        ctx.moveTo(cx + Math.cos(a)*R, cy + Math.sin(a)*R);
+        ctx.lineTo(cx + Math.cos(a)*ir, cy + Math.sin(a)*ir);
+        ctx.strokeStyle = inRed ? 'rgba(229,144,0,0.85)' : 'rgba(0,155,180,'+(maj?0.9:med?0.5:0.25)+')';
+        ctx.lineWidth = maj ? 1.6 : 0.7; ctx.stroke();
       }
 
-      // RPM number labels
-      const LABELS = [0, 2, 4, 6, 8, 10, 12];
-      ctx.font = `bold ${Math.round(R * 0.055)}px Inter, Arial, sans-serif`;
-      ctx.textAlign    = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle    = 'rgba(0,155,180,0.7)';
-      LABELS.forEach(function(lbl, idx) {
-        const t = idx / (LABELS.length - 1);
-        const a = TACHO_START + TACHO_SPAN * t;
-        ctx.fillText(String(lbl), cx + Math.cos(a) * R * 0.788, cy + Math.sin(a) * R * 0.788);
-      });
-
-      // ×1000 sub-label
-      ctx.font      = `${Math.round(R * 0.046)}px Inter, Arial, sans-serif`;
-      ctx.fillStyle = 'rgba(0,155,180,0.35)';
-      ctx.fillText('×1000 r/min', cx, cy + R * 0.56);
-
+      var LBL = [0,2,4,6,8,10,12];
+      ctx.font = 'bold '+Math.round(R*0.056)+'px Inter,Arial,sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(0,155,180,0.80)';
+      for (var li = 0; li < LBL.length; li++) {
+        var lt = li/(LBL.length-1), la = TS + TSPAN*lt;
+        ctx.fillText(String(LBL[li]), cx+Math.cos(la)*R*0.783, cy+Math.sin(la)*R*0.783);
+      }
+      ctx.font = Math.round(R*0.043)+'px Inter,Arial,sans-serif';
+      ctx.fillStyle = 'rgba(0,155,180,0.36)';
+      ctx.fillText('\xd71000 r/min', cx, cy + R*0.57);
       ctx.restore();
 
-      // Needle — separate pass, higher alpha
+      // Needle
+      var na = TS + TSPAN * clamp(t, 0, 1);
+      var ntx = cx+Math.cos(na)*R*0.80, nty = cy+Math.sin(na)*R*0.80;
+      var nlx = cx+Math.cos(na+Math.PI)*R*0.10, nly = cy+Math.sin(na+Math.PI)*R*0.10;
       ctx.save();
-      ctx.globalAlpha = 0.22;
-      const na    = TACHO_START + TACHO_SPAN * clamp(rpm, 0, 1);
-      const nTipX = cx + Math.cos(na) * R * 0.82;
-      const nTipY = cy + Math.sin(na) * R * 0.82;
-      const nTlX  = cx + Math.cos(na + Math.PI) * R * 0.11;
-      const nTlY  = cy + Math.sin(na + Math.PI) * R * 0.11;
-      ctx.beginPath();
-      ctx.moveTo(nTlX, nTlY);
-      ctx.lineTo(nTipX, nTipY);
-      ctx.strokeStyle = 'rgba(0,239,209,1)';
-      ctx.lineWidth   = 1.8;
-      ctx.lineCap     = 'round';
-      ctx.stroke();
-      // Hub dot
-      ctx.beginPath();
-      ctx.arc(cx, cy, R * 0.028, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(0,239,209,1)';
-      ctx.fill();
+      ctx.globalAlpha = 0.22; ctx.beginPath(); ctx.moveTo(nlx,nly); ctx.lineTo(ntx,nty);
+      ctx.strokeStyle='rgba(0,239,209,1)'; ctx.lineWidth=10; ctx.lineCap='round'; ctx.stroke();
+      ctx.globalAlpha = 0.70; ctx.beginPath(); ctx.moveTo(nlx,nly); ctx.lineTo(ntx,nty);
+      ctx.lineWidth=1.8; ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx,cy,R*0.030,0,Math.PI*2);
+      ctx.fillStyle='rgba(0,239,209,1)'; ctx.globalAlpha=0.75; ctx.fill();
       ctx.restore();
     }
 
-    // ── Spark ignition events ────────────────────────────────────────────
-    const sparks = [];
-
-    function fireSpark() {
-      const vw = canvas.width, vh = canvas.height;
-      const positions = [
-        { x: vw * 0.14, y: vh * 0.28 },
-        { x: vw * 0.35, y: vh * 0.67 },
-        { x: vw * 0.65, y: vh * 0.38 },
-        { x: vw * 0.86, y: vh * 0.62 },
-      ];
-      const pos = positions[Math.floor(Math.random() * positions.length)];
-      const spk = { x: pos.x, y: pos.y, age: 0, maxAge: 950, rings: [], pts: [] };
-
-      // 3 expanding rings
-      for (let i = 0; i < 3; i++) {
-        spk.rings.push({ maxR: 22 + i * 20, alpha: 0.55 - i * 0.11 });
-      }
-      // Burst particles — more during high RPM
-      const count = 10 + Math.floor(eng.rpm * 10);
-      for (let i = 0; i < count; i++) {
-        const a = Math.random() * Math.PI * 2;
-        const s = rand(1.2, 3.8);
-        spk.pts.push({ x:0, y:0, vx: Math.cos(a)*s, vy: Math.sin(a)*s - 1.2, alpha:0.9, r: rand(1.2, 2.5) });
-      }
-      sparks.push(spk);
+    // ── Ambient particles — constant slow drift, no timers ────────────────
+    var PCOUNT = 110, parts = [];
+    function resetP(p, rnd) {
+      p.angle = Math.random()*Math.PI*2; p.speed = rand(0.22,0.80);
+      p.r = rnd ? rand(0,340) : 0; p.blue = Math.random()>0.4; p.tk = rand(2,6);
+    }
+    for (var i = 0; i < PCOUNT; i++) {
+      var _p = {angle:0,speed:0,r:0,blue:true,tk:0}; resetP(_p,true); parts.push(_p);
     }
 
-    // ── Main render loop ─────────────────────────────────────────────────
-    let lastTs = 0, totalMs = 0;
+    // ── Motorcycle silhouette (CFMOTO adventure style) ───────────────────
+    function drawMoto(bx, by, sc, wa) {
+      var R  = 38 * sc;    // wheel radius
+      var WB = 185 * sc;   // wheelbase
+      var rwx = bx, rwy = by, fwx = bx+WB, fwy = by;
+
+      // Fork rake 26° from vertical
+      var rake = 26 * Math.PI / 180;
+      var fdx  = -Math.sin(rake), fdy = -Math.cos(rake); // fork direction (up+back)
+      var fLen = 95 * sc;
+      var htbx = fwx + fdx*fLen,         htby = fwy + fdy*fLen;          // head tube bottom
+      var httx = fwx + fdx*(fLen+18*sc), htty = fwy + fdy*(fLen+18*sc);  // head tube top
+
+      // Frame key points
+      var swpx = bx+60*sc, swpy = by-50*sc;   // swingarm pivot
+      var fpkx = bx+102*sc,fpky = by-114*sc;  // frame/tank peak
+      var sfx  = bx+72*sc, sfy  = by-104*sc;  // subframe junction
+      var srx  = bx+22*sc, sry  = by-90*sc;   // seat rear
+      var tlx  = bx+5*sc,  tly  = by-78*sc;   // tail tip
+
+      // Engine corners
+      var ex1 = bx+45*sc, ey1 = by-44*sc; // bottom-front
+      var ex2 = bx+45*sc, ey2 = by-90*sc; // top-front
+
+      // Fork perpendicular (for two-tube separation in side view)
+      var fpx = -fdy * 4.5*sc, fpy = fdx * 4.5*sc;
+
+      // ── Wheels ──────────────────────────────────────────────────────────
+      function drawWheel(wx, wy) {
+        var S = 20; // spoke count
+        // Tyre
+        ctx.beginPath(); ctx.arc(wx,wy,R,0,Math.PI*2);
+        ctx.strokeStyle='rgba(0,155,180,0.75)'; ctx.lineWidth=4*sc; ctx.stroke();
+        // Tyre shoulder
+        ctx.beginPath(); ctx.arc(wx,wy,R*0.90,0,Math.PI*2);
+        ctx.strokeStyle='rgba(0,155,180,0.18)'; ctx.lineWidth=0.8*sc; ctx.stroke();
+        // Brake disc arc (~240°)
+        ctx.beginPath(); ctx.arc(wx,wy,R*0.76,-0.4,Math.PI*1.65);
+        ctx.strokeStyle='rgba(0,155,180,0.38)'; ctx.lineWidth=3.5*sc; ctx.stroke();
+        ctx.beginPath(); ctx.arc(wx,wy,R*0.68,-0.4,Math.PI*1.65);
+        ctx.strokeStyle='rgba(0,155,180,0.16)'; ctx.lineWidth=0.8*sc; ctx.stroke();
+        // Rim ring
+        ctx.beginPath(); ctx.arc(wx,wy,R*0.53,0,Math.PI*2);
+        ctx.strokeStyle='rgba(0,155,180,0.52)'; ctx.lineWidth=2*sc; ctx.stroke();
+        ctx.beginPath(); ctx.arc(wx,wy,R*0.48,0,Math.PI*2);
+        ctx.strokeStyle='rgba(0,155,180,0.22)'; ctx.lineWidth=0.7*sc; ctx.stroke();
+        // Hub
+        ctx.beginPath(); ctx.arc(wx,wy,R*0.088,0,Math.PI*2);
+        ctx.fillStyle='rgba(0,155,180,0.70)'; ctx.fill();
+        ctx.strokeStyle='rgba(0,155,180,0.75)'; ctx.lineWidth=1.5*sc; ctx.stroke();
+        ctx.beginPath(); ctx.arc(wx,wy,R*0.030,0,Math.PI*2);
+        ctx.fillStyle='rgba(0,22,34,1)'; ctx.fill();
+        // Crossed spokes (each spoke goes from hub to offset rim point)
+        var cross = Math.PI*2*2/S;
+        for (var k=0; k<S; k++) {
+          var sa = wa + (Math.PI*2*k)/S;
+          ctx.beginPath();
+          ctx.moveTo(wx+Math.cos(sa)*R*0.09, wy+Math.sin(sa)*R*0.09);
+          ctx.lineTo(wx+Math.cos(sa-cross)*R*0.52, wy+Math.sin(sa-cross)*R*0.52);
+          ctx.strokeStyle='rgba(0,155,180,0.34)'; ctx.lineWidth=0.85*sc; ctx.stroke();
+        }
+      }
+
+      drawWheel(rwx, rwy);
+      drawWheel(fwx, fwy);
+
+      ctx.save();
+      ctx.lineCap='round'; ctx.lineJoin='round';
+
+      // ── Front fork (two parallel tubes) ─────────────────────────────────
+      ctx.beginPath();
+      ctx.moveTo(fwx+fpx, fwy+fpy); ctx.lineTo(htbx+fpx, htby+fpy);
+      ctx.strokeStyle='rgba(0,155,180,0.70)'; ctx.lineWidth=3*sc; ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(fwx-fpx, fwy-fpy); ctx.lineTo(htbx-fpx, htby-fpy);
+      ctx.strokeStyle='rgba(0,155,180,0.50)'; ctx.lineWidth=2.2*sc; ctx.stroke();
+      // Fork brace
+      var fb=0.34, fbx=fwx+fdx*fLen*fb, fby2=fwy+fdy*fLen*fb;
+      ctx.beginPath();
+      ctx.moveTo(fbx+fpx*1.4,fby2+fpy*1.4); ctx.lineTo(fbx-fpx*1.4,fby2-fpy*1.4);
+      ctx.strokeStyle='rgba(0,155,180,0.36)'; ctx.lineWidth=1.4*sc; ctx.stroke();
+      // Front brake caliper
+      ctx.beginPath(); ctx.arc(fwx+Math.cos(Math.PI*0.82)*R*0.76, fwy+Math.sin(Math.PI*0.82)*R*0.76, 5*sc, 0, Math.PI*2);
+      ctx.strokeStyle='rgba(0,239,209,0.40)'; ctx.lineWidth=1.5*sc; ctx.stroke();
+      ctx.fillStyle='rgba(0,239,209,0.07)'; ctx.fill();
+
+      // ── Head tube ────────────────────────────────────────────────────────
+      ctx.beginPath(); ctx.moveTo(htbx,htby); ctx.lineTo(httx,htty);
+      ctx.strokeStyle='rgba(0,155,180,0.80)'; ctx.lineWidth=6*sc; ctx.stroke();
+      // Triple clamps
+      ctx.beginPath();
+      ctx.moveTo(htbx-7*sc,htby); ctx.lineTo(htbx+7*sc,htby);
+      ctx.moveTo(httx-7*sc,htty); ctx.lineTo(httx+7*sc,htty);
+      ctx.strokeStyle='rgba(0,155,180,0.45)'; ctx.lineWidth=2*sc; ctx.stroke();
+
+      // ── Upper frame (head tube → peak → subframe) ────────────────────────
+      ctx.beginPath();
+      ctx.moveTo(httx,htty);
+      ctx.bezierCurveTo(httx-24*sc,htty+2*sc, fpkx+30*sc,fpky, fpkx,fpky);
+      ctx.bezierCurveTo(fpkx-18*sc,fpky+4*sc, sfx+8*sc,sfy+4*sc, sfx,sfy);
+      ctx.strokeStyle='rgba(0,155,180,0.72)'; ctx.lineWidth=2.8*sc; ctx.stroke();
+      // Subframe to tail
+      ctx.beginPath();
+      ctx.moveTo(sfx,sfy); ctx.lineTo(srx,sry); ctx.lineTo(tlx,tly);
+      ctx.strokeStyle='rgba(0,155,180,0.55)'; ctx.lineWidth=2*sc; ctx.stroke();
+      // Rear frame tube (swingarm pivot → near seat)
+      ctx.beginPath();
+      ctx.moveTo(swpx,swpy); ctx.lineTo(sfx-8*sc,sfy+9*sc);
+      ctx.strokeStyle='rgba(0,155,180,0.58)'; ctx.lineWidth=2.2*sc; ctx.stroke();
+
+      // ── Down tube (head tube → engine front) ─────────────────────────────
+      ctx.beginPath();
+      ctx.moveTo(htbx,htby);
+      ctx.bezierCurveTo(htbx-18*sc,htby+14*sc, ex2+35*sc,ey2, ex2,ey2);
+      ctx.strokeStyle='rgba(0,155,180,0.65)'; ctx.lineWidth=2.4*sc; ctx.stroke();
+
+      // ── Engine block ─────────────────────────────────────────────────────
+      ctx.beginPath();
+      ctx.moveTo(ex1,ey1);
+      ctx.lineTo(ex1,ey2);
+      ctx.lineTo(swpx+28*sc,ey2);
+      ctx.lineTo(swpx+40*sc,ey2+28*sc);
+      ctx.lineTo(swpx+2*sc,swpy+5*sc);
+      ctx.lineTo(ex1,ey1);
+      ctx.fillStyle='rgba(0,155,180,0.07)'; ctx.fill();
+      ctx.strokeStyle='rgba(0,155,180,0.45)'; ctx.lineWidth=1.8*sc; ctx.stroke();
+      // Engine fins
+      ctx.beginPath();
+      ctx.moveTo(ex1+5*sc,ey1+(ey2-ey1)*0.32); ctx.lineTo(swpx+26*sc,ey1+(ey2-ey1)*0.32);
+      ctx.moveTo(ex1+5*sc,ey1+(ey2-ey1)*0.62); ctx.lineTo(swpx+30*sc,ey1+(ey2-ey1)*0.62);
+      ctx.strokeStyle='rgba(0,155,180,0.14)'; ctx.lineWidth=0.8*sc; ctx.stroke();
+
+      // ── Fuel tank ────────────────────────────────────────────────────────
+      ctx.beginPath();
+      ctx.moveTo(swpx+22*sc,swpy-10*sc);
+      ctx.bezierCurveTo(sfx-22*sc,sfy+10*sc, fpkx-10*sc,fpky+5*sc, fpkx,fpky);
+      ctx.bezierCurveTo(fpkx+20*sc,fpky+2*sc, httx-18*sc,htty+8*sc, httx-3*sc,htty+12*sc);
+      ctx.fillStyle='rgba(0,155,180,0.07)'; ctx.fill();
+      ctx.strokeStyle='rgba(0,155,180,0.62)'; ctx.lineWidth=2.2*sc; ctx.stroke();
+
+      // ── Seat ─────────────────────────────────────────────────────────────
+      ctx.beginPath();
+      ctx.moveTo(sfx,sfy);
+      ctx.bezierCurveTo(sfx-8*sc,sfy-6*sc, srx+18*sc,sry-6*sc, srx,sry);
+      ctx.bezierCurveTo(srx-6*sc,sry+7*sc, sfx-12*sc,sfy+7*sc, sfx,sfy);
+      ctx.fillStyle='rgba(0,155,180,0.09)'; ctx.fill();
+      ctx.strokeStyle='rgba(0,155,180,0.40)'; ctx.lineWidth=1.6*sc; ctx.stroke();
+
+      // ── Windscreen ───────────────────────────────────────────────────────
+      ctx.beginPath();
+      ctx.moveTo(httx-2*sc,htty+5*sc);
+      ctx.bezierCurveTo(httx-14*sc,htty-20*sc, httx-32*sc,htty-31*sc, httx-44*sc,htty-22*sc);
+      ctx.bezierCurveTo(httx-36*sc,htty-13*sc, httx-20*sc,htty-4*sc, httx-2*sc,htty+5*sc);
+      ctx.fillStyle='rgba(0,239,209,0.04)'; ctx.fill();
+      ctx.strokeStyle='rgba(0,155,180,0.28)'; ctx.lineWidth=1.4*sc; ctx.stroke();
+
+      // ── Headlight ────────────────────────────────────────────────────────
+      ctx.beginPath();
+      ctx.ellipse(httx-8*sc, htty+11*sc, 12*sc, 8.5*sc, rake, 0, Math.PI*2);
+      ctx.fillStyle='rgba(0,239,209,0.07)'; ctx.fill();
+      ctx.strokeStyle='rgba(0,239,209,0.42)'; ctx.lineWidth=1.6*sc; ctx.stroke();
+      // DRL line
+      ctx.beginPath();
+      ctx.moveTo(httx-19*sc,htty+8*sc); ctx.lineTo(httx+1*sc,htty+13*sc);
+      ctx.strokeStyle='rgba(0,239,209,0.24)'; ctx.lineWidth=1*sc; ctx.stroke();
+
+      // ── Handlebars (wide adventure style) ────────────────────────────────
+      ctx.beginPath();
+      ctx.moveTo(httx-34*sc,htty-17*sc); ctx.lineTo(httx-12*sc,htty-10*sc);
+      ctx.strokeStyle='rgba(0,155,180,0.50)'; ctx.lineWidth=2.2*sc; ctx.stroke();
+      ctx.beginPath(); ctx.arc(httx-12*sc,htty-10*sc,3.5*sc,0,Math.PI*2);
+      ctx.fillStyle='rgba(0,155,180,0.40)'; ctx.fill();
+
+      // ── Swingarm ─────────────────────────────────────────────────────────
+      ctx.beginPath();
+      ctx.moveTo(swpx,swpy);
+      ctx.bezierCurveTo(swpx-22*sc,swpy+18*sc, rwx+44*sc,rwy-8*sc, rwx,rwy);
+      ctx.strokeStyle='rgba(0,155,180,0.62)'; ctx.lineWidth=3.2*sc; ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(swpx-2*sc,swpy+10*sc);
+      ctx.bezierCurveTo(swpx-20*sc,swpy+26*sc, rwx+38*sc,rwy+4*sc, rwx,rwy);
+      ctx.strokeStyle='rgba(0,155,180,0.36)'; ctx.lineWidth=1.8*sc; ctx.stroke();
+
+      // ── Rear shock ───────────────────────────────────────────────────────
+      ctx.beginPath();
+      ctx.moveTo(swpx-14*sc,swpy+8*sc); ctx.lineTo(sfx-12*sc,sfy+14*sc);
+      ctx.strokeStyle='rgba(0,155,180,0.32)'; ctx.lineWidth=2.8*sc; ctx.stroke();
+      for (var sh=0; sh<5; sh++) {
+        var t0=sh/5*0.75+0.12, t1=(sh+1)/5*0.75+0.12;
+        var sx0=(swpx-14*sc)+((sfx-12*sc)-(swpx-14*sc))*t0, sy0=(swpy+8*sc)+((sfy+14*sc)-(swpy+8*sc))*t0;
+        var sx1=(swpx-14*sc)+((sfx-12*sc)-(swpx-14*sc))*t1, sy1=(swpy+8*sc)+((sfy+14*sc)-(swpy+8*sc))*t1;
+        ctx.beginPath(); ctx.moveTo(sx0+5*sc,sy0); ctx.lineTo(sx1-5*sc,sy1);
+        ctx.strokeStyle='rgba(0,155,180,0.18)'; ctx.lineWidth=0.9*sc; ctx.stroke();
+      }
+
+      // ── Exhaust ──────────────────────────────────────────────────────────
+      ctx.beginPath();
+      ctx.moveTo(ex1+6*sc,ey1-10*sc);
+      ctx.bezierCurveTo(ex1-6*sc,ey1+16*sc, bx+64*sc,by+9*sc, bx+90*sc,by+4*sc);
+      ctx.strokeStyle='rgba(0,155,180,0.28)'; ctx.lineWidth=3.5*sc; ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(bx+90*sc,by+4*sc); ctx.lineTo(bx+114*sc,by-10*sc);
+      ctx.strokeStyle='rgba(0,155,180,0.34)'; ctx.lineWidth=6*sc; ctx.stroke();
+      ctx.beginPath(); ctx.arc(bx+114*sc,by-10*sc,6.5*sc,0,Math.PI*2);
+      ctx.strokeStyle='rgba(0,155,180,0.28)'; ctx.lineWidth=1.5*sc; ctx.stroke();
+
+      // ── Footpeg ──────────────────────────────────────────────────────────
+      ctx.beginPath();
+      ctx.rect(bx+52*sc,by-27*sc,20*sc,5*sc);
+      ctx.strokeStyle='rgba(0,155,180,0.35)'; ctx.lineWidth=1.4*sc; ctx.stroke();
+      ctx.fillStyle='rgba(0,155,180,0.05)'; ctx.fill();
+
+      ctx.restore();
+    }
+
+    // ── Render loop ───────────────────────────────────────────────────────
+    var lastTs = 0;
 
     function frame(ts) {
-      const dt = Math.min(ts - lastTs, 50);
-      lastTs  = ts;
-      totalMs += dt;
+      var dt = Math.min(ts - lastTs, 50); lastTs = ts;
 
-      const vw = canvas.width;
-      const vh = canvas.height;
-      const cx = vw * 0.5;
-      const cy = vh * 0.40;
+      // Smooth scroll
+      smoothProg += (scrollProg - smoothProg) * 0.07;
 
-      // Engine update
-      eng.stateTimer += dt;
-      eng.sparkTimer += dt;
+      var vw = canvas.width, vh = canvas.height;
+      var cx = vw * 0.5,    cy = vh * 0.40;
 
-      switch (eng.state) {
-        case 'startup': {
-          const p = clamp(eng.stateTimer / eng.stateDuration, 0, 1);
-          eng.rpm = easeOut(p) * 0.18;
-          if (p >= 1) transitionTo('idle');
-          break;
-        }
-        case 'idle': {
-          const wobble = Math.sin(totalMs * 0.0008) * 0.012;
-          eng.rpm = lerp(eng.rpm, eng.targetRpm + wobble, 0.025);
-          if (eng.sparkTimer >= eng.sparkInterval) {
-            fireSpark();
-            eng.sparkTimer    = 0;
-            eng.sparkInterval = rand(2400, 3600);
-          }
-          if (eng.stateTimer >= eng.stateDuration) transitionTo('revving');
-          break;
-        }
-        case 'revving': {
-          eng.rpm = lerp(eng.rpm, eng.targetRpm, 0.022);
-          if (eng.sparkTimer >= eng.sparkInterval) {
-            fireSpark();
-            eng.sparkTimer    = 0;
-            eng.sparkInterval = rand(190, 340);
-          }
-          if (eng.stateTimer >= eng.stateDuration) transitionTo('settling');
-          break;
-        }
-        case 'settling': {
-          eng.rpm = lerp(eng.rpm, eng.targetRpm, 0.014);
-          if (eng.stateTimer >= eng.stateDuration) transitionTo('idle');
-          break;
-        }
-      }
-
-      // Clear
       ctx.clearRect(0, 0, vw, vh);
 
       // Ghost tachometer
-      const tachoR = Math.min(vw, vh) * 0.40;
-      drawTacho(cx, cy + tachoR * 0.12, tachoR, eng.rpm);
+      var tR = Math.min(vw, vh) * 0.40;
+      drawTacho(cx, cy + tR * 0.12, tR, smoothProg);
 
-      // Speed particles
-      const speedMult = 0.5 + eng.rpm * 2.8;
-      const maxR = Math.sqrt(
-        Math.max(cx, vw - cx) * Math.max(cx, vw - cx) +
-        Math.max(cy, vh - cy) * Math.max(cy, vh - cy)
-      ) * 1.05;
-
+      // Ambient particles
+      var maxR = Math.sqrt(Math.max(cx,vw-cx)*Math.max(cx,vw-cx)+Math.max(cy,vh-cy)*Math.max(cy,vh-cy))*1.05;
       for (var pi = 0; pi < parts.length; pi++) {
         var p = parts[pi];
-        p.r += p.speed * speedMult * dt * 0.065;
-        if (p.r > maxR) { resetParticle(p, false); continue; }
-
-        var fadeIn  = clamp(p.r / 55, 0, 1);
-        var fadeOut = clamp(1 - (p.r / maxR) * 1.2, 0, 1);
-        var fade    = fadeIn * fadeOut;
+        p.r += p.speed * dt * 0.055;
+        if (p.r > maxR) { resetP(p, false); continue; }
+        var fi = clamp(p.r/60,0,1), fo = clamp(1-(p.r/maxR)*1.1,0,1), fade = fi*fo;
         if (fade < 0.01) continue;
-
-        var px = cx + Math.cos(p.angle) * p.r;
-        var py = cy + Math.sin(p.angle) * p.r;
-        var tR = Math.max(0, p.r - p.trailK * speedMult * 1.6);
-        var tx = cx + Math.cos(p.angle) * tR;
-        var ty = cy + Math.sin(p.angle) * tR;
-
-        var alpha = fade * 0.48 * (0.45 + eng.rpm * 0.55);
-        if (alpha < 0.01) continue;
-
-        var C = p.useBlue ? '0,155,180' : '0,239,209';
-        var grad = ctx.createLinearGradient(tx, ty, px, py);
-        grad.addColorStop(0, 'rgba(' + C + ',0)');
-        grad.addColorStop(1, 'rgba(' + C + ',' + alpha.toFixed(3) + ')');
-
-        ctx.beginPath();
-        ctx.moveTo(tx, ty);
-        ctx.lineTo(px, py);
-        ctx.strokeStyle = grad;
-        ctx.lineWidth   = 0.8 + fade * 0.9;
-        ctx.stroke();
+        var px=cx+Math.cos(p.angle)*p.r, py=cy+Math.sin(p.angle)*p.r;
+        var tRp=Math.max(0,p.r-p.tk*1.2), tx=cx+Math.cos(p.angle)*tRp, ty=cy+Math.sin(p.angle)*tRp;
+        var alpha = fade * 0.22; if (alpha < 0.01) continue;
+        var C = p.blue ? '0,155,180' : '0,239,209';
+        var g = ctx.createLinearGradient(tx,ty,px,py);
+        g.addColorStop(0,'rgba('+C+',0)'); g.addColorStop(1,'rgba('+C+','+alpha.toFixed(3)+')');
+        ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(px,py);
+        ctx.strokeStyle=g; ctx.lineWidth=0.6+fade*0.5; ctx.stroke();
       }
 
-      // Sparks
-      for (var si = sparks.length - 1; si >= 0; si--) {
-        var s    = sparks[si];
-        s.age   += dt;
-        if (s.age > s.maxAge) { sparks.splice(si, 1); continue; }
+      // Scroll-driven motorcycle
+      var msc = clamp(Math.min(vw,vh)/580, 0.5, 1.5);
+      var wr  = 38 * msc;   // must match drawMoto's R = 38*sc
+      var wb  = 185 * msc;  // must match drawMoto's WB = 185*sc
+      // Traverse from just off-screen left to just off-screen right
+      var mStartX = -(wb + wr*2.5);
+      var mEndX   = vw + wr*2.5;
+      var motoX   = mStartX + smoothProg * (mEndX - mStartX);
+      var motoY   = vh * 0.62;
 
-        var prog  = s.age / s.maxAge;
-        var flash = clamp(1 - prog * 3.2, 0, 1);
+      // Wheel angle from total distance traveled
+      var wheelAngle = (smoothProg * (mEndX - mStartX)) / wr;
 
-        if (flash > 0.01) {
-          var grd = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, 32);
-          grd.addColorStop(0,    'rgba(255,255,255,' + (flash * 0.5).toFixed(3)  + ')');
-          grd.addColorStop(0.35, 'rgba(0,239,209,'  + (flash * 0.15).toFixed(3) + ')');
-          grd.addColorStop(1,    'rgba(0,155,180,0)');
-          ctx.fillStyle = grd;
-          ctx.beginPath();
-          ctx.arc(s.x, s.y, 32, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        for (var ri = 0; ri < s.rings.length; ri++) {
-          var ring  = s.rings[ri];
-          var ringR = ring.maxR * easeOut(prog);
-          var rA    = ring.alpha * (1 - prog);
-          if (rA < 0.008) continue;
-          ctx.beginPath();
-          ctx.arc(s.x, s.y, ringR, 0, Math.PI * 2);
-          ctx.strokeStyle = 'rgba(0,239,209,' + rA.toFixed(3) + ')';
-          ctx.lineWidth   = 1.1;
-          ctx.stroke();
-        }
-
-        for (var pti = 0; pti < s.pts.length; pti++) {
-          var pt  = s.pts[pti];
-          pt.x   += pt.vx * dt * 0.065;
-          pt.y   += pt.vy * dt * 0.065;
-          pt.vy  += 0.045 * dt * 0.065;
-          pt.alpha = Math.max(0, pt.alpha - dt * 0.0019);
-          if (pt.alpha < 0.02) continue;
-          var t2 = 1 - pt.alpha / 0.9;
-          var pr = Math.round(lerp(255, 0,   t2));
-          var pg = Math.round(lerp(255, 239, t2));
-          var pb = Math.round(lerp(255, 209, t2));
-          ctx.beginPath();
-          ctx.arc(s.x + pt.x, s.y + pt.y, pt.r * pt.alpha, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(' + pr + ',' + pg + ',' + pb + ',' + pt.alpha.toFixed(3) + ')';
-          ctx.fill();
-        }
-      }
+      drawMoto(motoX, motoY, msc, wheelAngle);
 
       requestAnimationFrame(frame);
     }
-
-    // Startup ignition sparks
-    setTimeout(fireSpark, 700);
-    setTimeout(fireSpark, 1200);
-    setTimeout(fireSpark, 1800);
 
     requestAnimationFrame(frame);
   })();
